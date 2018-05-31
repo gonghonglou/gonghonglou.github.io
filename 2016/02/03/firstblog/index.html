@@ -455,7 +455,7 @@ npm install hexo --save
 <p>主机记录：将域名解析为example.com（不带www），填写@或者不填写</p>
 <p>记录值：gonghonglou.github.io.    (不要忘记最后的<code>.</code>，<code>gonghonglou</code>改为你自己的用户名)，点击保存即可，如下图：</p>
 <p><img src="http://image.gonghonglou.com/firstblog/yumingjiexi.png" alt="域名解析](http://localhost:4000"></p>
-<p>此时，点击访问<a href="http://gonghonglou.com" target="_blank" rel="noopener">http://gonghonglou.com</a>和访问<a href="http://gonghonglou.github.io" target="_blank" rel="noopener">http://gonghonglou.github.io</a>效果一致。</p>
+<p>此时，点击访问<a href="http://gonghonglou.com">http://gonghonglou.com</a>和访问<a href="http://gonghonglou.github.io" target="_blank" rel="noopener">http://gonghonglou.github.io</a>效果一致。</p>
 <p>大功告成！</p>
 <h4 id="——11-10更新-以下————————————————"><a href="#——11-10更新-以下————————————————" class="headerlink" title="——11.10更新 以下————————————————"></a>——11.10更新 以下————————————————</h4><h4 id="1、解决-deploy-后博客空白问题"><a href="#1、解决-deploy-后博客空白问题" class="headerlink" title="1、解决 deploy 后博客空白问题"></a>1、解决 deploy 后博客空白问题</h4><p>昨晚更新了一下 blog 做了个部署，结果blog就挂了，打开 <code>gonghonglou.com</code> 页面显示一片空白。然而 <code>hexo s</code> 开启本地服务器 <code>localhost:4000</code> 访问是没问题的。<br>上网查了一下，原来是 GitHub Pages 禁止了 <code>source/vendors</code> 目录的访问。Github 在 11 月 3 日更新了版本。其中包括升级了 Jekyll 到 3.3。Jekyll 为了加快构建速度，忽略 <code>vendor</code> 和 <code>node_modules</code> 文件夹。所以部署到 GitHub 后，识别不到本地下的的这个文件夹 <code>blog/themes/next/source/vendor</code>，你只需要给这个文件夹换个名字再重新部署一次就 OK 了。<code>nexT</code> 在 GitHub 上的 isusses 已经给出了解决方案：<a href="https://github.com/iissnan/hexo-theme-next/issues/1214" target="_blank" rel="noopener">#1214
 </a></p>
@@ -472,9 +472,9 @@ npm install hexo --save
 <p><img src="http://image.gonghonglou.com/firstblog/coding-pages.png" alt=""></p>
 <p>这样就可以访问自己在 Coding 上的个人博客了 <a href="http://gonghonglou.coding.me/gonghonglou" target="_blank" rel="noopener">gonghonglou.coding.me/gonghonglou</a> 如果像这样你的用户后缀名与博客项目名称相同你还可以省略项目名称直接访问 <a href="http://gonghonglou.coding.me" target="_blank" rel="noopener">gonghonglou.coding.me</a> </p>
 <p>7、添加域名绑定，输入个人域名就 OK 了，可能需要耐心等待几分钟，这样在国内访问自己的博客就快得多了。</p>
-<p>试了一下在国内访问 <a href="http://gonghonglou.com" target="_blank" rel="noopener">gonghonglou.com</a> 拦不住 要飞起来了😂</p>
-<h4 id="——11-10更新-以上————————————————"><a href="#——11-10更新-以上————————————————" class="headerlink" title="——11.10更新 以上————————————————"></a>——11.10更新 以上————————————————</h4><h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>以上便是我搭建<a href="http://gonghonglou.com" target="_blank" rel="noopener">与佳期的个人博客(gonghonglou.com)</a>的全过程，希望对大家有所帮助，欢迎吐槽～</p>
-<p>转载请保留原文地址：<a href="http://gonghonglou.com/2016/02/03/firstblog" target="_blank" rel="noopener">http://gonghonglou.com/2016/02/03/firstblog</a></p>
+<p>试了一下在国内访问 <a href="http://gonghonglou.com">gonghonglou.com</a> 拦不住 要飞起来了😂</p>
+<h4 id="——11-10更新-以上————————————————"><a href="#——11-10更新-以上————————————————" class="headerlink" title="——11.10更新 以上————————————————"></a>——11.10更新 以上————————————————</h4><h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>以上便是我搭建<a href="http://gonghonglou.com">与佳期的个人博客(gonghonglou.com)</a>的全过程，希望对大家有所帮助，欢迎吐槽～</p>
+<p>转载请保留原文地址：<a href="http://gonghonglou.com/2016/02/03/firstblog">http://gonghonglou.com/2016/02/03/firstblog</a></p>
 <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
 <li><a href="https://hexo.io/docs" target="_blank" rel="noopener">Hexo官网</a></li>
 <li><a href="http://leopardpan.github.io/2015/08/12/hexo/" target="_blank" rel="noopener">HEXO</a></li>
