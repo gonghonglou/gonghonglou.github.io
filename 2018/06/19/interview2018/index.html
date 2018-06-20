@@ -86,7 +86,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="很感谢待在卓骥的两年多的时间，这两年是我的技术成长期，算是熟悉了 iOS 开发的常见技能，具备了独立开发 APP 的能力。由于公司业务对 iOS 开发的要求并没有那么高，而我也基本算是公司主要甚至唯一的 iOS 开发者，且当前业务对于现阶段的技术层次来讲已经算是完善了，所以我也想出去找一份团队大一点，业务复杂一点，技术栈高级一点的 iOS 工作来做。 在完成了公司网络请求库的封装、iPad 项目基">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-06-20T15:00:10.304Z">
+<meta property="og:updated_time" content="2018-06-20T15:04:56.573Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="毕业两年后的第一次社招之旅">
 <meta name="twitter:description" content="很感谢待在卓骥的两年多的时间，这两年是我的技术成长期，算是熟悉了 iOS 开发的常见技能，具备了独立开发 APP 的能力。由于公司业务对 iOS 开发的要求并没有那么高，而我也基本算是公司主要甚至唯一的 iOS 开发者，且当前业务对于现阶段的技术层次来讲已经算是完善了，所以我也想出去找一份团队大一点，业务复杂一点，技术栈高级一点的 iOS 工作来做。 在完成了公司网络请求库的封装、iPad 项目基">
@@ -478,7 +478,7 @@
 <p>经历过的最强势的 HR，以前经历的 HR 都是态度极好，极亲切的，这个 HR 气势很强，语气很快，思路也很快，比一面的技术面压力还大，感觉稍不留神就会被碾压。当然入职之后发现 HR（紫苏）人很好呀哈哈哈。</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这次面试之旅还是很短暂的，就经历这么四个公司的面试，其中两个公司止步于电话面试：有赞主要是第一家面试又是刚下公交车的时候状态不好；宇石则是因为问了很多 WebView 和 JS 交互方面的东西，接触的很少。其他两家算是完整的面试过程，感觉还不错。</p>
 <p>挑一些比较经典的问题答一下吧：</p>
-<h2 id="KVO-原理："><a href="#KVO-原理：" class="headerlink" title="KVO 原理："></a>KVO 原理：</h2><p>1、Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象A的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。<br>2、isa 指针的作用：每个对象都有 isa 指针，指向该对象的类，它告诉 Runtime 系统这个对象的类是什么。所以对象注册为观察者时，isa 指针指向新子类，那么这个被观察的对象就神奇地变成新子类的对象（或实例）了。） 因而在该对象上对 setter 的调用就会调用已重写的 setter，从而激活键值通知机制。</p>
+<h2 id="KVO-原理："><a href="#KVO-原理：" class="headerlink" title="KVO 原理："></a>KVO 原理：</h2><p>1、Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象A的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。<br>2、isa 指针的作用：每个对象都有 isa 指针，指向该对象的类，它告诉 Runtime 系统这个对象的类是什么。所以对象注册为观察者时，isa 指针指向新子类，那么这个被观察的对象就神奇地变成新子类的对象（或实例）了。因而在该对象上对 setter 的调用就会调用已重写的 setter，从而激活键值通知机制。</p>
 <h2 id="类别-category-怎样给类别添加属性："><a href="#类别-category-怎样给类别添加属性：" class="headerlink" title="类别 category 怎样给类别添加属性："></a>类别 category 怎样给类别添加属性：</h2><p>1、category 在 runtime 层用结构体 category_t 定义，由该结构体可以看出 category 可以动态的添加实例方法，类方法，甚至可以实现协议，添加属性，但无法添加实例变量，因为无法添加实例变量，所以当采用 category 为类添加属性时，并不会自动生成带有 _ 的实例变量，所以 setter 和 getter 方法也需要自己去实现，使用 objc_setAssociatedObject 和 objc_getAssociatedObject 方法。<br>2、category 替换原来类已有的方法：category 的方法被放到了新方法列表的前面，而原来类的方法被放到了新方法列表的后面，运行时在查找方法的时候是顺着方法列表的顺序查找的，它只要一找到对应名字的方法，就会罢休。所以，category 的方法没有“完全替换掉”原来类已经有的方法，可以使用 class_copyMethodList 方法获取方法列表，顺着方法列表找到最后一个对应名字的方法，就可以调用原来类的方法。</p>
 <p>参考：<a href="https://tech.meituan.com/DiveIntoCategory.html" target="_blank" rel="noopener">深入理解Objective-C：Category</a></p>
 <h2 id="Runtime-能做的事："><a href="#Runtime-能做的事：" class="headerlink" title="Runtime 能做的事："></a>Runtime 能做的事：</h2><p>1、Method Swizzling（为某个类添加 category ，通过 runtime 方式 hook 类的某个方法进行替换）<br>1.1、实现埋点统计<br>1.2、异常保护<br>2、Isa Swizzling：KVO<br>3、Associated Object关联对象：objc_setAssociatedObject／objc_getAssociatedObject／objc_removeAssociatedObjects<br>4、动态的增加方法：resolveInstanceMethod:<br>5、NSCoding的自动归档和自动解档（获取某个对象的所有属性及属性值）<br>6、Aspect Oriented Programming</p>
