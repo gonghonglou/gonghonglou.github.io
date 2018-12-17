@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://gonghonglou.com/"/>
-  <updated>2018-10-11T15:53:17.916Z</updated>
+  <updated>2018-12-17T13:37:44.806Z</updated>
   <id>http://gonghonglou.com/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Say Bye 2018</title>
+    <link href="http://gonghonglou.com/2018/12/17/saybye2018/"/>
+    <id>http://gonghonglou.com/2018/12/17/saybye2018/</id>
+    <published>2018-12-17T12:09:32.000Z</published>
+    <updated>2018-12-17T13:37:44.806Z</updated>
+    
+    <content type="html"><![CDATA[<p>遇见十二月，又到了年终总结的时候，<br>以去年为鉴，怕挨到月底还是没有时间写这份总结，所以开始提笔</p><p>回顾今年贫瘠的博客，对这样的技术输出真是羞愧难当，感觉有学到不少东西，尤其来到新公司，更是见识了很多东西，包括技术上的、团队上的、流程上的、开发效率上的等等等等，但好像还没有一个好的思路来记录这一切，大概是时间不够加上工作紧张，所以还没有沉淀下来吧。</p><p>说到新公司，今年比较大的变化应该就是换工作了</p><h1 id="工作"><a href="#工作" class="headerlink" title="工作"></a>工作</h1><p>大概四月份吧开始找工作，四月底从老东家离职，五月七号入职新公司。<br>其实关于换工作已经打算了很久了，主要原因有两个吧，一是因为之前在卓骥的两年多时间里，前一年多是我的技术增长期，学习进步很快，大部分成长都是在那段时间，在过了那段时间之后就很少学到东西了，公司产品的项目量级有限，我已经将两款业务产品 iOS 端都重构过了，而且是那种遵循原有业务逻辑实现从架构、界面到实现细节的大重构。当然，只要想学肯定是能学到东西的，比如研究三方库和苹果框架的源码，或者在这个大前端时代学习前端相关的技术等，但终究因为团队环境等硬性原因收效甚微。离职的第二的原因则是公司业务始终不见起色，继而 iOS 产品也愈加没有地位，而且对于公司业务公司里的小伙伴也大都早早失去了信心，处于长远考虑吧，所以也就选择了离开。但我仍然要感谢待在卓骥的两年多的时间，对于从校园起步的我来说，学到了很多东西。</p><p>来到新公司，iOS 的开发团队大概有三五十人，我们的 APP 也是将各个业务、组件和基础模块拆分成 Pod，通过 CocoaPods 的方式集成在一起，每个人负责各自的 Pod。整个 APP 有很多业务线，互相之间除了组件和基础模块共用外，业务模块几乎是不相关的。我所在的业务线有5位 iOS 在负责，我们业务线也有属于自己的一套开发框架，主要负责复杂的表单页面，通过 json/js 的方式配置，iOS 和 Android 各自提供原生支持，目前基本已经能够覆盖需求，涉及到表单页面的时候通过一套 json/js 配置实现 iOS 和 Android 的两套页面。</p><p>整个 APP 通过 CocoaPods 实现组件化，CI持续化集成，git-flow工作流，项目立项、评审、开发、提测、上线流程，业务线内的 json/js 配置方案，等等这一切都是让我兴奋的急于消化吸收的知识、见识。</p><h1 id="生活"><a href="#生活" class="headerlink" title="生活"></a>生活</h1><p>因为换工作我来了杭州，没毕业的时候就已经打算好了以后定居杭州的，只是比原计划提前了。终于我也开始了自己租房子自己生活了，其实来了新公司之后一直比较忙，早晨起来就去上班，下班回家通常都是十点十一点了，洗漱洗漱也就该睡觉了，也是因为回来也没什么事所以也就在公司呆的晚一点吧。</p><p>五月份那会换工作要租房子，交房租押金，五一出国去了趟普吉岛，入职后买了台 MacBook Pro，这一连串的操作对于一直以来月光的我来说真的是压力山大，那两三个月真的是完全靠信用卡蚂蚁花呗借呗度日。。。过了好长一段拆东墙补西墙的日子，还好那个时期已经过去了，所以还是要存些积蓄才行啊。</p><h1 id="读书"><a href="#读书" class="headerlink" title="读书"></a>读书</h1><p>生活工作变动太大，感觉都没有多少时间安静读书了，今年的书单就很单薄了</p><p>《在细雨中呐喊》<br>《兄弟》<br>《许三观卖血记》<br>《边城》（未读完）<br>《飘》（未读完）</p><p>主要就读了余华的三部曲，《在细雨中呐喊》和《兄弟》都是悲惨的故事，还好《许三观卖血记》虽然历经曲折，但结局还算好的，而且还有些小温暖。</p><h1 id="旅行"><a href="#旅行" class="headerlink" title="旅行"></a>旅行</h1><p>本来的五月份计划改成了去普吉岛，景色很美，海很蓝。泰国，一个神奇的国度，刷三观。</p><p>十月份如期去了海南岛骑行，认识了 nice 的骑友，经历了很棒的旅程。</p><h1 id="计划"><a href="#计划" class="headerlink" title="计划"></a>计划</h1><p>还是希望新的一年有比较多的技术沉淀吧</p><p>1、维护RDER</p><p>2、新写一款 APP</p><p>3、拥有自己的服务器</p><p>4、更新博客</p><p>5、开源贡献，GitHub 开几个项目</p><p>6、公司团队内部多几次技术分享</p><p>7、多读读书</p><p>8、十一去环台湾岛骑行</p><p>对于你，全是未来！</p><p><img src="http://image.gonghonglou.com/hainan-cyclingIMG_0987.JPG" alt=""></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;遇见十二月，又到了年终总结的时候，&lt;br&gt;以去年为鉴，怕挨到月底还是没有时间写这份总结，所以开始提笔&lt;/p&gt;
+&lt;p&gt;回顾今年贫瘠的博客，对这样的技术输出真是羞愧难当，感觉有学到不少东西，尤其来到新公司，更是见识了很多东西，包括技术上的、团队上的、流程上的、开发效率上的等等等
+      
+    
+    </summary>
+    
+      <category term="Life" scheme="http://gonghonglou.com/categories/Life/"/>
+    
+    
+  </entry>
   
   <entry>
     <title>记环海南岛骑行</title>
@@ -462,30 +486,6 @@
     </summary>
     
       <category term="Journey" scheme="http://gonghonglou.com/categories/Journey/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>Mac上搭建Apache Tomcat ＋ MySQL</title>
-    <link href="http://gonghonglou.com/2016/04/01/build-tomcat/"/>
-    <id>http://gonghonglou.com/2016/04/01/build-tomcat/</id>
-    <published>2016-04-01T08:27:06.000Z</published>
-    <updated>2018-05-31T12:48:30.258Z</updated>
-    
-    <content type="html"><![CDATA[<p>因连接公司项目的测试服务器各种不便所以搭了个本地服务器Apache Tomcat，数据库用的MySQL。写下过程一来总结，二来分享，希望能帮到诸位一二，来介绍需要下载用到的工具吧。</p><h3 id="Java环境"><a href="#Java环境" class="headerlink" title="Java环境"></a>Java环境</h3><p>点击下载：<a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html" target="_blank" rel="noopener">jdk-7u79-macosx-x64.dmg</a></p><p>下载之后一路点击安装即可</p><h3 id="MySQL数据库"><a href="#MySQL数据库" class="headerlink" title="MySQL数据库"></a>MySQL数据库</h3><p>点击下载：<a href="https://dev.mysql.com/downloads/file/?id=461482" target="_blank" rel="noopener">mysql-5.6.29-osx10.8-x86_64</a> </p><p>下载之后同样一路点击安装即可，默认的安装路径为 <code>/usr/local/mysql-5.6.29-osx10.8-x86_64</code></p><p>此时，在系统偏好设置的最下方如下图所示：</p><p><img src="http://image.gonghonglou.com/apachetomcat/mysql.png" alt=""> </p><p>点击MySQL，然后点击 <code>Start MySQL Server</code> 开启数据库服务</p><p>/Users/user/Desktop/BuildTomcat:mysql.png</p><h3 id="阿帕奇服务器"><a href="#阿帕奇服务器" class="headerlink" title="阿帕奇服务器"></a>阿帕奇服务器</h3><p>点击下载：<a href="http://tomcat.apache.org/download-70.cgi" target="_blank" rel="noopener">apache-tomcat-7.0.68.zip</a></p><p>下载解压后放到任一目录中，我选择的是MySQL的默认安装目录下 <code>/usr/local/</code></p><p>终端 <code>cd</code> 到阿帕奇服务器所在目录的 <code>bin</code> 目录下，执行如下命令：</p><pre><code>$ ./startup.sh        // 开启服务器/Users/user/Desktop/mysql.png$ ./shutdown.sh       // 关闭服务器</code></pre><p>新下载的tomcat在启动时会报错：</p><pre><code>./startup.sh: Permission denied</code></pre><p>这是因为权限问题，执行如下命令即可解决：</p><pre><code>$ chmod u+x *.sh    //表示对当前目录下的*.sh文件的所有者增加可执行权限</code></pre><p>再次执行开启服务器命令即可。成功开启服务器后，浏览器打开 <a href="http://localhost:8080" target="_blank" rel="noopener">http://localhost:8080</a> 出现如下界面表示开启成功：</p><p><img src="http://image.gonghonglou.com/apachetomcat/localhost.png" alt=""></p><p>如上图点击<code>Manager App</code>登录需要账号密码，点击<code>取消</code>会有解释。<br>即打开<code>/usr/local/apache-tomcat-7.0.68/conf</code>目录下的<code>tomcat-users.xml</code>文件，在下方添加配置用户名密码如：</p><pre><code>&lt;role rolename=&quot;manager-gui&quot;/&gt;&lt;user username=&quot;tomcat_name&quot; password=&quot;tomcat_password&quot; roles=&quot;manager-gui&quot;/&gt;</code></pre><h3 id="Sequel-Pro"><a href="#Sequel-Pro" class="headerlink" title="Sequel Pro"></a>Sequel Pro</h3><p>点击下载mysql的图形化工具：<a href="http://sequelpro.com" target="_blank" rel="noopener">sequel-pro-1.1.1.dmg</a> </p><p>安装成功后打开，设置如下：</p><p><img src="http://image.gonghonglou.com/apachetomcat/sequel.png" alt=""></p><p><code>Name</code>随意，MySQL初始用户名为<code>root</code> 密码为空，因为初始并没有数据库所以<code>Database</code>也为空。</p><p>点击<code>Connect</code>进入后</p><p>1：左上角选择<code>Add Database...</code>，填入一个名字如<code>troy</code>，点击<code>add</code></p><p>2：<code>Sequel Pro</code>菜单栏选择<code>Database</code>–&gt;<code>User Accounts...</code>,给 root 用户添加用户名密码，点击<code>Apply</code></p><p>这样在下次登录时就要把<code>Password</code>和<code>Database</code>填上再连接</p><h3 id="添加数据"><a href="#添加数据" class="headerlink" title="添加数据"></a>添加数据</h3><p>将自己的<code>.sql</code>文件用<code>Sequel Pro</code>打开并运行，这样在数据库中就有了数据</p><p>将自己的<code>.war</code>的<code>jar</code>包添加到<code>/usr/local/apache-tomcat-7.0.68/webapps</code>目录下，这样就有了执行程序</p><p>终端 <code>cd</code> 到阿帕奇服务器所在目录的 <code>bin</code> 目录下，开启服务器可执行如下任一命令：</p><pre><code>$ ./startup.sh         // 单纯开启服务器$ ./catalina.sh run    // 开启服务器，控制台可打印服务器数据</code></pre><p>到这里本地服务器就开启了</p><p>执行如下命令，查看服务器在局域网中的地址：</p><pre><code>$ ifconfig</code></pre><p>这样你的手机等设备也可以连接到本地服务器了</p><h3 id="总结一下"><a href="#总结一下" class="headerlink" title="总结一下"></a>总结一下</h3><ol><li><p>jdk-7u79-macosx-x64.dmg<br> java环境</p></li><li><p>mysql-5.6.29-osx10.9-x86_64.dmg<br> mysql数据库</p></li><li><p>apache-tomcat-7.0.68.zip<br> 阿帕奇服务器</p></li><li><p>sequel-pro-1.1.1.dmg<br> mysql的图形化工具</p></li><li><p>troy_2016-03-25.sql<br> sql语句，放在 Sequel Pro中执行，生成数据）</p></li><li><p>rest.war<br> 运行程序，放在 apache-tomcat-7.0.68/webapps 目录下</p></li><li><p>开启服务器</p></li><li><p>愉快的玩耍</p></li></ol><h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>转载请保留原文地址：<a href="http://gonghonglou.com/2016/04/01/build-tomcat">http://gonghonglou.com/2016/04/01/build-tomcat</a></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;p&gt;因连接公司项目的测试服务器各种不便所以搭了个本地服务器Apache Tomcat，数据库用的MySQL。写下过程一来总结，二来分享，希望能帮到诸位一二，来介绍需要下载用到的工具吧。&lt;/p&gt;
-&lt;h3 id=&quot;Java环境&quot;&gt;&lt;a href=&quot;#Java环境&quot; class=&quot;h
-      
-    
-    </summary>
-    
-      <category term="Technology" scheme="http://gonghonglou.com/categories/Technology/"/>
     
     
   </entry>
