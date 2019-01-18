@@ -81,22 +81,17 @@
 
 
 
-<meta name="description" content="前言：刚从售后拿到Mac 回学校的公交车上。记录下这悲惨的经历告诫各位果友篇幅略长，怕有些读者看不下去遂将告诫先写在前面：  为保护手机，在iPhone设置–iCloud里有查找我的iPhone功能，确保开启（默认开启）万一不幸手机丢失，尽快登录iCloud官网或在查找我的iPhone app里将iPhone设为丢失模式或锁定iPhone，为保护隐私可选抹掉iPhone（会删除iPhone里的所有">
+<meta name="description" content="Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是于我来讲很早之前就有个更新约束的问题一直萦绕心头，就是题目里的 mas_updateConstraints: 方法。在 View 初始化时会添加一系列约束控制布局，随时更改约束来移动位置也是日常需求，但其中有许多设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。 当前环境：Xcod">
 <meta property="og:type" content="article">
-<meta property="og:title" content="由丢失一部iPhone6引发的祸端">
-<meta property="og:url" content="http://gonghonglou.com/2016/03/03/protect-apple-id/index.html">
+<meta property="og:title" content="一探 mas_updateConstraints 究竟">
+<meta property="og:url" content="http://gonghonglou.com/2019/01/18/mas-constraints/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="前言：刚从售后拿到Mac 回学校的公交车上。记录下这悲惨的经历告诫各位果友篇幅略长，怕有些读者看不下去遂将告诫先写在前面：  为保护手机，在iPhone设置–iCloud里有查找我的iPhone功能，确保开启（默认开启）万一不幸手机丢失，尽快登录iCloud官网或在查找我的iPhone app里将iPhone设为丢失模式或锁定iPhone，为保护隐私可选抹掉iPhone（会删除iPhone里的所有">
+<meta property="og:description" content="Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是于我来讲很早之前就有个更新约束的问题一直萦绕心头，就是题目里的 mas_updateConstraints: 方法。在 View 初始化时会添加一系列约束控制布局，随时更改约束来移动位置也是日常需求，但其中有许多设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。 当前环境：Xcod">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://image.gonghonglou.com/protectappleid/open.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/protectappleid/sock.png">
-<meta property="og:image" content="http://image.gonghonglou.com/protectappleid/haha.png">
-<meta property="og:image" content="http://image.gonghonglou.com/protectappleid/save.png">
-<meta property="og:updated_time" content="2018-05-31T12:48:30.260Z">
+<meta property="og:updated_time" content="2019-01-18T05:27:50.138Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="由丢失一部iPhone6引发的祸端">
-<meta name="twitter:description" content="前言：刚从售后拿到Mac 回学校的公交车上。记录下这悲惨的经历告诫各位果友篇幅略长，怕有些读者看不下去遂将告诫先写在前面：  为保护手机，在iPhone设置–iCloud里有查找我的iPhone功能，确保开启（默认开启）万一不幸手机丢失，尽快登录iCloud官网或在查找我的iPhone app里将iPhone设为丢失模式或锁定iPhone，为保护隐私可选抹掉iPhone（会删除iPhone里的所有">
-<meta name="twitter:image" content="http://image.gonghonglou.com/protectappleid/open.JPG">
+<meta name="twitter:title" content="一探 mas_updateConstraints 究竟">
+<meta name="twitter:description" content="Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是于我来讲很早之前就有个更新约束的问题一直萦绕心头，就是题目里的 mas_updateConstraints: 方法。在 View 初始化时会添加一系列约束控制布局，随时更改约束来移动位置也是日常需求，但其中有许多设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。 当前环境：Xcod">
 
 
 
@@ -126,13 +121,13 @@
 
 
 
-  <link rel="canonical" href="http://gonghonglou.com/2016/03/03/protect-apple-id/"/>
+  <link rel="canonical" href="http://gonghonglou.com/2019/01/18/mas-constraints/"/>
 
 
 
 
 
-  <title>由丢失一部iPhone6引发的祸端 | 与佳期的个人博客</title>
+  <title>一探 mas_updateConstraints 究竟 | 与佳期的个人博客</title>
   
 
 
@@ -293,7 +288,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2016/03/03/protect-apple-id/">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/01/18/mas-constraints/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="与佳期">
@@ -310,7 +305,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">由丢失一部iPhone6引发的祸端</h1>
+          <h1 class="post-title" itemprop="name headline">一探 mas_updateConstraints 究竟</h1>
         
 
         <div class="post-meta">
@@ -322,8 +317,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-03T11:36:26+08:00">
-                2016-03-03
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-01-18T11:30:22+08:00">
+                2019-01-18
               </time>
             
 
@@ -345,8 +340,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Life/" itemprop="url" rel="index">
-                    <span itemprop="name">Life</span>
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
                   </a>
                 </span>
 
@@ -382,35 +377,39 @@
       
 
       
-        <h2 id="前言："><a href="#前言：" class="headerlink" title="前言："></a>前言：</h2><p>刚从售后拿到Mac 回学校的公交车上。记录下这悲惨的经历告诫各位果友<br>篇幅略长，怕有些读者看不下去遂将告诫先写在前面：</p>
-<ul>
-<li>为保护手机，在iPhone设置–iCloud里有查找我的iPhone功能，确保开启（默认开启）万一不幸手机丢失，尽快登录iCloud官网或在查找我的iPhone app里将iPhone设为丢失模式或锁定iPhone，为保护隐私可选抹掉iPhone（会删除iPhone里的所有数据，不可逆） Mac和iPad一样如此</li>
-<li>手机在丢失模式下，锁屏界面会显示你设置的一个联系号码。若是好心人送还手机自然大喜。但也要提防钓鱼网站，伪造Apple身份给你发短信或邮件，骗取iCloud密码（lz已上当羞耻哭晕在厕所）</li>
-<li>万一不幸iCloud密码泄漏，请及时修改Apple ID的验证问题和Apple ID的密码。切勿以为只改密码万事大吉，盗取你的密码就能获取你的验证问题的答案，有了验证问题答案就能查看你更改的密码（怕）并且可以远程操作（锁定、抹掉…）你的设备（lz已受害二次哭晕在厕所）</li>
-<li>为防万一，建议在iCloud的管理我的Apple ID里开启两步验证，此后要操作远程命令就需要短信验证码再加上密码或验证问题。（开启两步验证会给你一份字母加数字的密钥，很重要，是你丢失密码或手机卡后的唯一凭证，切记保存好）</li>
-</ul>
-<h3 id="那么故事是这样的："><a href="#那么故事是这样的：" class="headerlink" title="那么故事是这样的："></a>那么故事是这样的：</h3><h4 id="事情发生在15年10月8号，却并非起始于这个日期。"><a href="#事情发生在15年10月8号，却并非起始于这个日期。" class="headerlink" title="事情发生在15年10月8号，却并非起始于这个日期。"></a>事情发生在15年10月8号，却并非起始于这个日期。</h4><p>8号上午如往常一样打开Mac准备码字，联网之后弹出一个提示iCloud什么的对话框，点了确定Mac就重启了，重启之后竟出现这样的界面：<br><img src="http://image.gonghonglou.com/protectappleid/open.JPG" alt="PIN码"><br>这是什么鬼？刚开始四个方框上提示：输入锁定此系统的PIN码来解锁。what？PIN码？我没有啊，崩溃！百度一些提示说按住option键重新开机。然后出现了一个锁头（这就是固件锁）<br><img src="http://image.gonghonglou.com/protectappleid/sock.png" alt="固件锁"><br>并没有什么卵用，遂拨打4006-272273（苹果技术支持热线）寻助AppleCare，一系列问答之后大概明白了应该是iCloud密码泄漏，Mac被远程恶意锁定。客服询问我的Apple ID是和别人共用还是怎样泄漏过，才回想起7月份失窃一部iPhone6（新机、心痛）</p>
-<h4 id="这就是故事的起点："><a href="#这就是故事的起点：" class="headerlink" title="这就是故事的起点："></a>这就是故事的起点：</h4><p>失窃iPhone后随即登录iCloud将iPhone6设为丢失模式（这时可留下一个联系方式显示在手机解锁屏幕上）几天后收到一条短信（来自香港号码）以苹果的身份，大体意思说</p>
+        <p>Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是于我来讲很早之前就有个更新约束的问题一直萦绕心头，就是题目里的 <code>mas_updateConstraints:</code> 方法。在 View 初始化时会添加一系列约束控制布局，随时更改约束来移动位置也是日常需求，但其中有许多设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。</p>
+<p>当前环境：Xcode 10.1、Simulator iPhone XS 12.1、Masonry 1.1.0</p>
+<h1 id="探索"><a href="#探索" class="headerlink" title="探索"></a>探索</h1><p>首先来看一段布局代码：topView 和 bottomView 上下排列、左右对齐，topView 和 rightView 左右排列、上下对齐。<br><figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[<span class="name">self.topView</span> mas_makeConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.centerY.equalTo(<span class="name">self.view</span>)<span class="comment">;</span></span><br><span class="line">   make.left.equalTo(<span class="name">self.view</span>).offset(<span class="name">50</span>)<span class="comment">;</span></span><br><span class="line">   make.size.mas_equalTo(<span class="name">CGSizeMake</span>(<span class="name">100</span>, <span class="number">30</span>))<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br><span class="line">[<span class="name">self.bottomView</span> mas_makeConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.topView.mas_bottom</span>).offset(<span class="name">50</span>)<span class="comment">;</span></span><br><span class="line">   make.left.equalTo(<span class="name">self.topView</span>)<span class="comment">;</span></span><br><span class="line">   make.size.mas_equalTo(<span class="name">self.topView</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br><span class="line">[<span class="name">self.rightView</span> mas_makeConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.topView</span>)<span class="comment">;</span></span><br><span class="line">   make.right.equalTo(<span class="name">self.view</span>).offset(<span class="name">-50</span>)<span class="comment">;</span></span><br><span class="line">   make.size.mas_equalTo(<span class="name">self.topView</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>从12行可以看出 rightView 的 top 依赖于 topView，现在有个需求是将 rightView 与 bottomView 顶部对齐。记得我第一次遇到这种问题的时候想当然的将 rightView 的 top 依赖于 bottomView 了：<br><figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[self.rightView mas_updateConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">    make.top.equalTo(<span class="name">self.bottomView</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>结果是报错、崩溃还是页面错落我倒是忘记了，总之是不能满足需求。当前在 Xcode 10.1、Simulator iPhone XS 12.1 环境下我试了下是页面错落。所以我将代码改成了这样：<br><figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[<span class="name">self.rightView</span> mas_updateConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.topView</span>).offset(<span class="name">80</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>这里当然可以使用 <code>mas_remakeConstraints:</code> 方法，只不过该方法的意思是清空所有约束重新添加（下文会有源码体现），相比 <code>mas_updateConstraints:</code> 性能低了不少，况且项目开发中往往全部约束散落在各处，难免会有遗漏或者约束错乱的情况。所以我的做法是在 <code>mas_updateConstraints:</code> 方法里不更改约束依赖的对象，而通过计算出一个合适的偏移量来更改 offset 值。所以得出了一个结论：</p>
 <blockquote>
-<p>您的iPhone在苹果售后申请换机，因凭证信息不符被Apple售后截下，若情况符实请登录<br>    iCloud网站（一段网址）申请扣机，确认信息后Apple会联系警察交还手机。。。。。</p>
+<p>Masonry 的 <code>mas_updateConstraints:</code> 方法不能更改约束依赖的对象，可以通过计算偏移量来更新布局。</p>
 </blockquote>
-<p>一开始没注意是因为对于找回手机已经不抱希望了（尽管我还没有锁定iPhone，汗）后来看到可申请扣机（其实一开始是短信太长没看懂，笑）因为失窃后已报警，又看到希望的我内心是鸡冻的。然后就上网登录”iCoud.com”(和平常登录时的iCloud界面一个模样)熟练输入帐号密码，登录之后找半天并没有找回iPhone啊，遂电话Apple客服<br>被惨痛告知：这是钓鱼网站骗取Apple ID密码的常见手法。赶紧到iCloud官网查看我的设备，已不见iPhone6的踪影（哭）这里要说客服态度很好，在我传达了收到的短信后，他们首先关注的是我是否已输入了登录密码。</p>
-<p>如此看来便是那时候泄漏的iCloud密码了。之后一直没有改密码（汗）而可恶的盗窃者在盗取我的iCloud密码后竟默默蛰伏至今<br>我在6号晚12点左右因为6s的某原因在手机上修改了iCloud密码，在Mac被锁后发现一份iCloud邮件提示我的Mac在7号下午八点多的时候被锁定。以此推断应该是我改密码的行为触动了盗窃者所以远程锁定了我的Mac，之前我以为改密码在Mac被锁之前账号应该是安全的，后来才知并非如此（如前言所述）<br>前后打了四五次400，有一次为查看Apple ID的动态要转接Apple的最高级别安全部门，转接等待一个半小时没接通（汗）不过客服们的态度都特别热情，这点很欣慰！只是她们貌似对PIN码什么的也说不太清，大概认定为被人远程恶意锁定了。</p>
-<h4 id="解决方案："><a href="#解决方案：" class="headerlink" title="解决方案："></a>解决方案：</h4><p>到售后解锁，赶到市里，售后态度也很好，只是他们也说不清楚PIN码什么的，今天取Mac时一位技术大哥总算给讲明白怎么回事，解释如下：<br>1）在查找我的iPhone里锁定我的iPhone或iPad可通过密码解锁，若忘记密码可向苹果申请解锁（需要设备的购买凭证，必须要且有效）<br>2）但是，锁定Mac时会输入一个密码，这个密码就是上面提到的PIN码</p>
+<p>但这究竟是为什么呢？让我们来看一下 Masonry 的 <code>mas_updateConstraints:</code> 方法都做了些什么工作：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">NSArray</span> *)mas_updateConstraints:(<span class="keyword">void</span>(^)(MASConstraintMaker *))block &#123;</span><br><span class="line">    <span class="keyword">self</span>.translatesAutoresizingMaskIntoConstraints = <span class="literal">NO</span>;</span><br><span class="line">    MASConstraintMaker *constraintMaker = [[MASConstraintMaker alloc] initWithView:<span class="keyword">self</span>];</span><br><span class="line">    constraintMaker.updateExisting = <span class="literal">YES</span>;</span><br><span class="line">    block(constraintMaker);</span><br><span class="line">    <span class="keyword">return</span> [constraintMaker install];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>constraintMaker 的 updateExisting 属性设置为 YES 之后执行了 install 方法：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">NSArray</span> *)install &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span>.removeExisting) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *installedConstraints = [MASViewConstraint installedConstraintsForView:<span class="keyword">self</span>.view];</span><br><span class="line">        <span class="keyword">for</span> (MASConstraint *constraint <span class="keyword">in</span> installedConstraints) &#123;</span><br><span class="line">            [constraint uninstall];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">NSArray</span> *constraints = <span class="keyword">self</span>.constraints.copy;</span><br><span class="line">    <span class="keyword">for</span> (MASConstraint *constraint <span class="keyword">in</span> constraints) &#123;</span><br><span class="line">        constraint.updateExisting = <span class="keyword">self</span>.updateExisting;</span><br><span class="line">        [constraint install];</span><br><span class="line">    &#125;</span><br><span class="line">    [<span class="keyword">self</span>.constraints removeAllObjects];</span><br><span class="line">    <span class="keyword">return</span> constraints;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这段代码 <code>mas_remakeConstraints:</code> 方法也会调用，只不过是将 removeExisting 属性设为 YES，第2行的 if 判断正是上文提到的清空所有约束。后半段代码则是调用 <code>install</code> 方法更新约束，该方法则是调用自 MASConstraint 的子类：MASViewConstraint。下边是关键实现代码：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">    MASLayoutConstraint *existingConstraint = nil;</span><br><span class="line">    <span class="keyword">if</span> (self.updateExisting) &#123;</span><br><span class="line">        existingConstraint = [self layoutConstraintSimilarTo:layoutConstraint];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (existingConstraint) &#123;</span><br><span class="line">        <span class="comment">// just update the constant</span></span><br><span class="line">        existingConstraint.constant = layoutConstraint.constant;</span><br><span class="line">        self.layoutConstraint = existingConstraint;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        [self.installedView addConstraint:layoutConstraint];</span><br><span class="line">        self.layoutConstraint = layoutConstraint;</span><br><span class="line">        [firstLayoutItem.mas_installedConstraints addObject:self];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (MASLayoutConstraint *)layoutConstraintSimilarTo:(MASLayoutConstraint *)layoutConstraint &#123;</span><br><span class="line">    <span class="comment">// check if any constraints are the same apart from the only mutable property constant</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// go through constraints in reverse as we do not want to match auto-resizing or interface builder constraints</span></span><br><span class="line">    <span class="comment">// and they are likely to be added first.</span></span><br><span class="line">    <span class="keyword">for</span> (NSLayoutConstraint *existingConstraint <span class="keyword">in</span> self.installedView.constraints.reverseObjectEnumerator) &#123;</span><br><span class="line">        <span class="keyword">if</span> (![existingConstraint isKindOfClass:MASLayoutConstraint.<span class="keyword">class</span>]) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.firstItem != layoutConstraint.firstItem) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.secondItem != layoutConstraint.secondItem) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.firstAttribute != layoutConstraint.firstAttribute) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.secondAttribute != layoutConstraint.secondAttribute) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.relation != layoutConstraint.relation) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.multiplier != layoutConstraint.multiplier) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (existingConstraint.priority != layoutConstraint.priority) <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> (id)existingConstraint;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nil;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>逻辑很简单，根据 updateExisting，也就是之前的标识更新布局的赋值来寻找已存在的约束，如果约束存在则执行更新操作，如果约束不存在则当成一条新的约束添加给 View。</p>
+<p>关键就在于 <code>layoutConstraintSimilarTo:</code> 查找约束时的判断方法，22～29行，竟然是根据这些条件来判断，这就是为什么在 <code>mas_updateConstraints:</code> 方法里更改约束对象后造成页面错乱的原因，因为它找不到这条约束就把它当成一条新的约束添加到 View 上，导致约束冲突。</p>
+<p>从这一点出发的话那我们首先想到的解决这个问题的方案就不再是更改偏移量了，而是通过设置约束的优先级来解决约束冲突的问题。</p>
+<p>如果遇到 View 出现重复约束时，比如：<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">make</span><span class="selector-class">.top</span><span class="selector-class">.equalTo</span>(<span class="selector-tag">self</span><span class="selector-class">.topView</span>)<span class="selector-class">.offset</span>(10);</span><br><span class="line"><span class="selector-tag">make</span><span class="selector-class">.top</span><span class="selector-class">.equalTo</span>(<span class="selector-tag">self</span><span class="selector-class">.topView</span>)<span class="selector-class">.offset</span>(20);</span><br></pre></td></tr></table></figure></p>
+<p>仅仅通过在 <code>mas_updateConstraints:</code> 方法里更改某条约束的偏移量并不能起到精确控制的作用。所以这种情况下设置优先级也许是个更好的解决方案。关于设置优先级值得注意的有：</p>
 <ul>
-<li>输入PIN码可以进入系统但是不能进行更改硬盘操作</li>
-<li>若是忘记PIN码或者是被恶意锁定的，按组合键<a href="https://support.apple.com/zh-cn/HT204063" target="_blank" rel="noopener">Command+Option+P+R</a>可以清空PIN码然后进入系统但仍然不能进行更改硬盘操作。</li>
-<li>开机时按住option键进入磁盘分区时就会出现固件锁，在这里输入PIN码也可以进入系统仍然不能进行更改硬盘操作。<br>怎样才能解开固件锁，只有去售后了，他们向Apple提供固件锁的信息，Apple做一个解密包发回来解锁，济南售后花费300大洋，倒是不贵可是心痛（哭）</li>
+<li>不特殊设置时约束的优先级默认是 UILayoutPriorityRequired，也就是最高的</li>
+<li>优先级的设值范围在 0～1000 之间，超出这个范围则会崩溃：<blockquote>
+<p>2019-01-18 13:00:09.449167+0800 MasonryTest[54681:15704474] *** Terminating app due to uncaught exception ‘NSInternalInconsistencyException’, reason: ‘It’s illegal to set priority:1200.  Priorities must be greater than 0 and less or equal to NSLayoutPriorityRequired, which is 1000.000000.’</p>
+</blockquote>
+</li>
 </ul>
-<p>为保安全，你也可以为你的Mac加上固件锁，自行百度（甚用，忘了心情就不好了。。。）</p>
-<p>最后不幸中的万幸是，盗窃者或许先点的锁定Mac这一不可逆的过程导致抹掉Mac不可用，又或者其他的网络连接什么的原因总之我的硬盘资料没有被抹。技术大哥说之前解掉的几个固件锁打开后数据都是被抹掉的，连系统都没了（庆幸）<br>发现资料还在时心情是无法用语言表达的，就用微博上一帅哥的表情来表达吧<br><img src="http://image.gonghonglou.com/protectappleid/haha.png" alt="屏幕快照 2015-10-10 17.39.16.png"></p>
-<h4 id="再次告诫广大果友："><a href="#再次告诫广大果友：" class="headerlink" title="再次告诫广大果友："></a>再次告诫广大果友：</h4><ul>
-<li>在保护好自己apple设备的同时更要保护好自己的Apple ID密码，最好开启两步验证。</li>
-<li>对于重要文件及时做好备份，Apple的锁做的很强大，极好的保护了我们的设备和数据，可是一旦泄露iCloud密码伤害也会很致命</li>
-<li>对于备份，Mac上有Time Machine备份工具甚是好用，听起来（嘿）<br>也是售后的技术大哥告知的，感谢AppleCare和Apple售后的好态度。<br><img src="http://image.gonghonglou.com/protectappleid/save.png" alt="屏幕快照 2015-10-10 18.41.11.png"></li>
+<p>所以我们应该将想要更新的约束提前设置一个较低的优先级，再在 <code>mas_updateConstraints:</code> 方法里更新约束并对新的约束设置一个高于原来约束的优先级，且低于 1000。例如：<br><figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[<span class="name">self.rightView</span> mas_makeConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.topView</span>).priorityLow()<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br><span class="line">    </span><br><span class="line">[<span class="name">self.rightView</span> mas_updateConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.bottomView</span>).priorityHigh()<span class="comment">;</span></span><br><span class="line">   // or</span><br><span class="line">   // make.top.equalTo(<span class="name">self.bottomView</span>).priority(<span class="name">800</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>认识几种优先级类型：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="built_in">UILayoutPriority</span> MASLayoutPriority;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityRequired = <span class="built_in">UILayoutPriorityRequired</span>; <span class="comment">// 1000</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultHigh = <span class="built_in">UILayoutPriorityDefaultHigh</span>; <span class="comment">// 750</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultMedium = <span class="number">500</span>;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultLow = <span class="built_in">UILayoutPriorityDefaultLow</span>; <span class="comment">// 250</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityFittingSizeLevel = <span class="built_in">UILayoutPriorityFittingSizeLevel</span>; <span class="comment">// 50</span></span><br></pre></td></tr></table></figure></p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
+<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
+</li>
+<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/01/18/mas-constraints/">http://gonghonglou.com/2019/01/18/mas-constraints/</a></p>
+</li>
 </ul>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>转载请保留原文地址：<a href="http://gonghonglou.com/2016/03/03/protect-apple-id">http://gonghonglou.com/2016/03/03/protect-apple-id</a></p>
-<p><strong>迁移文章 首发于2015-10-10 </strong></p>
 
       
     </div>
@@ -435,8 +434,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/03/firstblog/" rel="next" title="Mac上搭建基于GitHub的Hexo博客">
-                <i class="fa fa-chevron-left"></i> Mac上搭建基于GitHub的Hexo博客
+              <a href="/2018/12/17/saybye2018/" rel="next" title="Say Bye 2018">
+                <i class="fa fa-chevron-left"></i> Say Bye 2018
               </a>
             
           </div>
@@ -444,10 +443,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/03/03/date-week/" rel="prev" title="iOS开发tips之日期与星期的对应">
-                iOS开发tips之日期与星期的对应 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -613,7 +608,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言："><span class="nav-number">1.</span> <span class="nav-text">前言：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#那么故事是这样的："><span class="nav-number">1.1.</span> <span class="nav-text">那么故事是这样的：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#事情发生在15年10月8号，却并非起始于这个日期。"><span class="nav-number">1.1.1.</span> <span class="nav-text">事情发生在15年10月8号，却并非起始于这个日期。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#这就是故事的起点："><span class="nav-number">1.1.2.</span> <span class="nav-text">这就是故事的起点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解决方案："><span class="nav-number">1.1.3.</span> <span class="nav-text">解决方案：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#再次告诫广大果友："><span class="nav-number">1.1.4.</span> <span class="nav-text">再次告诫广大果友：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后记"><span class="nav-number">2.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#探索"><span class="nav-number">1.</span> <span class="nav-text">探索</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">2.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
 
           </div>
@@ -774,9 +769,9 @@
     
       <script type="text/javascript">
         var disqus_config = function () {
-          this.page.url = 'http://gonghonglou.com/2016/03/03/protect-apple-id/';
-          this.page.identifier = '2016/03/03/protect-apple-id/';
-          this.page.title = '由丢失一部iPhone6引发的祸端';
+          this.page.url = 'http://gonghonglou.com/2019/01/18/mas-constraints/';
+          this.page.identifier = '2019/01/18/mas-constraints/';
+          this.page.title = '一探 mas_updateConstraints 究竟';
         };
         var d = document, s = d.createElement('script');
         s.src = 'https://gonghonglou.disqus.com/embed.js';
