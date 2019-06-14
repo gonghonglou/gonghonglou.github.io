@@ -88,7 +88,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="现在有些规模的工程大概都是实行组件化开发吧，将基础库，业务库划分成单独模块，以 Pod 的形式集成到 APP 中。其中组件化开发一个不可避免的问题就是解耦，本篇博客大概会总结一些现在常用的解耦方案。 首先，整个工程应该分为两个部分，基础库和业务库，而组件化解耦应该主要针对的是业务模块。将相似度比较高的业务或者功能明确的业务划分成模块，由一个或多个 Pod 组成，比如：首页模块、详情模块、支付模块、">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-06-14T06:32:06.209Z">
+<meta property="og:updated_time" content="2019-06-14T06:36:54.711Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化解耦方案">
 <meta name="twitter:description" content="现在有些规模的工程大概都是实行组件化开发吧，将基础库，业务库划分成单独模块，以 Pod 的形式集成到 APP 中。其中组件化开发一个不可避免的问题就是解耦，本篇博客大概会总结一些现在常用的解耦方案。 首先，整个工程应该分为两个部分，基础库和业务库，而组件化解耦应该主要针对的是业务模块。将相似度比较高的业务或者功能明确的业务划分成模块，由一个或多个 Pod 组成，比如：首页模块、详情模块、支付模块、">
@@ -428,7 +428,7 @@
 <p>然后在你需要响应事件的地方实现 ghl_event 方法就好了</p>
 <figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)ghl_event:(NSString *)<span class="keyword">event</span> <span class="keyword">params</span>:(NSDictionary *)<span class="keyword">params</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">event</span> isEqualToString:<span class="string">@"kHomeTableViewCellButtonClickEvent"</span>]) &#123;</span><br><span class="line">        NSLog(<span class="string">@"params:%@"</span>, <span class="keyword">params</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>一种很巧妙的页面层级间的解耦方案。</p>
-<p>最后附上 Demo 地址：<a href="https://github.com/gonghonglou/GHLDecouplingDemo" target="_blank" rel="noopener">GHLDecouplingDemo</a></p>
+<p>最后附上 Demo 地址：<a href="https://github.com/gonghonglou/GHLDecouplingDemo" target="_blank" rel="noopener">https://github.com/gonghonglou/GHLDecouplingDemo</a></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
 <li><p>小白出手，请多指教。如言有误，还望斧正！</p>
 </li>
