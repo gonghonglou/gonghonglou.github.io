@@ -81,18 +81,18 @@
 
 
 
-<meta name="description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但结合了具体的场景实践">
+<meta name="description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Crash 防护方案（一）：Unrecognized Selector">
 <meta property="og:url" content="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但结合了具体的场景实践">
+<meta property="og:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
-<meta property="og:updated_time" content="2019-07-08T07:09:17.013Z">
+<meta property="og:updated_time" content="2019-07-08T08:47:36.093Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（一）：Unrecognized Selector">
-<meta name="twitter:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但结合了具体的场景实践">
+<meta name="twitter:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
 <meta name="twitter:image" content="http://image.gonghonglou.com/cheaptalk.png">
 
 
@@ -380,7 +380,7 @@
 
       
         <p>线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。</p>
-<p>文章参考<a href="https://mp.weixin.qq.com/s?__biz=MzUxMzcxMzE5Ng==&amp;mid=2247488311&amp;idx=1&amp;sn=0db090c8d4a5efafa47f00af4b3f174f" target="_blank" rel="noopener">网易iOS App运行时Crash自动防护实践</a> 但结合了具体的场景实践，有一些不同的方案分析，分析常用开源库的做法或给出 Demo 来实现解决方案。</p>
+<p>文章参考<a href="https://mp.weixin.qq.com/s?__biz=MzUxMzcxMzE5Ng==&amp;mid=2247488311&amp;idx=1&amp;sn=0db090c8d4a5efafa47f00af4b3f174f" target="_blank" rel="noopener">网易iOS App运行时Crash自动防护实践</a> 但给出了具体的实践，有一些不同的方案，分析常用开源库的做法或给出 Demo 来实现解决方案。</p>
 <p>本系列文章防护方案应对的的 Crash 有以下几种：</p>
 <ul>
 <li>Unrecognized Selector Crash</li>
