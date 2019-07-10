@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/ZoombieObjects.png">
-<meta property="og:updated_time" content="2019-07-10T04:35:42.850Z">
+<meta property="og:updated_time" content="2019-07-10T05:08:19.279Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（二）：EXC_BAD_ACCESS">
 <meta name="twitter:description" content="大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里">
@@ -383,7 +383,7 @@
         <blockquote>
 <p>大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里，而此对象也许能应答，也许不能。如果能，那程序就不崩溃</p>
 </blockquote>
-<p>这是《Effective Objective-C 2.0》书中”第 35 条：用“僵尸对象”调试内存管理问题“一章中对野指针的介绍，这便是野指针出现的原因。<br>这是 Crash 防护方案系列的第二篇文章，同样是非常常见的 Crash 类型：EXC_BAD_ACCESS，本篇文章会涉及以下几点：</p>
+<p>本篇是《Effective Objective-C 2.0》书中”第 35 条：用“僵尸对象”调试内存管理问题“一章中对野指针的介绍，这便是野指针出现的原因。<br>这是 Crash 防护方案系列的第二篇文章，同样是非常常见的 Crash 类型：EXC_BAD_ACCESS，本篇文章会涉及以下几点：</p>
 <ul>
 <li>重现 EXC_BAD_ACCESS Crash</li>
 <li>分析 Xcode 中 Zoombie Objects 僵尸对象调试原理</li>
