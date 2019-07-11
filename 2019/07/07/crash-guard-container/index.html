@@ -81,19 +81,17 @@
 
 
 
-<meta name="description" content="嘿，不觉间 2016 马上就要结束了，所以，这一年你都干了啥？ 2016 年，最大的变动就是毕了业，十六年的求学历程 结束了，然后，从一名学生变成了员工！ 怀念毕业了，才发现真的会怀念学生时代。 早晨拖着身子爬起来上课，然而课上少有听讲，就那样浪费着时间蚕食着生命，可那也是我的大学生活啊，不再有的挥霍时光。到学校食堂吃饭，乌泱泱的人群，打饭都要先占座，可以的，那也是我怀念的。每学期的宿舍聚餐、班级">
+<meta name="description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Say Bye 2016">
-<meta property="og:url" content="http://gonghonglou.com/2016/12/26/saybye2016/index.html">
+<meta property="og:title" content="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
+<meta property="og:url" content="http://gonghonglou.com/2019/07/07/crash-guard-container/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="嘿，不觉间 2016 马上就要结束了，所以，这一年你都干了啥？ 2016 年，最大的变动就是毕了业，十六年的求学历程 结束了，然后，从一名学生变成了员工！ 怀念毕业了，才发现真的会怀念学生时代。 早晨拖着身子爬起来上课，然而课上少有听讲，就那样浪费着时间蚕食着生命，可那也是我的大学生活啊，不再有的挥霍时光。到学校食堂吃饭，乌泱泱的人群，打饭都要先占座，可以的，那也是我怀念的。每学期的宿舍聚餐、班级">
+<meta property="og:description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://image.gonghonglou.com/saybye2016/FullSizeRender.jpg">
-<meta property="og:updated_time" content="2018-05-31T12:48:30.265Z">
+<meta property="og:updated_time" content="2019-07-11T07:24:40.877Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Say Bye 2016">
-<meta name="twitter:description" content="嘿，不觉间 2016 马上就要结束了，所以，这一年你都干了啥？ 2016 年，最大的变动就是毕了业，十六年的求学历程 结束了，然后，从一名学生变成了员工！ 怀念毕业了，才发现真的会怀念学生时代。 早晨拖着身子爬起来上课，然而课上少有听讲，就那样浪费着时间蚕食着生命，可那也是我的大学生活啊，不再有的挥霍时光。到学校食堂吃饭，乌泱泱的人群，打饭都要先占座，可以的，那也是我怀念的。每学期的宿舍聚餐、班级">
-<meta name="twitter:image" content="http://image.gonghonglou.com/saybye2016/FullSizeRender.jpg">
+<meta name="twitter:title" content="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
+<meta name="twitter:description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
 
 
 
@@ -123,13 +121,13 @@
 
 
 
-  <link rel="canonical" href="http://gonghonglou.com/2016/12/26/saybye2016/"/>
+  <link rel="canonical" href="http://gonghonglou.com/2019/07/07/crash-guard-container/"/>
 
 
 
 
 
-  <title>Say Bye 2016 | 与佳期的个人博客</title>
+  <title>Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.） | 与佳期的个人博客</title>
   
 
 
@@ -290,7 +288,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2016/12/26/saybye2016/">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/07/07/crash-guard-container/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="与佳期">
@@ -307,7 +305,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Say Bye 2016</h1>
+          <h1 class="post-title" itemprop="name headline">Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）</h1>
         
 
         <div class="post-meta">
@@ -319,8 +317,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-26T18:29:37+08:00">
-                2016-12-26
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-07T20:00:00+08:00">
+                2019-07-07
               </time>
             
 
@@ -342,8 +340,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Life/" itemprop="url" rel="index">
-                    <span itemprop="name">Life</span>
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
                   </a>
                 </span>
 
@@ -379,39 +377,24 @@
       
 
       
-        <p>嘿，不觉间 2016 马上就要结束了，<br>所以，这一年你都干了啥？</p>
-<p>2016 年，最大的变动就是毕了业，十六年的求学历程 结束了，<br>然后，从一名学生变成了员工！</p>
-<h2 id="怀念"><a href="#怀念" class="headerlink" title="怀念"></a>怀念</h2><p>毕业了，才发现真的会怀念学生时代。</p>
-<p>早晨拖着身子爬起来上课，然而课上少有听讲，就那样浪费着时间蚕食着生命，可那也是我的大学生活啊，不再有的挥霍时光。<br>到学校食堂吃饭，乌泱泱的人群，打饭都要先占座，可以的，那也是我怀念的。<br>每学期的宿舍聚餐、班级聚会、元旦晚会，终究会怀念身处群体中的日子，和身处公司不同。真心希望有一天会在社会团体中找到校园中的集体感，大概就像 Nicholas Tse 描述的 PO 那样的团体吧，如果是自己建立的就最完美了，Fighting ！<br>做学生时没有发现，原来这个社会对于学生的照顾这么多，电话费、住宿费、食堂、车票、景区门票等等等等这些有形的和那些无形的对于「学生」这一称号，每每感受到这一点在小小怀念学生时代之外都会多少感概这个社会还是很美好的，嗯。<br>毕业后每当看到朋友圈有人晒出学校照片都会特别感概真想回去看看，当初吃够了的商业街现在也是很怀念扬州炒饼和如意捞的火锅小料。 </p>
-<p>期待未知年后的大学聚会，我们校园一聚。</p>
-<h2 id="选择"><a href="#选择" class="headerlink" title="选择"></a>选择</h2><p>2016 年 1 月 11 日实习入职，马上我也要工作满一年了呢。当时找工作时收到了几份 offer ，最终选择了卓骥（现在的公司），也很幸运遇到了卓骥： </p>
-<p>1、实习入职的第二天就开始负责写 iPad 项目重构版的网络请求库。<br>2、实习结束回学校前的一个月开始接手整个 iPad 项目的重构版本。<br>3、正式入职后花费了四个月的时间完成了 iPad 项目重构的大部分内容。<br>4、紧接着接手了公司所有 iOS 业务（ iPad 和 iTouch 端）。<br>5、之后很快将会进行 iTouch 项目的重构</p>
-<p>这些都让我觉得：当初的选择没错。     </p>
-<h2 id="成绩"><a href="#成绩" class="headerlink" title="成绩"></a>成绩</h2><p>2016，应该是我技术道路的正式开端，因为这些，所以还不算荒废：</p>
-<p>1、算上这篇，今年该是写了十二篇博客。不像那些大 V 的博客对于求学者有较高的技术学习和参考价值，迄今为止「与佳期的个人博客」的主要内容或者功能应该是给自己的技术总结吧。切身体会对于很多技术，代码实现和博客输出还是有很大差距的，开始写某项技术博客前以为对该项技术已经掌握了，开始后和结束后才发现自己 too young too simple ，每篇技术博客写下来都觉得获益匪浅能学到更多知识，即便这样我也深知还仅是皮毛而已。继续努力吧，希望以后自己的博客输出也能在技术深度上对别人有所帮助和影响。<br>2、顺利完成毕业设计，还要感谢马根老师（我的学术指导老师）我的毕业设计也是做的 iOS 的一款跳蚤市场类软件。<br>3、完成了公司 iPad 项目重构版的网络请求库的开发。熟悉了网络请求、数据解析和部分缓存操作。<br>4、完成了公司 iPad 的重构项目，主要代码成绩就是这个了，花费了约四五个月的时间，大部分的技术成长也都在这里了，从控件使用、页面布局、业务实现到设计模式、工程架构。<br>5、接手公司所有 iOS 业务（ iPad 和 iTouch 端）。主要成长了 Debug 的能力吧以及对公司业务的熟悉。<br>6、上线了一款个人 App：<a href="https://itunes.apple.com/us/app/rder/id1178545654?l=zh&amp;ls=1&amp;mt=8" target="_blank" rel="noopener">RDER</a>，一款轻量极简的 RSS 订阅软件。大概有七八千行代码，虽然软件简单但是一点一滴都是自己细心雕琢的，因为这款软件也了解了关于一款软件上线的所有流程，而且用到了 relam ，和 sqlite 有了比较。</p>
-<p>以上，今年大概写了有近十万行代码。</p>
-<h2 id="幸运"><a href="#幸运" class="headerlink" title="幸运"></a>幸运</h2><p>一直都觉得自己少有努力，更多是幸运。 </p>
-<p>大一大二浑浑噩噩度过了两年，大二末总觉得该做点什么，所以办了个兼职中心，起名「曙光」。希望更多和我一样在大学迷茫的同学们能够因此看到方向，至少生活不再荒诞。然而最终也没办成个样子，现在看来那种职业生活的确不是我喜欢的，所以没有成样子也是有原因的。可也正因为这个兼职中心才让我遇到了马根老师（还要多谢班主任盛莉老师的引荐），遇到了编程，遇到了 iOS ，遇到了自己真正喜欢的东西。</p>
-<p>大三到大四有近一年的时间都待在马老师的实验室里，机电楼 C 228。这间实验并不是开放实验室，偶尔有班级过来做实验的时间我就会带电脑到图书馆，所以大部分时间实验室只有我一个人在，偶尔晚上马老师也在。早上八九点钟吃过早饭到实验室，然后午饭、晚饭，晚上大概十点半十一点回宿舍，就这样日复一日匆匆过了一年。没有无聊反而一直很充实。那时候打开浏览器真的就感觉“徜徉在（互联网的）知识的海洋里”，那是我上了十几年学第一次有“知识的海洋”的概念。<br>经过物联网 -&gt; 计算机 -&gt; 前端 -&gt; iOS -&gt; Objective-C 这一层层，要学的知识仍然像“海洋”一样望不到头，每天都是鼓足干劲的学习这些编程技术，从最基础的编程基础开始，for 循环、页面布局、多线程、数据库、网络编程、设计模式、开源代码……每阶段都有学不完的技术。当然也不是一直热情高涨，最受打击的应该是在继续学习的路上，对于刚开始一块崭新技术的迷惑，比如多线程和数据库，刚开始接触的时候真的是一脸懵逼，切身体会在那种时候一份基础系统的学习资料有多重要，一份好的技术博客或者技术文档有多重要！</p>
-<p>总感觉自己是幸运的：<br>幸运的在大学快结束的时候找到了自己喜欢的东西；<br>幸运的来到上海在上海海事大学和上海大学秋季招聘会上拿到了几份 offer ；<br>幸运的在这几份 offer 里遇见的现在的公司—卓骥，才有了上边的“这些都让我觉得：当初的选择没错。”     </p>
-<p>幸运的父母都在上海可以住在一起；<br>幸运的和父母住在一起不必负担房租；<br>幸运的和父母住在一起连生活费都省了。<br>因为这接连的三个幸运才能把钱攒起来一分不剩的花在了自己任性花的地方。而且我一直觉得迈入社会的第一年是我们人生负担最小收入最低的一年，如果说是要轻奢生活不虑积蓄，那这一年应该是最合适的时间了，所以我做了一名合格的月光族，有（了）钱任性所以真的是一分不剩。。。 </p>
-<h2 id="遗憾"><a href="#遗憾" class="headerlink" title="遗憾"></a>遗憾</h2><p>1、生活上，以往的宿舍聚餐。</p>
-<p>离开学校的前一天晚上宿舍最后一次聚餐，我们拿着班里分得的班费找了一家烧烤狠搓了一顿，胡吃海喝侃天侃地。那天说了好多话，而以往的宿舍聚餐因为酒量原因和吃货基因大家很少喝酒只顾吃吃吃，这应该就是最遗憾的了。<br>只有喝了酒大家才能推心置腹吧，所以那晚喝了很多酒，带着怀念和不舍，口口声声说着我们再聚再聚。曾经你让我不爽我让你不快的事如今都成了加深我们情义的助力。我们吹牛打屁的时候顿顿默默带了一波节奏，人高马大的他竟然落了几滴猫尿，我看到后立马大笑指着他：“卧槽，你竟然…” 然后突然哽咽，同样泪流不止。<br>那天喝的很真心。</p>
-<p>小插曲：第二天起床就吐了还带着块块“血色”，肠胃一直不好上次喝酒吐了一夜胆汁，这次竟然吐了血，吓坏了。可是毕业离校不想让室友们担心所以装作无事。此事过了个把月知乎上看到那个笑话才会回忆起，那晚喝过酒回宿舍好像顺便买了个西瓜。<br>哈，哈哈哈哈……</p>
-<p>2、技术上，遇到编程的时间太晚。</p>
-<p>在大三初开始接触编程，上学期一直在入门 Java ，因为是刚入门所以进度很慢。看了一学期的 Java 大概熟悉了编程语言基础，对于移动端有 iOS 和 Android 两大阵营，都想学可是显然时间来不及，所以选择了逼格略高且逼格高就是我所爱的 iOS 。即便如此，学习 iOS 的时间也只有大三下学期到大四上学期，15 年大约十月底十一月就开始找工作了。<br>所以大学里学习 iOS 的时间太短，编程生涯开始的太晚。如果可以早一年甚至两年的话至少在毕业时对于应聘这件事会游刃有余的多吧。</p>
-<h2 id="计划"><a href="#计划" class="headerlink" title="计划"></a>计划</h2><p>有了大学技术起步晚的遗憾，现在怎么能不早点做打算。</p>
-<p>年初的时候大概有了自己的第一个“五年计划”：两年上海，两年北京，2020 年的时候稳定于杭州。至于届时是买房买车平淡安稳的上班生活还是破釜沉舟不甘平庸的技术创业，就在下一个“五年计划”里决定吧，无论哪种，对这五年来说主要目的就是技术积累。然而在毕业的那段时间还是感觉又落入了类大学迷茫期的循环，接下来的五年除了积累技术还应该往什么方向思考。<br>大学：除了学习学习还能干嘛？<br>毕业：除了技术技术还能干嘛？<br>在接下来的五年能否像大学末期幸运的找到兴趣职业那样也幸运的找到兴趣事业呢？而且既然有了上边的技术遗憾当然是想越早发现越早准备的好。</p>
-<p>现在，马上就到年底了心里也大概有了底，虽然不够坚信但至少有了大致的方向。我们都很脆弱当然想尽量避免事业的打击，还好还有一段时间可以慢慢谋取，还好这一点在技术上是有优势的。<br>16 年就要结束了，接下来就是 “1+2”，此处省略三年的时间……</p>
-<p>总要有一些更实际有生活的计划：        </p>
-<ul>
-<li>旅行：<br>（或）1、三月份去趟黄山，2、五月份骑行青海湖，3、十月份去趟拉萨</li>
-<li>读书：<br>1、技术书籍，2、龙应台的书， 3、其他一些小说</li>
-<li>技术：<br>1、维护更新 <a href="https://itunes.apple.com/us/app/rder/id1178545654?l=zh&amp;ls=1&amp;mt=8" target="_blank" rel="noopener">RDER</a> ，2、写一款第三方微博客户端，3、更新技术博客，4、写一款牛逼的工具类 App（如果来得及）        </li>
+        <p>数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。</p>
+<p>这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：<a href="http://gonghonglou.com/2017/09/07/analyse-safekit/">从 SafeKit 看异常保护及 Method Swizzling 使用分析</a><br>但 <a href="https://github.com/JJMM/SafeKit" target="_blank" rel="noopener">SafeKit</a> 并未 Hook 全可能出现 Crash 的类及其方法，尤其是 NSArray 类簇。</p>
+<p>关于类簇这里是苹果官网文档：<a href="https://developer.apple.com/library/archive/documentation/General/Conceptual/CocoaEncyclopedia/ClassClusters/ClassClusters.html" target="_blank" rel="noopener">Class Clusters</a><br>以及 sunnyxx 在 <a href="https://blog.sunnyxx.com/2014/12/18/class-cluster/" target="_blank" rel="noopener">从NSArray看类簇</a> 文章里的说法：</p>
+<blockquote>
+<p>Class Clusters（类簇）是抽象工厂模式在 iOS 下的一种实现，众多常用类，如 NSString，NSArray，NSDictionary，NSNumber 都运作在这一模式下，它是接口简单性和扩展性的权衡体现，在我们完全不知情的情况下，偷偷隐藏了很多具体的实现类，只暴露出简单的接口。</p>
+</blockquote>
+<p>我们来仔细打印下看看：<br><figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NSArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"arr alloc:%@"</span>, [NSArray alloc].class); <span class="comment">// __NSPlaceholderArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"arr init:%@"</span>, [[NSArray alloc] init].class); <span class="comment">// __NSArray0</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"arr:%@"</span>, [@[] class]); <span class="comment">// __NSArray0</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"arr:%@"</span>, [@[<span class="variable">@1</span>] class]); <span class="comment">// __NSSingleObjectArrayI</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"arr:%@"</span>, [@[<span class="variable">@0</span>, <span class="variable">@1</span>] class]); <span class="comment">// __NSArrayI</span></span><br><span class="line">    </span><br><span class="line"><span class="comment">// NSMutableArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutA alloc:%@"</span>, [NSMutableArray alloc].class); <span class="comment">// __NSPlaceholderArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutA init:%@"</span>, [[NSMutableArray alloc] init].class); <span class="comment">// __NSArrayM</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutA:%@"</span>, [@[].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutA:%@"</span>, [@[<span class="variable">@1</span>].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutA:%@"</span>, [@[<span class="variable">@0</span>, <span class="variable">@1</span>].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"dict alloc:%@"</span>, [NSDictionary alloc].class); <span class="comment">// __NSPlaceholderDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"dict init:%@"</span>, [[NSDictionary alloc] init].class); <span class="comment">// __NSDictionary0</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"dict:%@"</span>, [@&#123;&#125; class]); <span class="comment">// __NSDictionary0</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"dict:%@"</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>&#125; class]); <span class="comment">// __NSSingleEntryDictionaryI</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"dict:%@"</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>, <span class="variable">@2</span>:<span class="variable">@2</span>&#125; class]); <span class="comment">// __NSDictionaryI</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSMutableDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutD alloc:%@"</span>, [NSMutableDictionary alloc].class); <span class="comment">// __NSPlaceholderDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutD init:%@"</span>, [[NSMutableDictionary alloc] init].class); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutD:%@"</span>, [@&#123;&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutD:%@"</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"mutD:%@"</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>, <span class="variable">@2</span>:<span class="variable">@2</span>&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSString</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"str:%@"</span>, [@<span class="string">""</span> class]); <span class="comment">// __NSCFConstantString</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSNumber</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">"num:%@"</span>, [<span class="variable">@1</span> class]); <span class="comment">// __NSCFNumber</span></span><br></pre></td></tr></table></figure></p>
+<p>以 NSArray 为例，他在 alloc 阶段生成的是 <strong>NSPlaceholderArray 的中间对象，然后在 init 阶段给这个中间对象发消息，由它做工厂，生成真正的对象。其中 NSMutableArray 生成的都是 </strong>NSArrayM 对象，M 代表的就是 Mutable。NSArray 则区分了数组里：包含 0 个对象时生成的是 <strong>NSArray0，包含 1 个对象生成的是 </strong>NSSingleObjectArrayI，包含多个对象时生成的是 __NSArrayI。</p>
+<p>NSDictionary 同样是类似的。那我们的防护方案里则是 Hook 全这些类型，比如 NSArray 的 Category：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="keyword">void</span>)load &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// [NSArray alloc]</span></span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSPlaceholderArray"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">initWithObjects:</span><span class="string">count:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">initWithObjects_guard:</span><span class="string">count:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    <span class="comment">// @[]</span></span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSArray0"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">objectAtIndex:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_objectAtIndex:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSArray0"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">arrayByAddingObject:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_arrayByAddingObject:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    <span class="comment">// @[@1]</span></span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSSingleObjectArrayI"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">objectAtIndex:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_objectAtIndex:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSSingleObjectArrayI"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">arrayByAddingObject:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_arrayByAddingObject:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    <span class="comment">// @[@1, @2]</span></span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSArrayI"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">objectAtIndex:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_objectAtIndex:</span>) <span class="string">error:</span>nil];</span><br><span class="line">    [NSClassFromString(@<span class="string">"__NSArrayI"</span>) <span class="string">jr_swizzleMethod:</span><span class="meta">@selector</span>(<span class="string">arrayByAddingObject:</span>) <span class="string">withMethod:</span><span class="meta">@selector</span>(<span class="string">guard_arrayByAddingObject:</span>) <span class="string">error:</span>nil];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (instancetype)<span class="string">initWithObjects_guard:</span>(id *)objects <span class="string">count:</span>(NSUInteger)cnt &#123;</span><br><span class="line">    NSUInteger newCnt = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (NSUInteger i = <span class="number">0</span>; i &lt; cnt; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!objects[i]) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        newCnt++;</span><br><span class="line">    &#125;</span><br><span class="line">    self = [self <span class="string">initWithObjects_guard:</span>objects <span class="string">count:</span>newCnt];</span><br><span class="line">    <span class="keyword">return</span> self;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (id)<span class="string">guard_objectAtIndex:</span>(NSUInteger)index &#123;</span><br><span class="line">    <span class="keyword">if</span> (index &gt;= [self count]) &#123;</span><br><span class="line">        <span class="comment">// 收集堆栈，上报 Crash</span></span><br><span class="line">        <span class="keyword">return</span> nil;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> [self <span class="string">guard_objectAtIndex:</span>index];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (NSArray *)<span class="string">guard_arrayByAddingObject:</span>(id)anObject &#123;</span><br><span class="line">    <span class="keyword">if</span> (!anObject) &#123;</span><br><span class="line">        <span class="comment">// 收集堆栈，上报 Crash</span></span><br><span class="line">        <span class="keyword">return</span> self;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> [self <span class="string">guard_arrayByAddingObject:</span>anObject];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当然 NSArray、NSMutableArray、NSDictionary、NSMutableDictionary、NSString、NSMutableString、NSNumber 这些类都提供了跟多的方法，只要细心仔细的将他们全 Hook 掉就好了。当然实际开发中可能常用的就那么几个方法，Hook 那些就已经足够了。</p>
+<p>线上接入了这类的防护之后要比前边的文章讲的 Unrecognized Selector Crash 和 EXC_BAD_ACCESS Crash 更容易造成业务逻辑的错乱，毕竟业务逻辑中不可避免的要用到大量的 NSArray、NSDictionary 类，可能在接入这类防护后会操成点击无响应或者页面卡死，有时候这种情况甚至比程序崩溃还让用户崩溃，所以也要看实际开发需要的取舍。在接入防护后尤其要做好堆栈收集，上报 Crash 的工作，及时解决掉问题。</p>
+<p>Demo 地址：<a href="https://github.com/gonghonglou/GHLCrashGuard/tree/master/GHLCrashGuard/Classes/Container" target="_blank" rel="noopener">GHLCrashGuard：GHLCrashGuard/Classes/Container</a></p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
+<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
+</li>
+<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/07/crash-guard-container/">http://gonghonglou.com/2019/07/07/crash-guard-container/</a></p>
+</li>
 </ul>
-<p>呼～工作量还真不小，时间真的蛮紧张，撸开袖子，干吧！ </p>
-<p>相信天空和大海，对于你，全是未来！</p>
-<p><img src="http://image.gonghonglou.com/saybye2016/FullSizeRender.jpg" alt=""></p>
 
       
     </div>
@@ -436,8 +419,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/10/29/set-language/" rel="next" title="iOS应用程序语言本地化及应用内语言设置">
-                <i class="fa fa-chevron-left"></i> iOS应用程序语言本地化及应用内语言设置
+              <a href="/2019/07/06/crash-guard-bad-access/" rel="next" title="Crash 防护方案（二）：EXC_BAD_ACCESS">
+                <i class="fa fa-chevron-left"></i> Crash 防护方案（二）：EXC_BAD_ACCESS
               </a>
             
           </div>
@@ -445,10 +428,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/07/05/cell-height/" rel="prev" title="UITableViewCell计算行高的几种方式">
-                UITableViewCell计算行高的几种方式 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -614,7 +593,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#怀念"><span class="nav-number">1.</span> <span class="nav-text">怀念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#选择"><span class="nav-number">2.</span> <span class="nav-text">选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#成绩"><span class="nav-number">3.</span> <span class="nav-text">成绩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#幸运"><span class="nav-number">4.</span> <span class="nav-text">幸运</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#遗憾"><span class="nav-number">5.</span> <span class="nav-text">遗憾</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计划"><span class="nav-number">6.</span> <span class="nav-text">计划</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">1.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
 
           </div>
@@ -775,9 +754,9 @@
     
       <script type="text/javascript">
         var disqus_config = function () {
-          this.page.url = 'http://gonghonglou.com/2016/12/26/saybye2016/';
-          this.page.identifier = '2016/12/26/saybye2016/';
-          this.page.title = 'Say Bye 2016';
+          this.page.url = 'http://gonghonglou.com/2019/07/07/crash-guard-container/';
+          this.page.identifier = '2019/07/07/crash-guard-container/';
+          this.page.title = 'Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）';
         };
         var d = document, s = d.createElement('script');
         s.src = 'https://gonghonglou.disqus.com/embed.js';

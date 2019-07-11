@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/ZoombieObjects.png">
-<meta property="og:updated_time" content="2019-07-10T05:14:26.937Z">
+<meta property="og:updated_time" content="2019-07-10T09:27:04.354Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（二）：EXC_BAD_ACCESS">
 <meta name="twitter:description" content="大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里">
@@ -320,7 +320,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T20:35:08+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T20:00:00+08:00">
                 2019-07-06
               </time>
             
@@ -455,6 +455,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2019/07/07/crash-guard-container/" rel="prev" title="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
+                Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.） <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -544,7 +548,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">30</span>
+                  <span class="site-state-item-count">31</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
