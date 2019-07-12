@@ -89,7 +89,7 @@
 <meta property="og:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
-<meta property="og:updated_time" content="2019-07-10T05:30:58.937Z">
+<meta property="og:updated_time" content="2019-07-12T10:20:44.160Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（一）：Unrecognized Selector">
 <meta name="twitter:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
@@ -390,7 +390,6 @@
 <li>KVO Crash</li>
 <li>NSNotification Crash</li>
 <li>NSNull Crash</li>
-<li>UI not on Main Thread Crash (非主线程刷UI)</li>
 </ul>
 <h1 id="Unrecognized-Selector-Crash"><a href="#Unrecognized-Selector-Crash" class="headerlink" title="Unrecognized Selector Crash"></a>Unrecognized Selector Crash</h1><figure class="highlight cos"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UIView *<span class="keyword">view</span> = [UIView <span class="keyword">new</span>]<span class="comment">;</span></span><br><span class="line">[<span class="keyword">view</span> performSelector:@selector(log)]<span class="comment">;</span></span><br></pre></td></tr></table></figure>
 <blockquote>
@@ -546,7 +545,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">31</span>
+                  <span class="site-state-item-count">32</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
