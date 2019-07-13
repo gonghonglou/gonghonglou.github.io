@@ -81,19 +81,19 @@
 
 
 
-<meta name="description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
+<meta name="description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Crash 防护方案（一）：Unrecognized Selector">
-<meta property="og:url" content="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/index.html">
+<meta property="og:title" content="Crash 防护方案（五）：KVO">
+<meta property="og:url" content="http://gonghonglou.com/2019/07/07/crash-guard-kvo/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
+<meta property="og:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
-<meta property="og:updated_time" content="2019-07-12T10:20:44.160Z">
+<meta property="og:image" content="http://image.gonghonglou.com/crash-guard/kvo-isa.png">
+<meta property="og:updated_time" content="2019-07-13T11:03:29.563Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Crash 防护方案（一）：Unrecognized Selector">
-<meta name="twitter:description" content="线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。 文章参考网易iOS App运行时Crash自动防护实践 但给出了具体的实践，有">
-<meta name="twitter:image" content="http://image.gonghonglou.com/cheaptalk.png">
+<meta name="twitter:title" content="Crash 防护方案（五）：KVO">
+<meta name="twitter:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
+<meta name="twitter:image" content="http://image.gonghonglou.com/crash-guard/kvo-isa.png">
 
 
 
@@ -123,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/"/>
+  <link rel="canonical" href="http://gonghonglou.com/2019/07/07/crash-guard-kvo/"/>
 
 
 
 
 
-  <title>Crash 防护方案（一）：Unrecognized Selector | 与佳期的个人博客</title>
+  <title>Crash 防护方案（五）：KVO | 与佳期的个人博客</title>
   
 
 
@@ -290,7 +290,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/07/07/crash-guard-kvo/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="与佳期">
@@ -307,7 +307,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Crash 防护方案（一）：Unrecognized Selector</h1>
+          <h1 class="post-title" itemprop="name headline">Crash 防护方案（五）：KVO</h1>
         
 
         <div class="post-meta">
@@ -319,8 +319,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T16:55:06+08:00">
-                2019-07-06
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-07T22:00:00+08:00">
+                2019-07-07
               </time>
             
 
@@ -379,43 +379,46 @@
       
 
       
-        <p>线上 APP Crash 是比较严重的问题，既影响用户体验又不利于程序猿们的 KPI，我们应当尽量避免线上 Crash 的出现，所以希望在 APP 发生 Crash 的时候能够实现自动防护，虽然我们的手段可能会导致业务逻辑的出错，但我们可以通过记录 Crash，上报堆栈来及时解决问题，也比用户 APP 崩溃掉要好得多。</p>
-<p>文章参考<a href="https://mp.weixin.qq.com/s?__biz=MzUxMzcxMzE5Ng==&amp;mid=2247488311&amp;idx=1&amp;sn=0db090c8d4a5efafa47f00af4b3f174f" target="_blank" rel="noopener">网易iOS App运行时Crash自动防护实践</a> 但给出了具体的实践，有一些不同的方案，分析常用开源库的做法或给出 Demo 来实现解决方案。</p>
-<p>本系列文章防护方案应对的的 Crash 有以下几种：</p>
-<ul>
-<li>Unrecognized Selector Crash</li>
-<li>EXC_BAD_ACCESS crash</li>
-<li>Container Crash</li>
-<li>NSTimer Crash</li>
-<li>KVO Crash</li>
-<li>NSNotification Crash</li>
-<li>NSNull Crash</li>
-</ul>
-<h1 id="Unrecognized-Selector-Crash"><a href="#Unrecognized-Selector-Crash" class="headerlink" title="Unrecognized Selector Crash"></a>Unrecognized Selector Crash</h1><figure class="highlight cos"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UIView *<span class="keyword">view</span> = [UIView <span class="keyword">new</span>]<span class="comment">;</span></span><br><span class="line">[<span class="keyword">view</span> performSelector:@selector(log)]<span class="comment">;</span></span><br></pre></td></tr></table></figure>
+        <p>Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。<br>isa 指针的作用：每个对象都有 isa 指针，指向该对象的类，它告诉 Runtime 系统这个对象的类是什么。所以对象注册为观察者时，isa 指针指向新子类，那么这个被观察的对象就变成新子类的对象（或实例）了。 因而在该对象上对 setter 的调用就会调用已重写的 setter，从而激活键值通知机制。</p>
+<p>我们可以通过断点看到，被观察者对象的 isa 指针已经变成了 NSKVONotifying_ 开头的类：<br><img src="http://image.gonghonglou.com/crash-guard/kvo-isa.png" alt="KVO isa-swizzling"></p>
+<p>对于 KVO 使用不当的话很容易出现 Crash，比如添加和移除观察不对应，重复 removeObserver: 或者移除一个不存在的观察者就会造成 Crash，尤其是在多线程操作时防不胜防：</p>
 <blockquote>
-<p>2019-07-08 14:07:35.895216+0800 GHLCrashGuard_Example[42376:3276094] *** Terminating app due to uncaught exception ‘NSInvalidArgumentException’, reason: ‘-[UIView log]: unrecognized selector sent to instance 0x7f8e78c13950’</p>
+<p>2019-07-13 17:50:14.805177+0800 GHLCrashGuard_Example[77448:5047850] *** Terminating app due to uncaught exception ‘NSRangeException’, reason: ‘Cannot remove an observer <ghlkvoviewcontroller 0x7fd072c17720=""> for the key path “name” from <ghltestobject 0x60000106c160=""> because it is not registered as an observer.’</ghltestobject></ghlkvoviewcontroller></p>
 </blockquote>
-<p>这算是 OC 里很经典常见的 Crash 了，出现的原因是向一个对象发送了该对象无法响应的消息，或者可以理解为调用一个对象不存在的方法发生的 Crash。简单陈述一下 OC 消息发送转发流程，从 objc_msgSend 方法开始，OC 消息发送机制看起来像是 objc_msgSend 返回了数据，其实 objc_msgSend 从不返回数据而是你的方法被调用后返回了数据。步骤：</p>
-<p>1、检测这个 selector 是不是要忽略的。比如 Mac OS X 开发，有了垃圾回收就不理会 retain, release 这些函数了。<br>2、检测这个 target 是不是 nil 对象。ObjC 的特性是允许对一个 nil 对象执行任何一个方法不会 Crash，因为会被忽略掉。<br>3、如果上面两个都过了，那就开始查找这个类的 IMP，先从 cache 里面找，完了找得到就跳到对应的函数去执行。<br>4、如果 cache 找不到就找一下方法分发表。<br>5、如果分发表找不到就到超类的分发表去找，一直找，直到找到 NSObject 类为止。</p>
-<p>如果还找不到就要开始进入动态方法解析了。当向一个对象发送消息，发现对象无法响应，对象会依次执行以下方法，这也是 ObjC 的运行时给出的三次拯救程序崩溃的机会：</p>
-<p>6、ObjC 运行时会调用 +resolveInstanceMethod: 或者 +resolveClassMethod:，让你有机会提供一个函数实现。如果你添加了函数并返回 YES，那运行时系统就会重新启动一次消息发送的过程，如果 resolve 方法返回 NO ，运行时就会移到下一步，消息转发（Message Forwarding）。<br>7、如果目标对象实现了-forwardingTargetForSelector: 方法，Runtime 这时就会调用这个方法，给你把这个消息转发给其他对象的机会。只要这个方法返回的不是 nil 和 self，整个消息发送的过程就会被重启，当然发送的对象会变成你返回的那个对象。否则，就会继续<br>8、这一步是 Runtime 最后一次给你挽救的机会。首先它会发送 -methodSignatureForSelector: 消息获得函数的参数和返回值类型。<br>如果 -methodSignatureForSelector: 返回 nil，Runtime 则会发出 -doesNotRecognizeSelector: 消息，程序这时也就挂掉了。<br>如果返回了一个函数签名，Runtime 就会创建一个 NSInvocation 对象并发送 -forwardInvocation: 消息给目标对象。</p>
-<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>Unrecognized Selector Crash 正是发生在 -doesNotRecognizeSelector: 消息里。防护方案是去 hook NSObject 的 -forwardingTargetForSelector: 方法，具体思路是：</p>
-<p>1、如果对象（或者父类）没有重写 forwardInvocation: 方法，那么就认为是调用出错了<br>2、为了防止 Crash 这时新建一个干净的 GHLCrashGuardProxy 对象，把方法转发给 GHLCrashGuardProxy<br>3、GHLCrashGuardProxy 在 resolveInstanceMethod: 中动态的创建一个返回空的方法，然后执行该方法防止 Crash</p>
-<p>这里我们选择 hook forwardingTargetForSelector 方法的原因是：</p>
-<p>1、resolveInstanceMethod 需要在类的本身上动态添加它本身不存在的方法，这些方法对于该类本身来说冗余的<br>2、forwardInvocation 可以通过 NSInvocation 的形式将消息转发给多个对象，但是其开销较大，需要创建新的 NSInvocation 对象，并且 forwardInvocation 的函数经常被使用者调用，来做多层消息转发选择机制，不适合多次重写<br>3、forwardingTargetForSelector 可以将消息转发给一个对象，开销较小，并且被重写的概率较低，适合重写</p>
-<p><img src="http://image.gonghonglou.com/cheaptalk.png" alt=""></p>
-<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><p>Hook 示例：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"NSObject+GHLCrashGuard.h"</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">&lt;JRSwizzle/JRSwizzle.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">"GHLUnrecognizedSelectorManager.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">NSObject</span> (<span class="title">GHLCrashGuard</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="keyword">void</span>)load &#123;</span><br><span class="line">    <span class="comment">// Unrecognized Selector</span></span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleMethod:<span class="keyword">@selector</span>(forwardingTargetForSelector:) withMethod:<span class="keyword">@selector</span>(ghl_forwardingTargetForSelector:) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">id</span>)ghl_forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [[GHLUnrecognizedSelectorManager sharedInstance] handleObject:<span class="keyword">self</span> forwardingTargetForSelector:aSelector];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure></p>
-<p>GHLUnrecognizedSelectorManager 查询是否重写 forwardInvocation: 方法并做转发操作：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">id</span>)handleObject:(__<span class="keyword">unsafe_unretained</span> <span class="keyword">id</span>)object forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (![<span class="keyword">self</span> needGuard:[object <span class="keyword">class</span>]]) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"[%@ %@]: unrecognized selector sent to instance %@"</span>, [object <span class="keyword">class</span>], <span class="built_in">NSStringFromSelector</span>(aSelector), object);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [GHLCrashGuardProxy new];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">BOOL</span>)needGuard:(Class)cls &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果重写了 forwardInvocation，说明自己要处理，这里直接返回</span></span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">self</span> methodHasOverwrited:<span class="keyword">@selector</span>(forwardInvocation:) cls:cls]) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断 cls 是否重写了 sel 方法，递归调用判断但不包括 NSObject</span></span><br><span class="line">- (<span class="built_in">BOOL</span>)methodHasOverwrited:(SEL)sel cls:(Class)cls &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> methodCount = <span class="number">0</span>;</span><br><span class="line">    Method *methods = class_copyMethodList(cls, &amp;methodCount);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; methodCount; i++) &#123;</span><br><span class="line">        Method method = methods[i];</span><br><span class="line">        <span class="keyword">if</span> (method_getName(method) == sel) &#123;</span><br><span class="line">            free(methods);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    free(methods);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 可能父类实现了这个 sel，一直遍历到基类 NSObject 为止</span></span><br><span class="line">    <span class="keyword">if</span> ([cls superclass] != [<span class="built_in">NSObject</span> <span class="keyword">class</span>]) &#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="keyword">self</span> methodHasOverwrited:sel cls:[cls superclass]];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>GHLCrashGuardProxy 的 resolveInstanceMethod: 实现：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="built_in">BOOL</span>)resolveInstanceMethod:(SEL)sel &#123;</span><br><span class="line">    class_addMethod([<span class="keyword">self</span> <span class="keyword">class</span>], sel, imp_implementationWithBlock(^&#123;</span><br><span class="line">        <span class="comment">// 收集堆栈，上报 Crash</span></span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"%@"</span>, [<span class="built_in">NSThread</span> callStackSymbols]);        </span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;), <span class="string">"@@:"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>这里为了方便展示用了 NSThread 的 callStackSymbols 来收集堆栈，但这个方法只能收集当前线程的对战，实际工作时可以选择 backtrace_symbols 方法或者更好的堆栈收集工具。</p>
+<p>为了避免这种重复添加或者重复移除观察造成的崩溃，可以对 KVO 包装一层。创建一个额外的观察者对象，所有的添加观察和移除观察都通过这个额外的对象，这样在添加和移除的时候就可以做安全判断了。<br>FaceBook 出品的 <a href="https://github.com/facebook/KVOController" target="_blank" rel="noopener">KVOController</a> 就是做的这样的事情。<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">self</span>.kvo = [FBKVOController controllerWithObserver:<span class="keyword">self</span>];</span><br><span class="line">[<span class="keyword">self</span>.kvo observe:<span class="keyword">self</span>.obj keyPath:<span class="string">@"name"</span> options:<span class="built_in">NSKeyValueObservingOptionNew</span> | <span class="built_in">NSKeyValueObservingOptionOld</span> block:^(<span class="keyword">id</span>  _Nullable observer, <span class="keyword">id</span>  _Nonnull object, <span class="built_in">NSDictionary</span>&lt;<span class="built_in">NSString</span> *,<span class="keyword">id</span>&gt; * _Nonnull change) &#123;</span><br><span class="line"></span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@"oldName:%@"</span>, [change objectForKey:<span class="built_in">NSKeyValueChangeOldKey</span>]);</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@"newName:%@"</span>, [change objectForKey:<span class="built_in">NSKeyValueChangeNewKey</span>]);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure></p>
+<p>FBKVOController 的关键主要就在以下三个方法上：</p>
+<h2 id="实例化"><a href="#实例化" class="headerlink" title="实例化"></a>实例化</h2><p><code>+ (instancetype)controllerWithObserver:(nullable id)observer;</code><br>创建 FBKVOController 对象，主要做了两件事：1、存储了观察者 _observer，2、创建了 _objectInfosMap，用于存储被观察对象的信息。</p>
+<h2 id="添加观察"><a href="#添加观察" class="headerlink" title="添加观察"></a>添加观察</h2><p><code>- (void)observe:(nullable id)object keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options block:(FBKVONotificationBlock)block;</code></p>
 <blockquote>
-<p>The return value describes the call stack backtrace of the current thread at the moment this method was called.</p>
+<p>1、</p>
 </blockquote>
-<p>Demo 地址：<a href="https://github.com/gonghonglou/GHLCrashGuard/tree/master/GHLCrashGuard/Classes/Unrecognized%20Selector" target="_blank" rel="noopener">GHLCrashGuard：GHLCrashGuard/Classes/Unrecognized Selector</a></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// create info</span></span><br><span class="line">_FBKVOInfo *info = [[_FBKVOInfo alloc] <span class="string">initWithController:</span>self <span class="string">keyPath:</span>keyPath <span class="string">options:</span>options <span class="string">block:</span>block];</span><br></pre></td></tr></table></figure>
+<p>主要在创建 _FBKVOInfo 对象，存储<br>FBKVOController（存储着观察者 _observer）<br>keyPath（观察属性）<br>options（观察时机）<br>block（回调）</p>
+<blockquote>
+<p>2、</p>
+</blockquote>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">- (void)<span class="variable">_observe</span>:(id)object info:(<span class="variable">_FBKVOInfo</span> *)info</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// lock</span></span><br><span class="line">  pthread_mutex_lock(&amp;<span class="variable">_lock</span>);</span><br><span class="line"></span><br><span class="line">  NSMutableSet *infos = [<span class="variable">_objectInfosMap</span> objectForKey:object];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// check for info existence</span></span><br><span class="line">  <span class="variable">_FBKVOInfo</span> *existingInfo = [infos member:info];</span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">nil</span> != existingInfo) &#123;</span><br><span class="line">    <span class="comment">// observation info already exists; do not observe it again</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// unlock and return</span></span><br><span class="line">    pthread_mutex_unlock(&amp;<span class="variable">_lock</span>);</span><br><span class="line">    return;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// lazilly create set of infos</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">nil</span> == infos) &#123;</span><br><span class="line">    infos = [NSMutableSet <span class="built_in">set</span>];</span><br><span class="line">    [<span class="variable">_objectInfosMap</span> setObject:infos forKey:object];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// add info and oberve</span></span><br><span class="line">  [infos addObject:info];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// unlock prior to callout</span></span><br><span class="line">  pthread_mutex_unlock(&amp;<span class="variable">_lock</span>);</span><br><span class="line"></span><br><span class="line">  [[<span class="variable">_FBKVOSharedController</span> sharedController] observe:object info:info];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>添加观察者之前做的判断，避免重复添加观察。并且添加了 pthread_mutex_lock 互斥锁保证线程安全。</p>
+<blockquote>
+<p>3、</p>
+</blockquote>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)<span class="string">observe:</span>(id)object <span class="string">info:</span>(nullable _FBKVOInfo *)info</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (nil == info) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// register info</span></span><br><span class="line">  pthread_mutex_lock(&amp;_mutex);</span><br><span class="line">  [_infos <span class="string">addObject:</span>info];</span><br><span class="line">  pthread_mutex_unlock(&amp;_mutex);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// add observer</span></span><br><span class="line">  [object <span class="string">addObserver:</span>self <span class="string">forKeyPath:</span>info-&gt;_keyPath <span class="string">options:</span>info-&gt;_options <span class="string">context:</span>(<span class="keyword">void</span> *)info];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (info-&gt;_state == _FBKVOInfoStateInitial) &#123;</span><br><span class="line">    info-&gt;_state = _FBKVOInfoStateObserving;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (info-&gt;_state == _FBKVOInfoStateNotObserving) &#123;</span><br><span class="line">    <span class="comment">// this could happen when `NSKeyValueObservingOptionInitial` is one of the NSKeyValueObservingOptions,</span></span><br><span class="line">    <span class="comment">// and the observer is unregistered within the callback block.</span></span><br><span class="line">    <span class="comment">// at this time the object has been registered as an observer (in Foundation KVO),</span></span><br><span class="line">    <span class="comment">// so we can safely unobserve it.</span></span><br><span class="line">    [object <span class="string">removeObserver:</span>self <span class="string">forKeyPath:</span>info-&gt;_keyPath <span class="string">context:</span>(<span class="keyword">void</span> *)info];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用系统方法 addObserver: 添加观察者，并且在这后判断了 info-&gt;_state 如果是非观察状态则执行 removeObserver:</p>
+<h2 id="移除观察"><a href="#移除观察" class="headerlink" title="移除观察"></a>移除观察</h2><blockquote>
+<p>1、</p>
+</blockquote>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">- (void)<span class="variable">_unobserve</span>:(id)object info:(<span class="variable">_FBKVOInfo</span> *)info</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// lock</span></span><br><span class="line">  pthread_mutex_lock(&amp;<span class="variable">_lock</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// get observation infos</span></span><br><span class="line">  NSMutableSet *infos = [<span class="variable">_objectInfosMap</span> objectForKey:object];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// lookup registered info instance</span></span><br><span class="line">  <span class="variable">_FBKVOInfo</span> *registeredInfo = [infos member:info];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">nil</span> != registeredInfo) &#123;</span><br><span class="line">    [infos removeObject:registeredInfo];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// remove no longer used infos</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span> == infos.<span class="built_in">count</span>) &#123;</span><br><span class="line">      [<span class="variable">_objectInfosMap</span> removeObjectForKey:object];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// unlock</span></span><br><span class="line">  pthread_mutex_unlock(&amp;<span class="variable">_lock</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// unobserve</span></span><br><span class="line">  [[<span class="variable">_FBKVOSharedController</span> sharedController] unobserve:object info:registeredInfo];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样是做了安全判断，并通过 pthread_mutex_lock 锁保证线程安全</p>
+<blockquote>
+<p>2、</p>
+</blockquote>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">- (void)unobserve:(id)object info:(nullable <span class="variable">_FBKVOInfo</span> *)info</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">nil</span> == info) &#123;</span><br><span class="line">    return;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// unregister info</span></span><br><span class="line">  pthread_mutex_lock(&amp;<span class="variable">_mutex</span>);</span><br><span class="line">  [<span class="variable">_infos</span> removeObject:info];</span><br><span class="line">  pthread_mutex_unlock(&amp;<span class="variable">_mutex</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// remove observer</span></span><br><span class="line">  <span class="keyword">if</span> (info-&gt;<span class="variable">_state</span> == <span class="variable">_FBKVOInfoStateObserving</span>) &#123;</span><br><span class="line">    [object removeObserver:self forKeyPath:info-&gt;<span class="variable">_keyPath</span> context:(void *)info];</span><br><span class="line">  &#125;</span><br><span class="line">  info-&gt;<span class="variable">_state</span> = <span class="variable">_FBKVOInfoStateNotObserving</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后一步调用系统方法 removeObserver: 移除观察者，info-&gt;_state 设置为非观察状态</p>
+<p>Demo 地址：<a href="https://github.com/gonghonglou/GHLCrashGuard" target="_blank" rel="noopener">GHLCrashGuard</a></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
 <li><p>小白出手，请多指教。如言有误，还望斧正！</p>
 </li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/">http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/</a></p>
+<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/07/crash-guard-kvo/">http://gonghonglou.com/2019/07/07/crash-guard-kvo/</a></p>
 </li>
 </ul>
 
@@ -442,8 +445,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/06/13/pod-decoupling/" rel="next" title="组件化解耦方案">
-                <i class="fa fa-chevron-left"></i> 组件化解耦方案
+              <a href="/2019/07/07/crash-guard-nstimer/" rel="next" title="Crash 防护方案（四）：NSTimer">
+                <i class="fa fa-chevron-left"></i> Crash 防护方案（四）：NSTimer
               </a>
             
           </div>
@@ -451,10 +454,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/07/06/crash-guard-bad-access/" rel="prev" title="Crash 防护方案（二）：EXC_BAD_ACCESS">
-                Crash 防护方案（二）：EXC_BAD_ACCESS <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -620,7 +619,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Unrecognized-Selector-Crash"><span class="nav-number">1.</span> <span class="nav-text">Unrecognized Selector Crash</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决方案"><span class="nav-number">2.</span> <span class="nav-text">解决方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代码实现"><span class="nav-number">3.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实例化"><span class="nav-number">1.</span> <span class="nav-text">实例化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#添加观察"><span class="nav-number">2.</span> <span class="nav-text">添加观察</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#移除观察"><span class="nav-number">3.</span> <span class="nav-text">移除观察</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number"></span> <span class="nav-text">后记</span></a></div>
             
 
           </div>
@@ -781,9 +780,9 @@
     
       <script type="text/javascript">
         var disqus_config = function () {
-          this.page.url = 'http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/';
-          this.page.identifier = '2019/07/06/crash-guard-unrecognized-selector/';
-          this.page.title = 'Crash 防护方案（一）：Unrecognized Selector';
+          this.page.url = 'http://gonghonglou.com/2019/07/07/crash-guard-kvo/';
+          this.page.identifier = '2019/07/07/crash-guard-kvo/';
+          this.page.title = 'Crash 防护方案（五）：KVO';
         };
         var d = document, s = d.createElement('script');
         s.src = 'https://gonghonglou.disqus.com/embed.js';
