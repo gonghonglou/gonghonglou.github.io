@@ -81,17 +81,17 @@
 
 
 
-<meta name="description" content="NSTimer 提供的计时器方法会操成循环引用，NStimer 引起的崩溃也基本是由其循环引用引起了，《Effective Objective-C 2.0》 书中思路和 BlockKit 的实现方案就完全能解决 NStimer 的问题了。 《Effective Objective-C 2.0》 思路12345+ (NSTimer *)scheduledTimerWithTimeInterval:(">
+<meta name="description" content="12345+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti                                     target:(id)aTarget                                   selector:(SEL)aSelector">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Crash 防护方案（四）：NSTimer">
 <meta property="og:url" content="http://gonghonglou.com/2019/07/07/crash-guard-nstimer/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="NSTimer 提供的计时器方法会操成循环引用，NStimer 引起的崩溃也基本是由其循环引用引起了，《Effective Objective-C 2.0》 书中思路和 BlockKit 的实现方案就完全能解决 NStimer 的问题了。 《Effective Objective-C 2.0》 思路12345+ (NSTimer *)scheduledTimerWithTimeInterval:(">
+<meta property="og:description" content="12345+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti                                     target:(id)aTarget                                   selector:(SEL)aSelector">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-07-12T10:14:28.332Z">
+<meta property="og:updated_time" content="2019-07-13T06:03:54.857Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（四）：NSTimer">
-<meta name="twitter:description" content="NSTimer 提供的计时器方法会操成循环引用，NStimer 引起的崩溃也基本是由其循环引用引起了，《Effective Objective-C 2.0》 书中思路和 BlockKit 的实现方案就完全能解决 NStimer 的问题了。 《Effective Objective-C 2.0》 思路12345+ (NSTimer *)scheduledTimerWithTimeInterval:(">
+<meta name="twitter:description" content="12345+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti                                     target:(id)aTarget                                   selector:(SEL)aSelector">
 
 
 
@@ -377,13 +377,12 @@
       
 
       
-        <p>NSTimer 提供的计时器方法会操成循环引用，NStimer 引起的崩溃也基本是由其循环引用引起了，《Effective Objective-C 2.0》 书中思路和 BlockKit 的实现方案就完全能解决 NStimer 的问题了。</p>
-<h1 id="《Effective-Objective-C-2-0》-思路"><a href="#《Effective-Objective-C-2-0》-思路" class="headerlink" title="《Effective Objective-C 2.0》 思路"></a>《Effective Objective-C 2.0》 思路</h1><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="built_in">NSTimer</span> *)scheduledTimerWithTimeInterval:(<span class="built_in">NSTimeInterval</span>)ti</span><br><span class="line">                                     target:(<span class="keyword">id</span>)aTarget</span><br><span class="line">                                   selector:(SEL)aSelector</span><br><span class="line">                                   userInfo:(<span class="keyword">nullable</span> <span class="keyword">id</span>)userInfo</span><br><span class="line">                                    repeats:(<span class="built_in">BOOL</span>)yesOrNo;</span><br></pre></td></tr></table></figure>
+        <figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="built_in">NSTimer</span> *)scheduledTimerWithTimeInterval:(<span class="built_in">NSTimeInterval</span>)ti</span><br><span class="line">                                     target:(<span class="keyword">id</span>)aTarget</span><br><span class="line">                                   selector:(SEL)aSelector</span><br><span class="line">                                   userInfo:(<span class="keyword">nullable</span> <span class="keyword">id</span>)userInfo</span><br><span class="line">                                    repeats:(<span class="built_in">BOOL</span>)yesOrNo;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>用此方法创建出来的计时器，会在指定的时间间隔之后执行任务。也可以令其反复执行任务，直到开发者稍后将其手动关闭为止。target 与 selector 参数表示计时器将在哪个对象上调用哪个方法。计时器会保留其目标对象，等到自身“失效”时再释放此对象。调用 invalidate 方法可令计时器失效；执行完相关任务之后，一次性的计时器也会失效。开发者若将计时器设置成重复执行模式，那么必须自己调用 invalidate 方法，才能令其停止。</p>
 <p>由于计时器会保留其目标对象，所以反复执行任务通常会导致应用程序出问题。也就是说，设置成重复执行模式的那种计时器，很容易引入“保留环”。</p>
 </blockquote>
-<p>这是《Effective Objective-C 2.0》书中”第 52 条：别忘了 NSTimer 会保留其目标对象“ 一章中的说法。<br>苹果在其文档中也有说明：</p>
+<p>这是《Effective Objective-C 2.0》书中”第 52 条：别忘了 NSTimer 会保留其目标对象“ 一章中的说法。苹果在其文档中的说明：</p>
 <blockquote>
 <p>repeats<br>If YES, the timer will repeatedly reschedule itself until invalidated. If NO, the timer will be invalidated after it fires.</p>
 </blockquote>
@@ -604,7 +603,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#《Effective-Objective-C-2-0》-思路"><span class="nav-number">1.</span> <span class="nav-text">《Effective Objective-C 2.0》 思路</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BlocksKit-实现"><span class="nav-number">2.</span> <span class="nav-text">BlocksKit 实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BlocksKit-新实现（未打-tag）"><span class="nav-number">3.</span> <span class="nav-text">BlocksKit 新实现（未打 tag）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#BlocksKit-实现"><span class="nav-number">1.</span> <span class="nav-text">BlocksKit 实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BlocksKit-新实现（未打-tag）"><span class="nav-number">2.</span> <span class="nav-text">BlocksKit 新实现（未打 tag）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">3.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
 
           </div>

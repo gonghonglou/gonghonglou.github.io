@@ -381,8 +381,7 @@
       
         
           
-          NSTimer 提供的计时器方法会操成循环引用，NStimer 引起的崩溃也基本是由其循环引用引起了，《Effective Objective-C 2.0》 书中思路和 BlockKit 的实现方案就完全能解决 NStimer 的问题了。
-《Effective Objective-C 2.0》 思路
+          12345+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti                                     target:(id)aTarget                            
           ...
           <!--noindex-->
           <div class="post-button text-center">
