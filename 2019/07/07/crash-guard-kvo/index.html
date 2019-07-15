@@ -81,18 +81,18 @@
 
 
 
-<meta name="description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
+<meta name="description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，Apple 还重写了该类的 -class 方法，返回父类，即对象 A 的本类。且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Crash 防护方案（五）：KVO">
 <meta property="og:url" content="http://gonghonglou.com/2019/07/07/crash-guard-kvo/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
+<meta property="og:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，Apple 还重写了该类的 -class 方法，返回父类，即对象 A 的本类。且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/kvo-isa.png">
-<meta property="og:updated_time" content="2019-07-13T11:03:29.563Z">
+<meta property="og:updated_time" content="2019-07-15T02:47:43.051Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（五）：KVO">
-<meta name="twitter:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。isa 指针">
+<meta name="twitter:description" content="Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，Apple 还重写了该类的 -class 方法，返回父类，即对象 A 的本类。且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原">
 <meta name="twitter:image" content="http://image.gonghonglou.com/crash-guard/kvo-isa.png">
 
 
@@ -379,7 +379,7 @@
       
 
       
-        <p>Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。<br>isa 指针的作用：每个对象都有 isa 指针，指向该对象的类，它告诉 Runtime 系统这个对象的类是什么。所以对象注册为观察者时，isa 指针指向新子类，那么这个被观察的对象就变成新子类的对象（或实例）了。 因而在该对象上对 setter 的调用就会调用已重写的 setter，从而激活键值通知机制。</p>
+        <p>Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，Apple 还重写了该类的 -class 方法，返回父类，即对象 A 的本类。且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象属性值的更改情况。<br>isa 指针的作用：每个对象都有 isa 指针，指向该对象的类，它告诉 Runtime 系统这个对象的类是什么。所以对象注册为观察者时，isa 指针指向新子类，那么这个被观察的对象就变成新子类的对象（或实例）了。 因而在该对象上对 setter 的调用就会调用已重写的 setter，从而激活键值通知机制。</p>
 <p>我们可以通过断点看到，被观察者对象的 isa 指针已经变成了 NSKVONotifying_ 开头的类：<br><img src="http://image.gonghonglou.com/crash-guard/kvo-isa.png" alt="KVO isa-swizzling"></p>
 <p>对于 KVO 使用不当的话很容易出现 Crash，比如添加和移除观察不对应，重复 removeObserver: 或者移除一个不存在的观察者就会造成 Crash，尤其是在多线程操作时防不胜防：</p>
 <blockquote>

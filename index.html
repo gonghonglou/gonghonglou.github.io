@@ -530,7 +530,7 @@ If your app targets iOS 9.0 and later or macOS 10.11 and later, you don’t need
       
         
           
-          Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，且 KVO 为 NSKVONotifying_A 重写观察属性的 setter 方法，sette
+          Apple 使用了 isa 混写（isa-swizzling）来实现 KVO 。当观察对象 A 时，KVO 机制动态创建一个新的名为：NSKVONotifying_A 的新类，该类继承自对象 A 的本类，Apple 还重写了该类的 -class 方法，返回父类，即对象 A 的本类。且 KVO 为 N
           ...
           <!--noindex-->
           <div class="post-button text-center">
