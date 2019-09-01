@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/registe-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/category-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/forwarding-msg.png">
-<meta property="og:updated_time" content="2019-08-30T13:23:16.821Z">
+<meta property="og:updated_time" content="2019-09-01T08:25:33.138Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期">
 <meta name="twitter:description" content="我不要你觉得，我要我觉得，听我的，组件化分发生命周期就这么写！  是什么组件化分发生命周期是什么？就是将主工程的生命周期分发到各个组件里去。直观些的介绍则是：AppDelegate 遵循并实现了 UIApplicationDelegate 代理，其中包括 willFinishLaunchingWithOptions:、didFinishLaunchingWithOptions:、applicat">
@@ -399,7 +399,7 @@
 <p>Kylin实现原理简述：Clang 提供了很多的编译器函数，它们可以完成不同的功能。其中一种就是 section() 函数，section()函数提供了二进制段的读写能力，它可以将一些编译期就可以确定的常量写入数据段。 在具体的实现中，主要分为编译期和运行时两个部分。在编译期，编译器会将标记了 <strong>attribute</strong>((section())) 的数据写到指定的数据段中，例如写一个 {key(key代表不同的启动阶段), *pointer} 对到数据段。到运行时，在合适的时间节点，在根据key读取出函数指针，完成函数的调用。</p>
 </blockquote>
 <p>这种方案呢，最好去写个专门的工具，如 Kylin，去实现 {key, *pointer} 对的注册和调用操作。对于使用方来说，添加一种函数执行时，使用 Kylin 注册，并在 AppDelegate 的合理阶段调起方法。</p>
-<p>参考：<a href="https://tech.meituan.com/2018/12/06/waimai-ios-optimizing-startup.html" target="_blank" rel="noopener">美团外卖iOS App冷启动治理</a></p>
+<p>参考原文：<a href="https://tech.meituan.com/2018/12/06/waimai-ios-optimizing-startup.html" target="_blank" rel="noopener">美团外卖iOS App冷启动治理</a></p>
 <p>除了以上方法之外还有一些比较“大型”的做法就是把 AppDelegate 的生命周期完整的分发出去：</p>
 <h2 id="3、手动注册、遍历分发"><a href="#3、手动注册、遍历分发" class="headerlink" title="3、手动注册、遍历分发"></a>3、手动注册、遍历分发</h2><p>这是我之前公司的做法，提前注册 Lifecycle 类（可实现 AppDelegate 的各阶段方法），在 AppDelegate 各阶段方法执行的同时遍历 lifecycle 类执行相应方法。具体的做法是，</p>
 <p>1）项目中存在一份配置文件，文件里配置着各个 pod 的 Lifecycle 类名，该类里实现了 AppDelegate 的某几个阶段方法。</p>
