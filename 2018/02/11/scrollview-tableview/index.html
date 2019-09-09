@@ -89,7 +89,7 @@
 <meta property="og:description" content="前段时间公司项目中遇到的问题，解决之后想着写篇博客总结一下但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 项目中需要实现以下这种页面，需求：1、在 UIScrollView 上嵌套左右两个 UITableView，以实现左右滑动展示页面的效果2、UITableView 可执行左滑删除 cell 功能  然而在实现过程中发现 UIScrollView 的滚动和 UITableView">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/scrollview/requirement.png">
-<meta property="og:updated_time" content="2018-09-04T12:19:28.280Z">
+<meta property="og:updated_time" content="2019-09-09T14:21:27.750Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于UIScrollView和UITableView手势冲突的解决方法">
 <meta name="twitter:description" content="前段时间公司项目中遇到的问题，解决之后想着写篇博客总结一下但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 项目中需要实现以下这种页面，需求：1、在 UIScrollView 上嵌套左右两个 UITableView，以实现左右滑动展示页面的效果2、UITableView 可执行左滑删除 cell 功能  然而在实现过程中发现 UIScrollView 的滚动和 UITableView">
@@ -397,7 +397,7 @@
 <p>目前为止，已经可以实现在 <code>UIScrollView</code> 上嵌套左右两个 <code>UITableView</code> 左右滑动的功能，并且 <code>UITableView</code> 存在左滑删除功能，但执行左滑删除时 <code>UIScrollView</code> 仍在滚动，显然不合理，幸好，<code>UIScrollView</code> 给我们提供了如下两个方法，我们可以在左滑删除手势的开始和完成的时机设置 <code>scrollView.scrollEnabled</code>：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView willBeginEditingRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="keyword">self</span>.scrollView.scrollEnabled = <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line">- (<span class="keyword">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView didEndEditingRowAtIndexPath:(<span class="keyword">nullable</span> <span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="keyword">self</span>.scrollView.scrollEnabled = <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>即 当左滑删除开始时禁止 <code>UIScrollView</code> 滚动，当左滑删除完成时开启 <code>UIScrollView</code> 的滚动。</p>
 <p>至此便解决了 <code>UIScrollView</code> 左右滚动和 <code>UITableView</code> 左滑删除手势冲突的问题。</p>
-<p><a href="https://github.com/gonghonglou/ScrollViewDemo" target="_blank" rel="noopener">ScrollViewDemo GitHub 地址</a></p>
+<p><a href="https://github.com/gonghonglou/DemoRepo/tree/master/ScrollViewDemo" target="_blank" rel="noopener">ScrollViewDemo GitHub 地址</a></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
 <li><p>小白出手，请多指教。如言有误，还望斧正！</p>
 </li>
