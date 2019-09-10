@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/registe-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/category-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/forwarding-msg.png">
-<meta property="og:updated_time" content="2019-09-01T16:02:17.218Z">
+<meta property="og:updated_time" content="2019-09-10T14:01:53.933Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期">
 <meta name="twitter:description" content="我不要你觉得，我要我觉得，听我的，组件化分发生命周期就这么写！  是什么组件化分发生命周期是什么？就是将主工程的生命周期分发到各个组件里去。直观些的介绍则是：AppDelegate 遵循并实现了 UIApplicationDelegate 代理，其中包括 willFinishLaunchingWithOptions:、didFinishLaunchingWithOptions:、applicat">
@@ -386,7 +386,7 @@
 </blockquote>
 <h1 id="是什么"><a href="#是什么" class="headerlink" title="是什么"></a>是什么</h1><p>组件化分发生命周期是什么？就是将主工程的生命周期分发到各个组件里去。直观些的介绍则是：AppDelegate 遵循并实现了 UIApplicationDelegate 代理，其中包括 <code>willFinishLaunchingWithOptions:</code>、<code>didFinishLaunchingWithOptions:</code>、<code>applicationWillEnterForeground:</code>、<code>applicationDidEnterBackground:</code> 等等方法，包含了主工程的各个阶段将执行的方法，我们要做的就是在主工程的这些阶段方法被执行的时候，各个组件里相对应的阶段方法同时会被执行，这样，主工程和各个组件便共享了生命周期，</p>
 <h1 id="为什么"><a href="#为什么" class="headerlink" title="为什么"></a>为什么</h1><p>至于为什么要将主工程的生命周期分发到各个组件中，原因有以下几点：</p>
-<p>1、替换 load 方法<br>因为 load 方法时机较早，所有很多时候会在 load 方法里执行注册，初始化等操作，但这也会导致 load 方法的滥用，将一些本可以靠后执行的操作提前执行了，可能引发 APP 启动耗时过长的问题，需要做 load 耗时监测，治理起来困难，所以很多团队是禁用 load 方法的。<br>将这些操作方法放到生命周期方法里去做显然更好，寻找合理的时机执行相应的操作，耗时能检测功能也比较好做。</p>
+<p>1、替换 load 方法<br>因为 load 方法时机较早，所有很多时候会在 load 方法里执行注册，初始化等操作，但这也会导致 load 方法的滥用，将一些本可以靠后执行的操作提前执行了，可能引发 APP 启动耗时过长的问题，需要做 load 耗时监测，治理起来困难，所以很多团队是禁用 load 方法的。<br>将这些操作方法放到生命周期方法里去做显然更好，寻找合理的时机执行相应的操作，耗时检测功能也比较好做。</p>
 <p>2、解决 AppDelegate 臃肿问题<br>工程中难免有一系列的注册、初始化操作，比如：APP 性能检测、bug 收集、打点等一系列工具的注册；各种基础组件涉及的初始化或重置操作。<br>将这些操作放到组件自己的生命周期方法里去执行，避免了 AppDelegate 的臃肿，而且各基础组件与主工程解耦，开发维护更方便。</p>
 <p>3、Debugger 类组件可插拔<br>某些 Debugger 类组件在工作前可能需要注册操作，将注册操作放在 Pod 自己的生命周期里。这样一来，对于 Debugger 类组件只需要在 Podfile 里控制加载形式，即可做到 Debug/Release 环境组件可插拔，如：<br><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pod <span class="string">'DebuggerKit'</span>, <span class="symbol">:configurations</span> =&gt; [<span class="string">'Debug'</span>]</span><br></pre></td></tr></table></figure></p>
 <h1 id="怎么做"><a href="#怎么做" class="headerlink" title="怎么做"></a>怎么做</h1><p>相比于将 AppDelegate 里的所有阶段方法分发出去，先介绍两种相对轻量的做法，也能做到和分发生命周期类似的能力：</p>
