@@ -81,61 +81,17 @@
 
 
 
-<meta name="description" content="生活终究按不住远方的躁动骑行将会是你爱上的运动方式 自去年环崇明岛骑行之后便念念不忘再计划骑行一次，而且最近特别喜好西北远方，虽然在2016 年的年终总结里计划了五月份骑行青海湖，不过听网友推荐七月才是青海湖最美骑行季节，由环湖赛就安排在七月份也可见一斑。所以便将这份骑行计划安排在了七月份，只身一人，来一场远方的躁动吧！ 其实青海湖有许多租车服务，只不过我更喜欢骑自己的车子，所以自己带了车子过去。">
+<meta name="description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
 <meta property="og:type" content="article">
-<meta property="og:title" content="记环青海湖骑行">
-<meta property="og:url" content="http://gonghonglou.com/2017/07/29/qinghaihu-cycling/index.html">
+<meta property="og:title" content="组件化分发生命周期 - AOP 方案">
+<meta property="og:url" content="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="生活终究按不住远方的躁动骑行将会是你爱上的运动方式 自去年环崇明岛骑行之后便念念不忘再计划骑行一次，而且最近特别喜好西北远方，虽然在2016 年的年终总结里计划了五月份骑行青海湖，不过听网友推荐七月才是青海湖最美骑行季节，由环湖赛就安排在七月份也可见一斑。所以便将这份骑行计划安排在了七月份，只身一人，来一场远方的躁动吧！ 其实青海湖有许多租车服务，只不过我更喜欢骑自己的车子，所以自己带了车子过去。">
+<meta property="og:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6367.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6376.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6381.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6386.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6418.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6969.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6440.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6461.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6467.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender%2016.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender%2011.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender14.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6430.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender6.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6487.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6490.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender3.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender5.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6974.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6973.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6526.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6550.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6975.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender2.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender10.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6979.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6978.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender9.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender7.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6671.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6679.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6655.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6654.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6657.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6664.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6688.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6691.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender12.jpg">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6949.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6948.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6951.JPG">
-<meta property="og:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6950.JPG">
-<meta property="og:updated_time" content="2018-05-31T12:48:30.262Z">
+<meta property="og:updated_time" content="2020-03-09T15:50:52.796Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="记环青海湖骑行">
-<meta name="twitter:description" content="生活终究按不住远方的躁动骑行将会是你爱上的运动方式 自去年环崇明岛骑行之后便念念不忘再计划骑行一次，而且最近特别喜好西北远方，虽然在2016 年的年终总结里计划了五月份骑行青海湖，不过听网友推荐七月才是青海湖最美骑行季节，由环湖赛就安排在七月份也可见一斑。所以便将这份骑行计划安排在了七月份，只身一人，来一场远方的躁动吧！ 其实青海湖有许多租车服务，只不过我更喜欢骑自己的车子，所以自己带了车子过去。">
-<meta name="twitter:image" content="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6367.JPG">
+<meta name="twitter:title" content="组件化分发生命周期 - AOP 方案">
+<meta name="twitter:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
 
 
 
@@ -165,13 +121,13 @@
 
 
 
-  <link rel="canonical" href="http://gonghonglou.com/2017/07/29/qinghaihu-cycling/"/>
+  <link rel="canonical" href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/"/>
 
 
 
 
 
-  <title>记环青海湖骑行 | 与佳期的个人博客</title>
+  <title>组件化分发生命周期 - AOP 方案 | 与佳期的个人博客</title>
   
 
 
@@ -332,7 +288,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2017/07/29/qinghaihu-cycling/">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="与佳期">
@@ -349,7 +305,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">记环青海湖骑行</h1>
+          <h1 class="post-title" itemprop="name headline">组件化分发生命周期 - AOP 方案</h1>
         
 
         <div class="post-meta">
@@ -361,8 +317,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-29T15:14:22+08:00">
-                2017-07-29
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-08T23:55:49+08:00">
+                2020-03-08
               </time>
             
 
@@ -384,8 +340,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Journey/" itemprop="url" rel="index">
-                    <span itemprop="name">Journey</span>
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
                   </a>
                 </span>
 
@@ -421,51 +377,32 @@
       
 
       
-        <p>生活终究按不住远方的躁动<br>骑行将会是你爱上的运动方式</p>
-<p>自去年<a href="http://gonghonglou.com/2016/05/10/chongming-cycling">环崇明岛骑行</a>之后便念念不忘再计划骑行一次，而且最近特别喜好西北远方，虽然在<a href="http://gonghonglou.com/2016/12/26/saybye2016/">2016 年的年终总结</a>里计划了五月份骑行青海湖，不过听网友推荐七月才是青海湖最美骑行季节，由环湖赛就安排在七月份也可见一斑。所以便将这份骑行计划安排在了七月份，只身一人，来一场远方的躁动吧！</p>
-<p>其实青海湖有许多租车服务，只不过我更喜欢骑自己的车子，所以自己带了车子过去。<br>一辆车子，一个满满的驮包，讲真：带起来超费劲。到了西宁住宿洗澡的时候我才发现，两肩已经勒出淤血。。。<br>也正是因为自己带了车子，所以选择了火车出行，因此省下了一笔出行费。<br>二十五个小时的卧铺，这是我坐过的最长时间的火车了，本以为会累成狗，实际上却没有。在车上看一部电影（《神奇女侠》）、看一本书（东野圭吾的《恶意》）、听车厢里的人聊天、看路过的风景。就这些，不知觉的西宁就到了。</p>
-<p>这种，一个人，坐上驶往远方的列车，置身嘈杂的车厢，却有独自宁静的感觉……也让人蛮享受的「摊手」</p>
-<p>经历“短暂”的二十五小时的卧铺，西宁站，到了：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6367.JPG" alt="西宁站"></p>
-<p>背一车子，拎一驮包，加持三千多海拔及西北内陆地区的干燥，在从西宁站到宾馆短短不足一公里的路程，休息了无数次，特别容易气喘而且干燥异常，而我…还没带水……（在接下来的四五天了，我留了N次鼻血…因为青海这干燥的天气。五分钟不喝水就感觉要干涸了，然而喝过水之后也不会缓解这种感觉多少💊）    </p>
-<p>总之，历尽辛苦总算到了宾馆！<br>在卸下行李关上房门之后才感觉，一个人，有些太宁静了。突然感觉太空荡了，或者是，空荡荡…<br>打开电视，CCTV1，调大音量，who care 节目是什么…<br>出门买了瓶水，吃了碗面（真tm咸，突然想起来大一时候，南方同学乍来北方说北方的饭啥都咸，我想现在的我稍微能感受一点了）</p>
-<p>回宾馆路上，约晚上十一点，一个人，七月的西宁，凉爽的夜晚，有风，没有身影。</p>
-<p>洗个澡睡个觉，明个早起赶七点半西宁到西海镇的首班客车。<br>环青海湖路线及大事件：西海镇 —- 151基地 —- 黑马河（茶卡盐湖、黑马河日出） —- 刚察县 —- 西海镇</p>
-<p>接下来便是我四天环青海湖骑行的行程，多图预警⚠️⚠️⚠️</p>
-<h1 id="16号"><a href="#16号" class="headerlink" title="16号"></a>16号</h1><p>提前在网上买好了西宁到西海的车票，赶上七点半的班车，发往西海。<br>大约十点钟就抵达了西海镇。终于，携带车子的负担结束了，终于，可以把车子组装起来了：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6376.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6381.JPG" alt=""></p>
-<p>在开往西海的车上认识了一位也是独自一人来环青海湖骑行的齐子煜，在哈尔滨读书，开学大三，潍坊人，也算遇到老乡了，都是一人，所以就结伴骑行了，就这样，捡到了骑友。<br>我装好了车子，他租好了车子，简单吃了个午饭，约十二点，出发了。<br>坐标：西海，目标：西海！<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6386.JPG" alt=""></p>
-<p>刚开始便是十五公里的上坡。然后在抵达湖东种羊场之前一直是大上坡大下坡的起伏路，既有日渐荒化的沙漠也有广阔无垠的草原：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6418.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6969.JPG" alt=""></p>
-<p>过了湖东种羊场，一直到转上109国道之前的这段环湖东路，应该是环青海湖路程中最美的一段路了，怎么能不停下来多拍几张照：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6440.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6461.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6467.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender%2016.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender%2011.jpg" alt=""></p>
-<p>然后的路程就是最苦逼的了，不知道是第一天刚开始的不适应，还是的确这段路比较难行，尤其是转上109国道之后，骑起来特别费力，这是一段特别辛苦的路程。<br>但也不差有好的风景：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender14.jpg" alt=""></p>
-<p>本来是打算骑到江西沟的，然后明天上午只需要骑行五十公里便可以抵达黑马河，但由于这段路的辛苦，速度太慢，而且体力不支，所以只能在151基地（二郎剑景区）附近住宿了。<br>下午七点多，在距离151基地四公里处住了下来。骑友的租车老板介绍的宾馆 —- 牧民之家。一个人骑行，已经做好了住宿青旅的打算，然而现在是两人骑行，所以住宿当然也是选择略舒适的两人间。这几天的住宿都还不错，两人间，160，价格和环境都比预期的满意多了：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6430.JPG" alt=""></p>
-<p>有意思的是，青海这边大部分只支持微信支付，极少支持支付宝。老板说：支付宝太麻烦，我们也不会用，微信收支付很方便。</p>
-<p><strong>今天骑了约七十公里！</strong></p>
-<h1 id="17号"><a href="#17号" class="headerlink" title="17号"></a>17号</h1><p>休息了一夜，一早七八点钟，吃过早饭再次赶路。<br>所谓“骑行，最重要的是一个坚强的屁股”绝对是一句箴言！一踏上车子，坐上车座，我天，屁股炸裂，即使穿了骑行裤，感觉像垫了姨妈巾，依然没有什么卵用！</p>
-<p>在青海湖，最不缺的就是油菜花：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender6.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6487.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6490.JPG" alt=""></p>
-<p>所谓油菜花，应该是与美女的连衣裙相配才是，而我也厚着脸皮以头盔加骑行装合了两张照片😂<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender3.jpg" alt=""></p>
-<p>今天，仍旧不轻松。前路漫漫，虽然坡不大，但遇上逆风，骑起来就艰难异常。<br>骑行，最绝望的，就是望不到尽头的上坡。<br>在很长的一段路途中，上坡加逆风会让你脑袋放空，鼻孔大口吸气，嘴巴负责呼气，两腿只需要机械的运动。你能听到的只有你粗重的喘息声，两手扶好车把，两腿只要卖力的蹬、蹬、蹬，直到征服这段上坡！</p>
-<p>接近黑马河的是一段约五到十公里的下坡，约下午一点半抵达黑马河。<br>找了宾馆，放了车子，吃了午饭，和人拼车去茶卡盐湖。</p>
-<p>橡皮山，海拔 3817米，大概是去茶卡盐湖路上的最高海拔点，司机师傅还停车让我们能拍了个照：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender5.jpg" alt=""></p>
-<p>大约两个多小时抵达了茶卡盐湖，又是一波放照：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6974.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6973.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6526.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6550.JPG" alt=""></p>
-<p>从茶卡盐湖出来，湿过的裤腿又干了，已经变的硬邦邦。。。</p>
-<p>再回到黑马河已经是晚上十点，不知道是这边天黑得晚（将近九点）还是黑马河的旅游旺季，这个点了，所有的店还都开着门呢。<br>黑马河，不像其他地方的旅游景点，这里的人像服务员、包车司机、宾馆老板都特别客气。<br>服务员：要么是中学生大小带着诚挚的表情，要么是二十多岁带着亲和的笑容，让人心情愉悦，感叹这里民风淳朴。<br>包车司机：不知道是汉语不够好还是心地太纯良，他也想多挣点钱，所以对去哪哪的包车价格支吾的报一个略高的价格，然而却是以一种轻易让人听得出来心思的语气表达，又极易被乘客的语言套路。。。乘客和司机都没有恶意，反而觉得这样的关系很轻松。<br>宾馆老板娘：简直好的不要不要的，我需要洗衣盆，洗衣粉，衣架，热水，老板娘都很耐心给找来，更要命的是，第二天一大早我想冲包感冒冲剂，问老板娘有没有一次性纸杯，她说等一会，然后，然后，她就去超市买了一袋纸杯回来。没有的话她完全可以拒绝我啊，我们只是花了160住了个两人间。</p>
-<p><strong>今天骑了约八十公里！</strong></p>
-<h1 id="18号"><a href="#18号" class="headerlink" title="18号"></a>18号</h1><p>2017年7月18日的黑马河，日出时间是06:16:00。<br>五点多钟起床匆匆洗漱，卸下行李，踏上单车，轻装上阵，骑往湖边等待日出。从镇上到湖边观日出的地点大约有五六公里，这段路早已人满为患，有开车的，骑行的，步行的，排满了整段路。<br>还好，我们骑车的比较快，六点之前就赶到了湖边。虽然看日出的人很多，但是湖边的岸线很长，所以并不显得拥挤，大家都有看日出的位置。<br>然后，就是等待日出：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6975.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender2.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender10.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6979.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6978.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender9.jpg" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender7.jpg" alt=""></p>
-<p>看完日出，回去吃完午饭，当然是继续赶路，今天有一整天的时间，要赶到刚察县，一百二十公里！<br>不过听司机师傅说接下来两天的路况还都不错，应该是比前两天轻松的。</p>
-<p>征服过一个大上坡之后的路边休息：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6671.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6679.JPG" alt=""></p>
-<p>骑行青海湖的小朋友：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6655.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6654.JPG" alt=""></p>
-<p>遇见青藏铁路：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6657.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6664.JPG" alt=""></p>
-<p>大概在下午七点钟的样子，终于赶到刚察，找到宾馆直接瘫在床上睡了两个小时才休息过来出门吃饭。只不过，青海的饭菜实在是吃不惯，还贵。在青海的这几天，感觉汉堡和士力架就是最合口的了，然而除了西海镇是没有汉堡的。</p>
-<p><strong>今天骑了约一百二十公里！</strong></p>
-<h1 id="19号"><a href="#19号" class="headerlink" title="19号"></a>19号</h1><p>今天还有九十公里的路程，路上还要翻越一座绝望坡，因为要赶上西海到西宁的末班车，五点半，而且要早点赶到才能买上车票，所以还是要加紧赶路。</p>
-<p>今天的状态特别好，感觉可以一口气骑到西海着（要不是遇到绝望坡。。。）<br>路过甘子河，状态依然，所以也没有停下来休息：<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6688.JPG" alt=""></p>
-<p>终于遇到绝望坡，这样看起来好像还好，不过实际上还是挺大的坡，而且特别长，忘记了骑了多长时间，好几次想停下了休息，总是想：骑上这个坡头就休息。然而骑过一个坡头又望见一个坡头，就这样最慢以 7-8km/h 的的速度登上了绝望坡，然后再没力气了，只能停下来休息，顺便等一下骑友吃个午饭。<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6691.JPG" alt=""></p>
-<p>休息了四五十分钟吃了碗泡面，继续赶路，听骑过的骑友讲还剩来两个小坡，随后二十公里全是下坡了，不蹬都能到 30km/h，赶路！</p>
-<p>终于，在下午三点半赶到了西海镇，买上了最后一班车的车票。<br>环青海湖骑行，三百六十公里，完成了！<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/FullSizeRender12.jpg" alt=""></p>
-<p>每次骑行的时候都累到：骑完这次再不骑了。<br>骑完之后又还想再计划一次骑行。</p>
-<p><strong>今天骑了约九十公里！</strong></p>
-<h1 id="再见青海"><a href="#再见青海" class="headerlink" title="再见青海"></a>再见青海</h1><p>因为休了一周的年假，所以时间还早，计划回济南同学聚一波。顺便爬一爬泰山，弥补一下在济南待了四年喊着要去爬泰山的遗憾。<br>所谓“累成狗”应该是一种比较舒适的状态吧「二哈」<br>在兰州中川机场飞济南遥墙，遇见西北地貌，再见青海！<br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6949.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6948.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6951.JPG" alt=""><br><img src="http://image.gonghonglou.com/qinghaihu-cycling/IMG_6950.JPG" alt=""></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>这里有一份.gpx文件 👉<a href="http://image.gonghonglou.com/qinghaihu-cycling/qinghaihu_trajectory.gpx.zip" target="_blank" rel="noopener">点击下载</a> ，记录了环青海湖的骑行轨迹，有兴趣的话可以下载下来看看。<br>将它导入到支持 gpx 格式的软件里就可以了，我用的是「行者」，大家喜欢用什么软件可以自行 Google～</p>
-<p>转载请保留原文地址：<a href="http://gonghonglou.com/2017/07/29/qinghaihu-cycling/">http://gonghonglou.com/2017/07/29/qinghaihu-cycling</a></p>
+        <p>在之前的文章（ <strong><a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a></strong> ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。</p>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 <code>GoogleUtilities</code> 也对 UIApplication 的 delegate 里的一些方法做了 hook 操作，对 APP 做了一些监听操作。以下是 <code>GoogleUtilities</code> 产生影响的关键代码：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">+ (GULApplication *)sharedApplication &#123;</span><br><span class="line">  <span class="keyword">if</span> ([GULAppEnvironmentUtil isAppExtension]) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">id</span> sharedApplication = <span class="literal">nil</span>;</span><br><span class="line">  Class uiApplicationClass = <span class="built_in">NSClassFromString</span>(kGULApplicationClassName);</span><br><span class="line">  <span class="keyword">if</span> (uiApplicationClass &amp;&amp;</span><br><span class="line">      [uiApplicationClass respondsToSelector:(<span class="built_in">NSSelectorFromString</span>(<span class="string">@"sharedApplication"</span>))]) &#123;</span><br><span class="line">    sharedApplication = [uiApplicationClass sharedApplication];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> sharedApplication;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中 <code>kGULApplicationClassName</code> 就是 <code>@&quot;UIApplication&quot;</code>。因为在上一种方案里我们将系统的 delegate 重设成了我们自己的类：<code>GHLApplicationDelegate</code>，并通过消息转发的方式统一处理了原 <code>AppDelegate</code> 里的所有方法。<br>这样一来，Firebase 通过以上代码得到的 <code>GULApplication</code> 就变成了 <code>GHLApplicationDelegate</code>，再去 hook <code>application:didFinishLaunchingWithOptions:</code> 等方法的时候就找不到这些方法了，即 Firebase 失去了相应的功能。</p>
+<p>这里是 Firebase 的场景，其他第三方库有相应 hook 操作的话也会有相同的问题，而我们在实际开发过程中没法避免其他库的 hook 操作，甚至可能察觉不到问题的存在，所以之前提到的方案是有问题的。</p>
+<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>这样一想，原本的方法的确在设计上是有问题的，我们只顾着自己的 hook，影响了其他第三方对 <code>AppDelegate</code> 的 hook 操作，这显然不合理。</p>
+<p>为了解决以上的问题，不得不再次寻找方案。重新梳理下我们的需求：</p>
+<p>在主工程的 <code>AppDelegate</code> 里执行 <code>UIApplicationDelegate</code> 的一系列生命周期的方法的时候，相应的各个 Pod 里也能有对应方法同时被执行，且不影响其他第三方对 <code>AppDelegate</code> 的 hook 操作。</p>
+<p>那我们也可以 hook <code>AppDelegate</code> 的各阶段方法，遍历执行各个 Pod 里的对应方法之后，再执行下原本的方法。这样大家都保证各自的 hook 链不会断掉就 ok 了。</p>
+<h1 id="解决方案：AOP"><a href="#解决方案：AOP" class="headerlink" title="解决方案：AOP"></a>解决方案：AOP</h1><p>想起 <a href="https://github.com/steipete/Aspects" target="_blank" rel="noopener">Aspects</a> 这个库。或许，AOP 是一种不错的解决方案。思路如下：</p>
+<p>1）首先还是 hook <code>UIApplication</code> 的 <code>setDelegate:</code> 方法，拿到 <code>AppDelegate</code></p>
+<p>2）遍历 <code>AppDelegate</code> 的方法列表，判断是否是 <code>UIApplicationDelegate</code> 的协议方法</p>
+<p>3）使用 AOP 的方法，对以上遍历加判断筛选拿到的方法一一进行 hook</p>
+<p>4）在被 hook 的每个方法执行前，遍历 <code>HoloLifecycle</code> 的所有子类（<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a> 文章里最后一节有介绍），执行同名方法</p>
+<p>以上就是根据需求想到的解决步骤，唯一的关键就在最后一步，执行 <code>HoloLifecycle</code> 类里的方法时，因为入参不确定，<code>performSelector:withObject:</code> 方法肯定是不适用了，可以用 <code>NSInvocation</code> 的方法转发消息，参考 <code>Aspects</code>。</p>
+<p>大体思路就是：</p>
+<p>1）通过 <code>Aspects</code> hook <code>AppDelegate</code> 方法，让被 hook 的方法不会被正常执行，而是走消息转发流程（<code>Aspects</code> 的思路）</p>
+<p>2）在消息转发的最后一步 <code>forwardInvocation:</code> 方法里获取当前所 hook 方法的 <code>NSInvocation</code> 对象 A，在这个对象里存储着转发的方法名，参数值等信息</p>
+<p>3）根据 <code>HoloLifecycle</code> 类对象（target）和想要分发的方法的方法名（selector），创建一个 <code>NSInvocation</code> 对象 B</p>
+<p>4）遍历 <code>NSInvocation</code> 对象 A 的所有参数，把它们依次赋值给 <code>NSInvocation</code> 对象 B，并发送对象 B</p>
+<p>遍历所有的 <code>HoloLifecycle</code> 类对象，循环执行以上步骤就可以了，这样就做到了 hook <code>AppDelegate</code> 各生命周期方法，在各方法执行前遍历执行 <code>HoloLifecycle</code> 类对象的对应同名方法，也就是：组件化分发生命周期 的最终效果。</p>
+<p>一开始以为 <code>Aspects</code> 暴露的方法里没法获取所 hook 方法的 <code>NSInvocation</code>，所以花了些力气参考 <code>Aspects</code> 的源码实现了一套方案。能够正常工作之后才发现 <code>Aspects</code> 的 hook 方法的 block 里可以拿到 <code>AspectInfo</code> 这个对象，而这个对象持有的 <code>originalInvocation</code> 属性，就是所 hook 方法走 <code>forwardInvocation:</code> 方法时拿到的 <code>NSInvocation</code>。所以，最后借助 <code>Aspects</code> 的实现简单了很多，以下是关键代码：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">UIApplication</span> (<span class="title">HoloLifecycle</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="keyword">void</span>)load &#123;</span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleMethod:<span class="keyword">@selector</span>(setDelegate:) withMethod:<span class="keyword">@selector</span>(_lb_setDelegate:) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)_lb_setDelegate:(<span class="keyword">id</span> &lt;<span class="built_in">UIApplicationDelegate</span>&gt;)delegate &#123;</span><br><span class="line">    <span class="keyword">unsigned</span> count = <span class="number">0</span>;</span><br><span class="line">    Method *methods = class_copyMethodList([delegate <span class="keyword">class</span>], &amp;count);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">        Method method = methods[i];</span><br><span class="line">        SEL sel = method_getName(method);</span><br><span class="line">        <span class="keyword">struct</span> objc_method_description methodDesc = protocol_getMethodDescription(<span class="class"><span class="keyword">@protocol</span>(<span class="title">UIApplicationDelegate</span>), <span class="title">sel</span>, <span class="title">NO</span>, <span class="title">YES</span>);</span></span><br><span class="line">        <span class="keyword">if</span> (methodDesc.name != <span class="literal">NULL</span> &amp;&amp; methodDesc.types != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            [<span class="keyword">self</span> _aspect_hookSelectorWithDelegate:delegate sel:sel];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    [<span class="keyword">self</span> _lb_setDelegate:delegate];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)_aspect_hookSelectorWithDelegate:(<span class="keyword">id</span> &lt;<span class="built_in">UIApplicationDelegate</span>&gt;)delegate sel:(SEL)sel &#123;</span><br><span class="line">    [(<span class="built_in">NSObject</span> *)delegate aspect_hookSelector:sel withOptions:AspectPositionBefore usingBlock:^(<span class="keyword">id</span>&lt;AspectInfo&gt; info) &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (HoloLifecycle *lifecycle <span class="keyword">in</span> [HoloLifecycleManager sharedInstance].subClasses) &#123;</span><br><span class="line">            <span class="keyword">if</span> ([lifecycle respondsToSelector:sel]) &#123;</span><br><span class="line">                <span class="built_in">NSMethodSignature</span> *signature = [lifecycle methodSignatureForSelector:sel];</span><br><span class="line">                <span class="built_in">NSInvocation</span> *invocation = [<span class="built_in">NSInvocation</span> invocationWithMethodSignature:signature];</span><br><span class="line">                invocation.target = lifecycle;</span><br><span class="line">                invocation.selector = sel;</span><br><span class="line">                </span><br><span class="line">                <span class="built_in">NSUInteger</span> numberOfArguments = signature.numberOfArguments;</span><br><span class="line">                <span class="keyword">if</span> (numberOfArguments &gt; info.originalInvocation.methodSignature.numberOfArguments) &#123;</span><br><span class="line">                    <span class="built_in">NSLog</span>(<span class="string">@"lifecycle has too many arguments. Not calling %@"</span>, info);</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">void</span> *argBuf = <span class="literal">NULL</span>;</span><br><span class="line">                <span class="keyword">for</span> (<span class="built_in">NSUInteger</span> idx = <span class="number">2</span>; idx &lt; numberOfArguments; idx++) &#123;</span><br><span class="line">                    <span class="keyword">const</span> <span class="keyword">char</span> *type = [info.originalInvocation.methodSignature getArgumentTypeAtIndex:idx];</span><br><span class="line">                    <span class="built_in">NSUInteger</span> argSize;</span><br><span class="line">                    <span class="built_in">NSGetSizeAndAlignment</span>(type, &amp;argSize, <span class="literal">NULL</span>);</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">if</span> (!(argBuf = reallocf(argBuf, argSize))) &#123;</span><br><span class="line">                        <span class="built_in">NSLog</span>(<span class="string">@"Failed to allocate memory for lifecycle invocation."</span>);</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    [info.originalInvocation getArgument:argBuf atIndex:idx];</span><br><span class="line">                    [invocation setArgument:argBuf atIndex:idx];</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                [invocation invoke];</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> (argBuf != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    free(argBuf);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure></p>
+<p>代码已开源至：<a href="https://github.com/gonghonglou/HoloLifecycle" target="_blank" rel="noopener">HoloLifecycle</a>，欢迎使用。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
+<li>小白出手，请多指教。如言有误，还望斧正！</li>
+<li>转载请保留原文地址：<a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/</a></li>
+</ul>
 
       
     </div>
@@ -490,8 +427,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/07/10/ss-vps/" rel="next" title="一小时轻松实现科学上网">
-                <i class="fa fa-chevron-left"></i> 一小时轻松实现科学上网
+              <a href="/2020/03/01/sdwebimage-gif/" rel="next" title="SDWebImage 4.x & 5.x 对 GIF 类型的处理问题">
+                <i class="fa fa-chevron-left"></i> SDWebImage 4.x & 5.x 对 GIF 类型的处理问题
               </a>
             
           </div>
@@ -499,10 +436,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/08/09/100days-100blogs/" rel="prev" title="100 Days, 100 Blogs">
-                100 Days, 100 Blogs <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -668,7 +601,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#16号"><span class="nav-number">1.</span> <span class="nav-text">16号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#17号"><span class="nav-number">2.</span> <span class="nav-text">17号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#18号"><span class="nav-number">3.</span> <span class="nav-text">18号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#19号"><span class="nav-number">4.</span> <span class="nav-text">19号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#再见青海"><span class="nav-number">5.</span> <span class="nav-text">再见青海</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">6.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#问题"><span class="nav-number">1.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析"><span class="nav-number">2.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决方案：AOP"><span class="nav-number">3.</span> <span class="nav-text">解决方案：AOP</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
 
           </div>
@@ -829,9 +762,9 @@
     
       <script type="text/javascript">
         var disqus_config = function () {
-          this.page.url = 'http://gonghonglou.com/2017/07/29/qinghaihu-cycling/';
-          this.page.identifier = '2017/07/29/qinghaihu-cycling/';
-          this.page.title = '记环青海湖骑行';
+          this.page.url = 'http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/';
+          this.page.identifier = '2020/03/08/pod-lifecycle-aop/';
+          this.page.title = '组件化分发生命周期 - AOP 方案';
         };
         var d = document, s = d.createElement('script');
         s.src = 'https://gonghonglou.disqus.com/embed.js';

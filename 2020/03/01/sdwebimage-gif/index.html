@@ -89,7 +89,7 @@
 <meta property="og:description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的：123456NSURL *url = [NSURL URLWithString:">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/sdwebimage-gif/animatedImage.png">
-<meta property="og:updated_time" content="2020-03-03T01:43:37.730Z">
+<meta property="og:updated_time" content="2020-03-08T16:22:25.045Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SDWebImage 4.x &amp; 5.x 对 GIF 类型的处理问题">
 <meta name="twitter:description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的：123456NSURL *url = [NSURL URLWithString:">
@@ -418,10 +418,8 @@
 <p>再次需要注意的是：<br>使用以上方法所存储的 image 如果是 SD 经手过的，由 NSData 类型转换来的 UIImage，SD 会给它打上 <code>sd_imageFormat</code> 标签，即能够正确识别图片类型。如果并非 SD 经手的话，即没有 <code>sd_imageFormat</code> 标签的情况，该方法还是会将图片编码为 PNG 或者 JPEG，除非使用 <code>[[SDImageCache sharedImageCache] storeImage:image imageData:imageData forKey:key toDisk:YES completion::nil];</code> 方法，同时传入 image 和 imageData。</p>
 <p>相关 Issue：<a href="https://github.com/SDWebImage/SDWebImage/issues/2952" target="_blank" rel="noopener">Download a GIF and store the image, SD will save it as a PNG to disk. #2952</a></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2020/03/01/sdwebimage-gif/">http://gonghonglou.com/2020/03/01/sdwebimage-gif/</a></p>
-</li>
+<li>小白出手，请多指教。如言有误，还望斧正！</li>
+<li>转载请保留原文地址：<a href="http://gonghonglou.com/2020/03/01/sdwebimage-gif/">http://gonghonglou.com/2020/03/01/sdwebimage-gif/</a></li>
 </ul>
 
       
@@ -456,6 +454,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/08/pod-lifecycle-aop/" rel="prev" title="组件化分发生命周期 - AOP 方案">
+                组件化分发生命周期 - AOP 方案 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -546,7 +548,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">37</span>
+                  <span class="site-state-item-count">38</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
