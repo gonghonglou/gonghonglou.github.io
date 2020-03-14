@@ -93,7 +93,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/setlanguage/localizable.png">
 <meta property="og:image" content="http://image.gonghonglou.com/setlanguage/Localization.png">
 <meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
-<meta property="og:updated_time" content="2018-05-31T12:48:30.266Z">
+<meta property="og:updated_time" content="2020-03-14T12:57:15.577Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS应用程序语言本地化及应用内语言设置">
 <meta name="twitter:description" content="Xcode 新建一个工程的默认语言是英文，所以你在 app 里粘贴复制都是显示的 copy paste，你可以通过在 info.plst 文件里选择 Localization native development region 来设置不同语言。  可是如果你想在软件内选择设置语言，为软件添加多语言选择功能就需要一番折腾了，倒也简单，只不过还是有几个坑的。以下是一篇详细介绍为软件配置多语言选项的博客">
@@ -443,12 +443,6 @@
 <p>注意：使用这种方法要确保你的 <code>.strings</code> 的文件名为 <code>Localizable.strings</code><br>否则还是要重新设置宏定义：<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">#def</span>ine NSLocalizedString(key, comment) \</span><br><span class="line">	    [NSBundle<span class="selector-class">.mainBundle</span> localizedStringForKey:(key) value:@<span class="string">""</span> <span class="selector-tag">table</span>:@“RDLocalizable”]</span><br></pre></td></tr></table></figure></p>
 <p>这样的话该宏定义会有一个警告，毕竟系统已经定义过了的，而且你还要到处重定义。。。又犯了上面第二种情况的尴尬。</p>
 <p>到这里，该篇博客就结尾了，希望能帮助到各位一二<br>祝大家生活愉快，勤勉Coding</p>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2016/10/29/set-language">http://gonghonglou.com/2016/10/29/set-language</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -651,7 +645,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#关于-NSBundle"><span class="nav-number">1.</span> <span class="nav-text">关于 NSBundle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置-Project"><span class="nav-number">2.</span> <span class="nav-text">配置 Project</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加语言"><span class="nav-number">2.1.</span> <span class="nav-text">添加语言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建-strings-配置文件"><span class="nav-number">2.2.</span> <span class="nav-text">新建 .strings 配置文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建多语言设置工具类"><span class="nav-number">3.</span> <span class="nav-text">创建多语言设置工具类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多语言设置的「坑」"><span class="nav-number">4.</span> <span class="nav-text">多语言设置的「坑」</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#关于更改语言后重新初始化页面"><span class="nav-number">4.1.</span> <span class="nav-text">关于更改语言后重新初始化页面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于本地化语言的宏定义-RDLocalizedString-lt-key-gt"><span class="nav-number">4.2.</span> <span class="nav-text">关于本地化语言的宏定义 RDLocalizedString(&lt;#key#&gt;)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于初始化语言-RDLocalizableController-initUserLanguage"><span class="nav-number">4.3.</span> <span class="nav-text">关于初始化语言 [RDLocalizableController initUserLanguage]</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#就想使用-NSLocalizedString-lt-key-gt-lt-comment-gt-方法"><span class="nav-number">5.</span> <span class="nav-text">就想使用 NSLocalizedString(&lt;#key#&gt;, &lt;#comment#&gt;) 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后记"><span class="nav-number">6.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#关于-NSBundle"><span class="nav-number">1.</span> <span class="nav-text">关于 NSBundle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置-Project"><span class="nav-number">2.</span> <span class="nav-text">配置 Project</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加语言"><span class="nav-number">2.1.</span> <span class="nav-text">添加语言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建-strings-配置文件"><span class="nav-number">2.2.</span> <span class="nav-text">新建 .strings 配置文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建多语言设置工具类"><span class="nav-number">3.</span> <span class="nav-text">创建多语言设置工具类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多语言设置的「坑」"><span class="nav-number">4.</span> <span class="nav-text">多语言设置的「坑」</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#关于更改语言后重新初始化页面"><span class="nav-number">4.1.</span> <span class="nav-text">关于更改语言后重新初始化页面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于本地化语言的宏定义-RDLocalizedString-lt-key-gt"><span class="nav-number">4.2.</span> <span class="nav-text">关于本地化语言的宏定义 RDLocalizedString(&lt;#key#&gt;)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于初始化语言-RDLocalizableController-initUserLanguage"><span class="nav-number">4.3.</span> <span class="nav-text">关于初始化语言 [RDLocalizableController initUserLanguage]</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#就想使用-NSLocalizedString-lt-key-gt-lt-comment-gt-方法"><span class="nav-number">5.</span> <span class="nav-text">就想使用 NSLocalizedString(&lt;#key#&gt;, &lt;#comment#&gt;) 方法</span></a></li></ol></div>
             
 
           </div>

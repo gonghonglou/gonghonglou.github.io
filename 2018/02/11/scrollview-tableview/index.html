@@ -89,7 +89,7 @@
 <meta property="og:description" content="前段时间公司项目中遇到的问题，解决之后想着写篇博客总结一下但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 项目中需要实现以下这种页面，需求：1、在 UIScrollView 上嵌套左右两个 UITableView，以实现左右滑动展示页面的效果2、UITableView 可执行左滑删除 cell 功能  然而在实现过程中发现 UIScrollView 的滚动和 UITableView">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/scrollview/requirement.png">
-<meta property="og:updated_time" content="2019-09-09T14:21:27.750Z">
+<meta property="og:updated_time" content="2020-03-14T12:57:22.377Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于UIScrollView和UITableView手势冲突的解决方法">
 <meta name="twitter:description" content="前段时间公司项目中遇到的问题，解决之后想着写篇博客总结一下但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 项目中需要实现以下这种页面，需求：1、在 UIScrollView 上嵌套左右两个 UITableView，以实现左右滑动展示页面的效果2、UITableView 可执行左滑删除 cell 功能  然而在实现过程中发现 UIScrollView 的滚动和 UITableView">
@@ -398,12 +398,6 @@
 <p>即 当左滑删除开始时禁止 <code>UIScrollView</code> 滚动，当左滑删除完成时开启 <code>UIScrollView</code> 的滚动。</p>
 <p>至此便解决了 <code>UIScrollView</code> 左右滚动和 <code>UITableView</code> 左滑删除手势冲突的问题。</p>
 <p><a href="https://github.com/gonghonglou/DemoRepo/tree/master/ScrollViewDemo" target="_blank" rel="noopener">ScrollViewDemo GitHub 地址</a></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2018/02/11/scrollview-tableview/">http://gonghonglou.com/2018/02/11/scrollview-tableview/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -606,7 +600,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阶段一：实现-UITableView-左右滑动的效果"><span class="nav-number">1.</span> <span class="nav-text">阶段一：实现 UITableView 左右滑动的效果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、系统边缘触发返回手势是否开启"><span class="nav-number">1.0.1.</span> <span class="nav-text">1、系统边缘触发返回手势是否开启</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、在该页面是否自定义了导航条的返回按钮"><span class="nav-number">1.0.2.</span> <span class="nav-text">2、在该页面是否自定义了导航条的返回按钮</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#阶段二：实现-UITableView-左滑删除功能"><span class="nav-number">2.</span> <span class="nav-text">阶段二：实现 UITableView 左滑删除功能</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number"></span> <span class="nav-text">后记</span></a></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阶段一：实现-UITableView-左右滑动的效果"><span class="nav-number">1.</span> <span class="nav-text">阶段一：实现 UITableView 左右滑动的效果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、系统边缘触发返回手势是否开启"><span class="nav-number">1.0.1.</span> <span class="nav-text">1、系统边缘触发返回手势是否开启</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、在该页面是否自定义了导航条的返回按钮"><span class="nav-number">1.0.2.</span> <span class="nav-text">2、在该页面是否自定义了导航条的返回按钮</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#阶段二：实现-UITableView-左滑删除功能"><span class="nav-number">2.</span> <span class="nav-text">阶段二：实现 UITableView 左滑删除功能</span></a></li></ol></div>
             
 
           </div>

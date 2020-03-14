@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/setlanguage/set_project.png">
 <meta property="og:image" content="http://image.gonghonglou.com/setlanguage/localizable.png">
 <meta property="og:image" content="http://image.gonghonglou.com/setlanguage/Localization.png">
-<meta property="og:updated_time" content="2018-06-04T06:30:45.590Z">
+<meta property="og:updated_time" content="2020-03-14T12:56:15.280Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="GHLLocalizable：iOS应用内语言设置工具">
 <meta name="twitter:description" content="之前我写过一篇关于 iOS应用程序语言本地化及应用内语言设置，但是因为最近新开了两个新的项目，在新建工程搭建各种配置中发现为了给项目添加「应用内语言设置」这项功能，每次都要新建 Localizable 文件及 NSBundle 的 Category 文件，感觉很烦，所以写了一个工具（GHLLocalizable）出来，通过 CocoaPods 添加到工程以节省劳动力，并且整理一下这部分内容以及介绍">
@@ -410,12 +410,6 @@
 <p>记得删除通知，比如在 <code>- (void)applicationWillTerminate:(UIApplication *)application</code>方法里：<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-attr">[[NSNotificationCenter defaultCenter]</span> <span class="selector-tag">removeObserver</span><span class="selector-pseudo">:self</span> <span class="selector-tag">name</span><span class="selector-pseudo">:GHLNotificationLanguageChanged</span> <span class="selector-tag">object</span><span class="selector-pseudo">:nil</span>];</span><br></pre></td></tr></table></figure></p>
 <p>5、实现通知方法：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)<span class="string">languageChange:</span>(NSNotification *)note &#123;</span><br><span class="line">    <span class="comment">// 在该方法里实现重新初始化 rootViewController 的行为，并且所有带有文字的页面都要重新渲染</span></span><br><span class="line">    <span class="comment">// 比如：[UIApplication sharedApplication].keyWindow.rootViewController = ...;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>OK，希望 <a href="https://github.com/gonghonglou/GHLLocalizable" target="_blank" rel="noopener">GHLLocalizable</a> 这个小工具能稍稍减轻一些你的工作量，欢迎使用。</p>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2018/03/14/GHLLocalizable/">http://gonghonglou.com/2018/03/14/GHLLocalizable/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -618,7 +612,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#应用程序语言本地化"><span class="nav-number">1.</span> <span class="nav-text">应用程序语言本地化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#添加语言包"><span class="nav-number">1.1.</span> <span class="nav-text">添加语言包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#新建-strings-配置文件"><span class="nav-number">1.2.</span> <span class="nav-text">新建 .strings 配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用程序名称语言本地化"><span class="nav-number">1.3.</span> <span class="nav-text">应用程序名称语言本地化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用内语言设置"><span class="nav-number">1.4.</span> <span class="nav-text">应用内语言设置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后记"><span class="nav-number">1.5.</span> <span class="nav-text">后记</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#应用程序语言本地化"><span class="nav-number">1.</span> <span class="nav-text">应用程序语言本地化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#添加语言包"><span class="nav-number">1.1.</span> <span class="nav-text">添加语言包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#新建-strings-配置文件"><span class="nav-number">1.2.</span> <span class="nav-text">新建 .strings 配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用程序名称语言本地化"><span class="nav-number">1.3.</span> <span class="nav-text">应用程序名称语言本地化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用内语言设置"><span class="nav-number">1.4.</span> <span class="nav-text">应用内语言设置</span></a></li></ol></li></ol></div>
             
 
           </div>

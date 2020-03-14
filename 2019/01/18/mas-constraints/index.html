@@ -89,7 +89,7 @@
 <meta property="og:description" content="Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是对我来讲很早之前就有个更新约束的问题要好好搞搞清楚，就是题目里的 mas_updateConstraints: 方法。在 View 初始化时会添加一系列约束控制布局，而随时更改约束来移动位置也是日常需求，但其中关于这个方法的某些设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。 当">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/mas-constraints/updateConstraints.png">
-<meta property="og:updated_time" content="2019-01-19T11:51:31.240Z">
+<meta property="og:updated_time" content="2020-03-14T12:55:51.602Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一探 mas_updateConstraints 究竟">
 <meta name="twitter:description" content="Masonry 的链式编程对 iOS UI 添加约束简直好用的不得了，想必在使用上大家也都早已烂熟于心。只是对我来讲很早之前就有个更新约束的问题要好好搞搞清楚，就是题目里的 mas_updateConstraints: 方法。在 View 初始化时会添加一系列约束控制布局，而随时更改约束来移动位置也是日常需求，但其中关于这个方法的某些设计并不是直观想象的那样，现在，终于有时间写篇博客一探究竟。 当">
@@ -406,12 +406,6 @@
 </ul>
 <p>所以我们应该将想要更新的约束提前设置一个较低的优先级，再在 <code>mas_updateConstraints:</code> 方法里更新约束并对新的约束设置一个高于原来约束的优先级，且低于 1000。例如：<br><figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[<span class="name">self.rightView</span> mas_makeConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.topView</span>).priorityLow()<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br><span class="line">    </span><br><span class="line">[<span class="name">self.rightView</span> mas_updateConstraints:^(<span class="name">MASConstraintMaker</span> *make) &#123;</span><br><span class="line">   make.top.equalTo(<span class="name">self.bottomView</span>).priorityHigh()<span class="comment">;</span></span><br><span class="line">   // or</span><br><span class="line">   // make.top.equalTo(<span class="name">self.bottomView</span>).priority(<span class="name">800</span>)<span class="comment">;</span></span><br><span class="line">&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
 <p>最后，认识几种优先级类型：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1000</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityRequired = <span class="built_in">UILayoutPriorityRequired</span>;</span><br><span class="line"><span class="comment">// 750</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultHigh = <span class="built_in">UILayoutPriorityDefaultHigh</span>;</span><br><span class="line"><span class="comment">// 500</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultMedium = <span class="number">500</span>;</span><br><span class="line"><span class="comment">// 250</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityDefaultLow = <span class="built_in">UILayoutPriorityDefaultLow</span>;</span><br><span class="line"><span class="comment">// 50</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> MASLayoutPriority MASLayoutPriorityFittingSizeLevel = <span class="built_in">UILayoutPriorityFittingSizeLevel</span>;</span><br></pre></td></tr></table></figure></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/01/18/mas-constraints/">http://gonghonglou.com/2019/01/18/mas-constraints/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -614,7 +608,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#探索"><span class="nav-number">1.</span> <span class="nav-text">探索</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">2.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#探索"><span class="nav-number">1.</span> <span class="nav-text">探索</span></a></li></ol></div>
             
 
           </div>

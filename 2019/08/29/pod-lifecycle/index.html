@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/registe-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/category-for.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-lifecycle/forwarding-msg.png">
-<meta property="og:updated_time" content="2020-03-08T16:03:12.642Z">
+<meta property="og:updated_time" content="2020-03-14T12:55:35.952Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期">
 <meta name="twitter:description" content="我不要你觉得，我要我觉得，听我的，组件化分发生命周期就这么写！  是什么组件化分发生命周期是什么？就是将主工程的生命周期分发到各个组件里去。直观些的介绍则是：AppDelegate 遵循并实现了 UIApplicationDelegate 代理，其中包括 willFinishLaunchingWithOptions:、didFinishLaunchingWithOptions:、applicat">
@@ -437,10 +437,6 @@
 <p>无侵入、无注册，个人感觉还是比较完美的。虽然最后只是基于青木的方案做了免注册的优化，但是思考过程中的其他方案也是值得分享的！</p>
 <p>以上，就是总结的所有组件化分发生命周期的方案了。如果你还有其他更好方案，欢迎讨论！<br>所有的实践都在 Demo 里了： <a href="https://github.com/gonghonglou/DemoRepo/tree/master/GHLShareLifecycle/GHLShareLifecycle" target="_blank" rel="noopener">GHLShareLifecycle</a></p>
 <h1 id="2020-03-08-更新"><a href="#2020-03-08-更新" class="headerlink" title="2020.03.08 更新:"></a>2020.03.08 更新:</h1><p><strong>本以为上一种方案已经很完美了，但是在项目中应用的时候还是发现了问题。最新解决方案见：<a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a></strong></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li>小白出手，请多指教。如言有误，还望斧正！</li>
-<li>转载请保留原文地址：<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">http://gonghonglou.com/2019/08/29/pod-lifecycle/</a></li>
-</ul>
 
       
     </div>
@@ -643,7 +639,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#是什么"><span class="nav-number">1.</span> <span class="nav-text">是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么"><span class="nav-number">2.</span> <span class="nav-text">为什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么做"><span class="nav-number">3.</span> <span class="nav-text">怎么做</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、sunnyxx-的-Notification-Once"><span class="nav-number">3.1.</span> <span class="nav-text">1、sunnyxx 的 Notification Once</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、美团的-Kylin-注册函数"><span class="nav-number">3.2.</span> <span class="nav-text">2、美团的 Kylin 注册函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、手动注册、遍历分发"><span class="nav-number">3.3.</span> <span class="nav-text">3、手动注册、遍历分发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、Category-覆盖、追加方法⚠️"><span class="nav-number">3.4.</span> <span class="nav-text">4、Category 覆盖、追加方法⚠️</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5、消息转发"><span class="nav-number">3.5.</span> <span class="nav-text">5、消息转发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6、最后的优化"><span class="nav-number">3.6.</span> <span class="nav-text">6、最后的优化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2020-03-08-更新"><span class="nav-number">4.</span> <span class="nav-text">2020.03.08 更新:</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#是什么"><span class="nav-number">1.</span> <span class="nav-text">是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么"><span class="nav-number">2.</span> <span class="nav-text">为什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么做"><span class="nav-number">3.</span> <span class="nav-text">怎么做</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、sunnyxx-的-Notification-Once"><span class="nav-number">3.1.</span> <span class="nav-text">1、sunnyxx 的 Notification Once</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、美团的-Kylin-注册函数"><span class="nav-number">3.2.</span> <span class="nav-text">2、美团的 Kylin 注册函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、手动注册、遍历分发"><span class="nav-number">3.3.</span> <span class="nav-text">3、手动注册、遍历分发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、Category-覆盖、追加方法⚠️"><span class="nav-number">3.4.</span> <span class="nav-text">4、Category 覆盖、追加方法⚠️</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5、消息转发"><span class="nav-number">3.5.</span> <span class="nav-text">5、消息转发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6、最后的优化"><span class="nav-number">3.6.</span> <span class="nav-text">6、最后的优化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2020-03-08-更新"><span class="nav-number">4.</span> <span class="nav-text">2020.03.08 更新:</span></a></li></ol></div>
             
 
           </div>

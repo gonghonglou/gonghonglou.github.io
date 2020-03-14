@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png">
 <meta property="og:image" content="http://image.gonghonglou.com/crash-guard/ZoombieObjects.png">
-<meta property="og:updated_time" content="2019-07-10T09:27:04.354Z">
+<meta property="og:updated_time" content="2020-03-14T12:56:30.840Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（二）：EXC_BAD_ACCESS">
 <meta name="twitter:description" content="大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里">
@@ -415,12 +415,6 @@
 <p>剩下的就是上一篇文章的内容了，这样就能做到 EXC_BAD_ACCESS Crash 的防护。</p>
 <p><strong><em>但仍然存在问题是延迟释放内存会造成性能浪费，所以可以设置一个默认的缓存僵尸对象的实例数量（50）或者给定一个固定内存大小（2M），超出这个限制就会释放，当然在释放之后如果再此触发了刚好释放掉的野指针，还是会造成 Crash 的。</em></strong></p>
 <p>Demo 地址：<a href="https://github.com/gonghonglou/GHLCrashGuard/tree/master/GHLCrashGuard/Classes/EXC_BAD_ACCESS" target="_blank" rel="noopener">GHLCrashGuard：GHLCrashGuard/Classes/EXC_BAD_ACCESS</a></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/06/crash-guard-bad-access/">http://gonghonglou.com/2019/07/06/crash-guard-bad-access/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -623,7 +617,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#重现-EXC-BAD-ACCESS-Crash"><span class="nav-number">1.</span> <span class="nav-text">重现 EXC_BAD_ACCESS Crash</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Xcode-中-Zoombie-Objects-僵尸对象调试原理"><span class="nav-number">2.</span> <span class="nav-text">Xcode 中 Zoombie Objects 僵尸对象调试原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自己实现僵尸对象调试"><span class="nav-number">3.</span> <span class="nav-text">自己实现僵尸对象调试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#EXC-BAD-ACCESS-防护"><span class="nav-number">4.</span> <span class="nav-text">EXC_BAD_ACCESS 防护</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#重现-EXC-BAD-ACCESS-Crash"><span class="nav-number">1.</span> <span class="nav-text">重现 EXC_BAD_ACCESS Crash</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Xcode-中-Zoombie-Objects-僵尸对象调试原理"><span class="nav-number">2.</span> <span class="nav-text">Xcode 中 Zoombie Objects 僵尸对象调试原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自己实现僵尸对象调试"><span class="nav-number">3.</span> <span class="nav-text">自己实现僵尸对象调试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#EXC-BAD-ACCESS-防护"><span class="nav-number">4.</span> <span class="nav-text">EXC_BAD_ACCESS 防护</span></a></li></ol></div>
             
 
           </div>

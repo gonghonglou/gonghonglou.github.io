@@ -89,7 +89,7 @@
 <meta property="og:description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的：123456NSURL *url = [NSURL URLWithString:">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/sdwebimage-gif/animatedImage.png">
-<meta property="og:updated_time" content="2020-03-08T16:22:25.045Z">
+<meta property="og:updated_time" content="2020-03-14T12:55:21.604Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SDWebImage 4.x &amp; 5.x 对 GIF 类型的处理问题">
 <meta name="twitter:description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的：123456NSURL *url = [NSURL URLWithString:">
@@ -417,10 +417,6 @@
 <p>需要注意的版本差异是：<br>使用 <code>[[SDImageCache sharedImageCache] storeImage:image forKey:key completion:nil];</code> 方法存储 GIF 时，从磁盘再次取出该图片：<br>v5.x 得益于新的编解码方法会保留动图效果，其中 v5.6.0 之前虽然有动图效果，但取出的 NSData 头信息仍然是 0x89 即 PNG 格式；v5.6.0 之后会修正为 0x47 GIF 格式（根据 SD 维护者提供的预计版本，见 <a href="https://github.com/SDWebImage/SDWebImage/issues/2952" target="_blank" rel="noopener">Issue #2952</a> 和 <a href="https://github.com/SDWebImage/SDWebImage/pull/2953" target="_blank" rel="noopener">PR #2953</a>）<br>v4.x 则会失去动图效果</p>
 <p>再次需要注意的是：<br>使用以上方法所存储的 image 如果是 SD 经手过的，由 NSData 类型转换来的 UIImage，SD 会给它打上 <code>sd_imageFormat</code> 标签，即能够正确识别图片类型。如果并非 SD 经手的话，即没有 <code>sd_imageFormat</code> 标签的情况，该方法还是会将图片编码为 PNG 或者 JPEG，除非使用 <code>[[SDImageCache sharedImageCache] storeImage:image imageData:imageData forKey:key toDisk:YES completion::nil];</code> 方法，同时传入 image 和 imageData。</p>
 <p>相关 Issue：<a href="https://github.com/SDWebImage/SDWebImage/issues/2952" target="_blank" rel="noopener">Download a GIF and store the image, SD will save it as a PNG to disk. #2952</a></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li>小白出手，请多指教。如言有误，还望斧正！</li>
-<li>转载请保留原文地址：<a href="http://gonghonglou.com/2020/03/01/sdwebimage-gif/">http://gonghonglou.com/2020/03/01/sdwebimage-gif/</a></li>
-</ul>
 
       
     </div>
@@ -623,7 +619,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#v4-x"><span class="nav-number">1.</span> <span class="nav-text">v4.x</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#v5-x"><span class="nav-number">2.</span> <span class="nav-text">v5.x</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number"></span> <span class="nav-text">后记</span></a></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#v4-x"><span class="nav-number">1.</span> <span class="nav-text">v4.x</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#v5-x"><span class="nav-number">2.</span> <span class="nav-text">v5.x</span></a></li></ol></div>
             
 
           </div>

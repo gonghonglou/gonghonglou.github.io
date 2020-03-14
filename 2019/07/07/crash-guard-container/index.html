@@ -88,7 +88,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-09-09T14:09:49.594Z">
+<meta property="og:updated_time" content="2020-03-14T13:00:37.335Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
 <meta name="twitter:description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
@@ -389,12 +389,6 @@
 <p>当然 NSArray、NSMutableArray、NSDictionary、NSMutableDictionary、NSString、NSMutableString、NSNumber 这些类都提供了跟多的方法，只要细心仔细的将他们全 Hook 掉就好了。当然实际开发中可能常用的就那么几个方法，Hook 那些就已经足够了。</p>
 <p>线上接入了这类的防护之后要比前边的文章讲的 Unrecognized Selector Crash 和 EXC_BAD_ACCESS Crash 更容易造成业务逻辑的错乱，毕竟业务逻辑中不可避免的要用到大量的 NSArray、NSDictionary 类，可能在接入这类防护后会操成点击无响应或者页面卡死，有时候这种情况甚至比程序崩溃还让用户崩溃，所以也要看实际开发需要的取舍。在接入防护后尤其要做好堆栈收集，上报 Crash 的工作，及时解决掉问题。</p>
 <p>Demo 地址：<a href="https://github.com/gonghonglou/DemoRepo/tree/master/GHLCrashGuard/GHLCrashGuard/Classes/Container" target="_blank" rel="noopener">GHLCrashGuard：GHLCrashGuard/Classes/Container</a></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/07/crash-guard-container/">http://gonghonglou.com/2019/07/07/crash-guard-container/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -493,17 +487,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -587,22 +572,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">1.</span> <span class="nav-text">后记</span></a></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       

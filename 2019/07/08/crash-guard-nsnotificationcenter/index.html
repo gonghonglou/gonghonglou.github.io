@@ -88,7 +88,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="If your app targets iOS 9.0 and later or macOS 10.11 and later, you don’t need to unregister an observer in its dealloc method. Otherwise, you should call this method or removeObserver:name:object: b">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-07-14T10:49:14.776Z">
+<meta property="og:updated_time" content="2020-03-14T12:56:24.164Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Crash 防护方案（六）：NSNotificationCenter">
 <meta name="twitter:description" content="If your app targets iOS 9.0 and later or macOS 10.11 and later, you don’t need to unregister an observer in its dealloc method. Otherwise, you should call this method or removeObserver:name:object: b">
@@ -387,12 +387,6 @@
 <p>NSObject+GHLCrashGuard 分类里 Hook dealloc 方法：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="keyword">void</span>)load &#123;</span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleMethod:<span class="built_in">NSSelectorFromString</span>(<span class="string">@"dealloc"</span>) withMethod:<span class="keyword">@selector</span>(ghl_dealloc) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)ghl_dealloc &#123;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">if</span> ([<span class="built_in">UIDevice</span> currentDevice].systemVersion.doubleValue &lt; <span class="number">9.0</span>) &#123;</span><br><span class="line">        [[GHLNotificationCenterManager sharedInstance] handleObjectRemoveObserver:<span class="keyword">self</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    [<span class="keyword">self</span> ghl_dealloc];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>GHLNotificationCenterManager 的 handleObjectRemoveObserver: 方法实现：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)handleObjectRemoveObserver:(__<span class="keyword">unsafe_unretained</span> <span class="keyword">id</span>)object &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *addObserver = objc_getAssociatedObject(object, <span class="string">"addObserverFlag"</span>);</span><br><span class="line">    <span class="keyword">if</span> ([addObserver boolValue]) &#123;</span><br><span class="line">        [[<span class="built_in">NSNotificationCenter</span> defaultCenter] removeObserver:<span class="keyword">self</span>];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>Demo 地址：<a href="https://github.com/gonghonglou/GHLCrashGuard/tree/master/GHLCrashGuard/Classes/NSNotificationCenter" target="_blank" rel="noopener">GHLCrashGuard：GHLCrashGuard/Classes/NSNotificationCenter</a></p>
-<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><ul>
-<li><p>小白出手，请多指教。如言有误，还望斧正！</p>
-</li>
-<li><p>转载请保留原文地址：<a href="http://gonghonglou.com/2019/07/08/crash-guard-nsnotificationcenter/">http://gonghonglou.com/2019/07/08/crash-guard-nsnotificationcenter/</a></p>
-</li>
-</ul>
 
       
     </div>
@@ -491,17 +485,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -585,22 +570,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">1.</span> <span class="nav-text">后记</span></a></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
