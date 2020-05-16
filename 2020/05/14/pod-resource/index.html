@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podfile.png">
-<meta property="og:updated_time" content="2020-05-16T17:10:52.216Z">
+<meta property="og:updated_time" content="2020-05-16T17:13:39.826Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化资源文件管理方案">
 <meta name="twitter:description" content="前言最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。 进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资">
@@ -431,7 +431,7 @@
 <p><img src="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png" alt="Preprocessor Macros from pospec"></p>
 <p>这样以来，在组件内使用 <code>HOLO_POD_NAME</code> 这个宏，就能得到 <code>@&quot;HoloResource&quot;</code> 这个字符串了。那我们就可以用这个宏来拼接不同的路径以加载资源文件。比如：</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="built_in">UIImage</span> holo_imageNamed:name inBundle:HOLO_POD_NAME];</span><br></pre></td></tr></table></figure>
-<p>每个组件统一调用以上方法就可以访问自己的图片资源了，把这个方法调用定义一个 宏，使用起来就更方便了，后续章节会给出具体实现。</p>
+<p>每个组件统一调用以上方法就可以访问自己的图片资源了，再把这个方法调用定义一个 宏，就满足我们的需求了，后续章节会给出具体实现。</p>
 <h2 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h2><p>但是这种在 podspec 里配置预编译宏的方式也会配置在主工程的 Pods-HoloResource_Example.debug.xcconfig / Pods-HoloResource_Example.release.xcconfig 文件里，这就导致了，如果多个组件配置了同名的预编译宏会有多个同名的配置出现在主工程，编译也会报警告。</p>
 <p>替代这种方案的另一种实现是，在 Podfile 里 hook install，在 install 之后给每个工程配置一份预编译宏，通过 <code>post_install</code> 的能力：</p>
 <figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">post_install <span class="keyword">do</span> <span class="params">|installer|</span></span><br><span class="line">  installer.pods_project.targets.each <span class="keyword">do</span> <span class="params">|target|</span></span><br><span class="line">    target.build_configurations.each <span class="keyword">do</span> <span class="params">|config|</span></span><br><span class="line">      config.build_settings[<span class="string">'GCC_PREPROCESSOR_DEFINITIONS'</span>] = <span class="string">"'HOLO_POD_NAME=@(\"<span class="subst">#&#123;target&#125;</span>\")'"</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
