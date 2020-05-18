@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podfile.png">
-<meta property="og:updated_time" content="2020-05-16T17:18:31.433Z">
+<meta property="og:updated_time" content="2020-05-18T14:48:49.898Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化资源文件管理方案">
 <meta name="twitter:description" content="前言最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。 进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资">
@@ -419,7 +419,7 @@
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSString</span> *bundlePath = [<span class="built_in">NSBundle</span> bundleForClass:HoloResourceDemoA.class].resourcePath;</span><br><span class="line">bundlePath = [bundlePath stringByAppendingPathComponent:<span class="string">@"HoloResourceDemoA.bundle"</span>];</span><br><span class="line"><span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> bundleWithPath:bundlePath];</span><br><span class="line">[<span class="built_in">UIImage</span> imageNamed:<span class="string">@""</span> inBundle:bundle compatibleWithTraitCollection:<span class="literal">nil</span>];</span><br></pre></td></tr></table></figure>
 <p>而且需要根据不同的组件名称获取当前组件的 bundle，这就导致不同组件内需要提供不同的取值方法。</p>
 <p>最简单的解决方案是将这些取值方法统一成单一方法，封装进一个基础类，每个组件调用时传入当前组件名称。根据上一节可以发现，最终不同的路径也就只有 4 种而已，如果我们能获取到当前组件的名称，也就可以分别到这 4 个路径下查找文件了。</p>
-<p>但是每个组件调用这个基础类方法时仍然需要传入自己的组件名称，而且是字符串形式，还是会很麻烦。如果在代码执行当前行能够获取到当前 Pod 名称就好，那么我们就可以把这个 “获取代码执行当所在 Pod 名称” 的逻辑封装进统一方法里，少传一个参数。</p>
+<p>但是每个组件调用这个基础类方法时仍然需要传入自己的组件名称，而且是字符串形式，还是会很麻烦。如果在代码执行当前行能够获取到当前 Pod 名称就好，那么我们就可以把这个 “获取代码执行当前行所在 Pod 名称” 的逻辑封装进统一方法里，少传一个参数。</p>
 <p>好在 CocoaPods 给我们提供了给各个组件配置预编译宏的能力。虽然不是提供方法，但是可以提供 宏，在代码执行当前行拿到当前 Pod 名称。</p>
 <h2 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h2><p>在 podspec 里加上：</p>
 <figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配置 Xcode Build Setting</span></span><br><span class="line">s.xcconfig = &#123;</span><br><span class="line"><span class="comment">#'GCC_PREPROCESSOR_DEFINITIONS' =&gt; 'HOLO_POD_NAME=@(\"HoloResource\")'</span></span><br><span class="line">  <span class="string">'GCC_PREPROCESSOR_DEFINITIONS'</span> =&gt; <span class="string">"'HOLO_POD_NAME=@(\"<span class="subst">#&#123;s.name&#125;</span>\")'"</span> <span class="comment"># 配置预编译宏</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -429,7 +429,7 @@
 <figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GCC_PREPROCESSOR_DEFINITIONS = <span class="variable">$(inherited)</span> COCOAPODS=1 'HOLO_POD_NAME=@(<span class="string">"HoloResource"</span>)'</span><br></pre></td></tr></table></figure>
 <p>相应的，在各 Pod 的 TARGET 里能看到的 Preprocessor Macros 为：</p>
 <p><img src="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png" alt="Preprocessor Macros from pospec"></p>
-<p>这样以来，在组件内使用 <code>HOLO_POD_NAME</code> 这个宏，就能得到 <code>@&quot;HoloResource&quot;</code> 这个字符串了。那我们就可以用这个宏来拼接不同的路径以加载资源文件。比如：</p>
+<p>这样一来，在组件内使用 <code>HOLO_POD_NAME</code> 这个宏，就能得到 <code>@&quot;HoloResource&quot;</code> 这个字符串了。那我们就可以用这个宏来拼接不同的路径以加载资源文件。比如：</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="built_in">UIImage</span> holo_imageNamed:name inBundle:HOLO_POD_NAME];</span><br></pre></td></tr></table></figure>
 <p>每个组件统一调用以上方法就可以访问自己的图片资源了，再把这个方法调用定义一个 宏，就满足我们的需求了，后续章节会给出具体实现。</p>
 <h2 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h2><p>但是这种在 podspec 里配置预编译宏的方式也会配置在主工程的 Pods-HoloResource_Example.debug.xcconfig / Pods-HoloResource_Example.release.xcconfig 文件里，这就导致了，如果多个组件配置了同名的预编译宏会有多个同名的配置出现在主工程，编译也会报警告。</p>
