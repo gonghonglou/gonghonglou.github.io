@@ -90,7 +90,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png">
 <meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podfile.png">
-<meta property="og:updated_time" content="2020-05-19T14:47:38.850Z">
+<meta property="og:updated_time" content="2020-05-19T14:51:34.478Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化资源文件管理方案">
 <meta name="twitter:description" content="前言最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。 进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资">
@@ -473,7 +473,7 @@
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// If the bundle parameter is nil, the main bundle is used.</span></span><br><span class="line"><span class="comment">// Releases resources in response to memory pressure (e.g. memory warning), reloading from the bundle when necessary.</span></span><br><span class="line">+ (<span class="built_in">UINib</span> *)nibWithNibName:(<span class="built_in">NSString</span> *)name bundle:(<span class="keyword">nullable</span> <span class="built_in">NSBundle</span> *)bundleOrNil;</span><br><span class="line"></span><br><span class="line"><span class="comment">// If the bundle parameter is nil, the main bundle is used.</span></span><br><span class="line">+ (<span class="built_in">UINib</span> *)nibWithData:(<span class="built_in">NSData</span> *)data bundle:(<span class="keyword">nullable</span> <span class="built_in">NSBundle</span> *)bundleOrNil;</span><br></pre></td></tr></table></figure>
 <p>注册 xib 文件：<br><figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> holo_bundleNamed:HOLO_POD_NAME];</span><br><span class="line"><span class="built_in">UINib</span> *nib = [<span class="built_in">UINib</span> nibWithNibName:<span class="built_in">NSStringFromClass</span>([ExampleTableViewCell <span class="keyword">class</span>]) bundle:bundle];</span><br><span class="line">[<span class="keyword">self</span>.tableView registerNib:nib forCellReuseIdentifier:<span class="built_in">NSStringFromClass</span>([ExampleTableViewCell <span class="keyword">class</span>])];</span><br></pre></td></tr></table></figure></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>1、代码已开源，具体实现及思路请参照源码：<a href="https://github.com/gonghonglou/HoloResource" target="_blank" rel="noopener">HoloResource</a></p>
-<p>2、大家在进行组件化之后都是怎么管理资源文件的呢？欢迎留言讨论指教。</p>
+<p>2、大家的资源文件都是怎么管理的呢？欢迎留言讨论指教。</p>
 
       
     </div>
