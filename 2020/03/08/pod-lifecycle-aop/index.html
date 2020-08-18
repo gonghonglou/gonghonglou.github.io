@@ -88,7 +88,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-06-14T16:04:54.303Z">
+<meta property="og:updated_time" content="2020-08-18T13:39:14.632Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期 - AOP 方案">
 <meta name="twitter:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
@@ -386,7 +386,7 @@
 <p>在主工程的 <code>AppDelegate</code> 里执行 <code>UIApplicationDelegate</code> 的一系列生命周期的方法的时候，相应的各个 Pod 里也能有对应方法同时被执行，且不影响其他第三方对 <code>AppDelegate</code> 的 hook 操作。例如：主工程 <code>AppDelegate</code> 里的 <code>application:didFinishLaunchingWithOptions:</code> 方法被执行时，各个 Pod 里也能有对应的 <code>application:didFinishLaunchingWithOptions:</code> 方法被执行。</p>
 <p>那我们也可以 hook <code>AppDelegate</code> 的各阶段方法，遍历执行各个 Pod 里的对应方法之后，再执行下原本的方法。这样大家都保证各自的 hook 链不会断掉就 ok 了。</p>
 <h1 id="解决方案：AOP"><a href="#解决方案：AOP" class="headerlink" title="解决方案：AOP"></a>解决方案：AOP</h1><p>想起 <a href="https://github.com/steipete/Aspects" target="_blank" rel="noopener">Aspects</a> 这个库。或许，AOP 是一种不错的解决方案。思路如下：</p>
-<p>1）首先还是采用上一篇文章（<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a>）的方案，在各个 Pod 里通过继承 <code>HoloLifecycle</code> 类的方式让其子类拥有执行 UIApplicationDelegate 生命周期方法的能力。DEBUG 模式下收集 <code>HoloLifecycle</code> 的所有子类并存到 UserDefaults 里，RELEASE 模式下从 UserDefaults 里直接取出该数组</p>
+<p>1）首先还是采用上一篇文章（<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a>）的方案，在各个 Pod 里通过继承 <code>HoloLifecycle</code> 类的方式让其子类拥有执行 UIApplicationDelegate 生命周期方法的能力。</p>
 <p>2）hook <code>UIApplication</code> 的 <code>setDelegate:</code> 方法，拿到 <code>AppDelegate</code></p>
 <p>3）遍历 <code>AppDelegate</code> 的方法列表，判断是否是 <code>UIApplicationDelegate</code> 的协议方法</p>
 <p>4）使用 AOP 的方法，对以上遍历加判断筛选拿到的方法一一进行 hook</p>
