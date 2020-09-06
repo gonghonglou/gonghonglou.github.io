@@ -81,17 +81,17 @@
 
 
 
-<meta name="description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
+<meta name="description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） 在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Fireb">
 <meta property="og:type" content="article">
 <meta property="og:title" content="组件化分发生命周期 - AOP 方案">
 <meta property="og:url" content="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/index.html">
 <meta property="og:site_name" content="与佳期的个人博客">
-<meta property="og:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
+<meta property="og:description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） 在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Fireb">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-08-18T13:39:14.632Z">
+<meta property="og:updated_time" content="2020-09-06T12:20:07.784Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期 - AOP 方案">
-<meta name="twitter:description" content="在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 GoogleUtilities 也对 UIApplication 的 delegate 里的一些方法做了 hook">
+<meta name="twitter:description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） 在之前的文章（ 组件化分发生命周期 ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。 问题因为我们工程里用了 Fireb">
 
 
 
@@ -377,7 +377,8 @@
       
 
       
-        <p>在之前的文章（ <strong><a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a></strong> ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。</p>
+        <p>组件化分发生命周期 方案实现探索系列文章：<br>1、<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a><br><strong>2、<a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a></strong><br>3、<a href="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/">组件化分发生命周期 - AOP 方案（libffi 实现）</a></p>
+<p>在之前的文章（ <strong><a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a></strong> ）里已经介绍过了 组件化分发生命周期 的概念及理由，并总结了几种分发生命周期的方案，最后一节的方案本以为已经很完美了，但是在项目中实际应用的时候还是发现了问题。</p>
 <h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>因为我们工程里用了 Firebase 打点，其中 Firebase 依赖的一个库 <code>GoogleUtilities</code> 也对 UIApplication 的 delegate 里的一些方法做了 hook 操作，对 APP 做了一些监听操作。以下是 <code>GoogleUtilities</code> 产生影响的关键代码：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">+ (GULApplication *)sharedApplication &#123;</span><br><span class="line">  <span class="keyword">if</span> ([GULAppEnvironmentUtil isAppExtension]) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">id</span> sharedApplication = <span class="literal">nil</span>;</span><br><span class="line">  Class uiApplicationClass = <span class="built_in">NSClassFromString</span>(kGULApplicationClassName);</span><br><span class="line">  <span class="keyword">if</span> (uiApplicationClass &amp;&amp;</span><br><span class="line">      [uiApplicationClass respondsToSelector:(<span class="built_in">NSSelectorFromString</span>(<span class="string">@"sharedApplication"</span>))]) &#123;</span><br><span class="line">    sharedApplication = [uiApplicationClass sharedApplication];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> sharedApplication;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>其中 <code>kGULApplicationClassName</code> 就是 <code>@&quot;UIApplication&quot;</code>。因为在上一种方案里我们将系统的 delegate 重设成了我们自己的类：<code>GHLApplicationDelegate</code>，并通过消息转发的方式统一处理了原 <code>AppDelegate</code> 里的所有方法。<br>这样一来，Firebase 通过以上代码得到的 <code>GULApplication</code> 就变成了 <code>GHLApplicationDelegate</code>，再去 hook <code>application:didFinishLaunchingWithOptions:</code> 等方法的时候就找不到这些方法了，即 Firebase 失去了相应的功能。</p>
 <p>这里是 Firebase 的场景，其他第三方库有相应 hook 操作的话也会有相同的问题，而我们在实际开发过程中没法避免其他库的 hook 操作，甚至可能察觉不到问题的存在，所以之前提到的方案是有问题的。</p>
@@ -529,7 +530,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">41</span>
+                  <span class="site-state-item-count">42</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
