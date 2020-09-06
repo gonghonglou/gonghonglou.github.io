@@ -88,7 +88,7 @@
 <meta property="og:site_name" content="与佳期的个人博客">
 <meta property="og:description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） background在上一篇 组件化分发生命周期 - AOP 方案 文章里，介绍了通过 Aspects 这个库，面向切面实现分发 UIApplicationDelegate 方法。 再简单重复介绍下分发思路： 1) hook UIA">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-09-06T13:52:06.140Z">
+<meta property="og:updated_time" content="2020-09-06T13:57:38.100Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="组件化分发生命周期 - AOP 方案（libffi 实现）">
 <meta name="twitter:description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） background在上一篇 组件化分发生命周期 - AOP 方案 文章里，介绍了通过 Aspects 这个库，面向切面实现分发 UIApplicationDelegate 方法。 再简单重复介绍下分发思路： 1) hook UIA">
@@ -378,7 +378,7 @@
 
       
         <p>组件化分发生命周期 方案实现探索系列文章：<br>1、<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a><br>2、<a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a><br><strong>3、<a href="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/">组件化分发生命周期 - AOP 方案（libffi 实现）</a></strong></p>
-<h1 id="background"><a href="#background" class="headerlink" title="background"></a>background</h1><p>在上一篇 <a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a> 文章里，介绍了通过 <a href="https://github.com/steipete/Aspects" target="_blank" rel="noopener">Aspects</a> 这个库，面向切面实现分发 UIApplicationDelegate 方法。</p>
+<h1 id="background"><a href="#background" class="headerlink" title="background"></a>background</h1><p>在上一篇 <a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a> 文章里，介绍了通过 <a href="https://github.com/steipete/Aspects" target="_blank" rel="noopener">Aspects</a> 这个库，面向切面实现分发 <code>UIApplicationDelegate</code> 方法。</p>
 <p>再简单重复介绍下分发思路：</p>
 <p>1) hook <code>UIApplication</code> 的 <code>setDelegate:</code> 方法，拿到 <code>AppDelegate</code> 实例</p>
 <p>2）遍历 <code>AppDelegate</code> 的方法列表，判断是否是 <code>UIApplicationDelegate</code> 的协议方法</p>
