@@ -98,7 +98,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip.png">
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip-CreateUniversalBinary.png">
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip-CreateUniversalBinary.png">
-<meta property="og:updated_time" content="2021-03-08T16:44:13.935Z">
+<meta property="og:updated_time" content="2021-03-08T16:54:36.079Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64">
 <meta name="twitter:description" content="前言之前打包机升级 Xcode12 之后发现私有库发版时执行 pod lib lint 命令报错，一开始看报错信息提示以为是 Xcode12 或者 CocoaPods 的锅，想着蹲个新版本出来也许就好了，就暂时没管，打包机仍旧使用 Xcode11 发版。后来因为另外的需求需要我们升级 Xcode12，要优先解决组件发版报错问题，所以就仔细排查了下这个问题。 复现随便找一个简单的开源库，以 Holo">
@@ -445,9 +445,7 @@
 <p>额外说明的是：关于 <code>App</code> 这个字符串，在执行 <code>pod lib lint</code> 命令时，CocoaPods 会根据当前的 podspec 文件创建一个叫 <code>App</code> 的工程，执行 <code>pod install</code> 命令生成 <code>App.xcworkspace</code> 文件，对这个工程文件执行 <code>xcodebuild</code> 命令进行校验。感兴趣详细过程的话可以仔细阅读下 <code>lint.rb</code> 这几个文件。</p>
 </blockquote>
 <p>到这里我们也就搞清楚了传入的 <code>--skip-import-validation</code> 参数究竟作用在了哪里，如果没传该参数的话 <code>xcodebuild</code> 命令的 <code>scheme</code> 值为 <code>App</code>，也就是将包含当前 pod 的所有相关 pod 链接进主工程进行编译；如果传递了该参数的话 <code>xcodebuild</code> 命令的 <code>scheme</code> 值为 “当前 pod 名称”，也就是仅编译当前 pod。通过查看这两种命令执行的 log 日志便一目了然：</p>
-<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/xcodebuild clean build -workspace</span><br><span class="line">    /var/folders/z7/<span class="number">9</span>hq4dfq97cn4xt4v56vqykph0000gn/T/CocoaPods-Lint-<span class="number">20210308</span>-<span class="number">5626</span>-<span class="number">1</span>qf4isb-HoloTableView/App.xcworkspace</span><br><span class="line">    -scheme App -configuration Release CODE_SIGN_IDENTITY=- -sdk</span><br><span class="line">    iphonesimulator -destination id=<span class="number">92</span>D0138F-E883-<span class="number">4</span>EC5-B9B1-<span class="number">78</span>A60002388B</span><br></pre></td></tr></table></figure>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip.png" alt=""></p>
-<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/xcodebuild clean build -workspace</span><br><span class="line">    /var/folders/z7/<span class="number">9</span>hq4dfq97cn4xt4v56vqykph0000gn/T/CocoaPods-Lint-<span class="number">20210308</span>-<span class="number">5626</span>-<span class="number">1</span>qf4isb-HoloTableView/App.xcworkspace</span><br><span class="line">    -scheme HoloTableView -configuration Release CODE_SIGN_IDENTITY=- -sdk</span><br><span class="line">    iphonesimulator -destination id=<span class="number">92</span>D0138F-E883-<span class="number">4</span>EC5-B9B1-<span class="number">78</span>A60002388B</span><br></pre></td></tr></table></figure>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip.png" alt=""></p>
 <p>查看 log 日志结尾能够看到命令执行的结果最终的产物：</p>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip-CreateUniversalBinary.png" alt=""></p>
