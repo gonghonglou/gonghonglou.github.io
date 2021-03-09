@@ -100,7 +100,7 @@
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip.png">
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip-CreateUniversalBinary.png">
 <meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip-CreateUniversalBinary.png">
-<meta property="og:updated_time" content="2021-03-09T02:01:05.684Z">
+<meta property="og:updated_time" content="2021-03-09T02:13:00.906Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64">
 <meta name="twitter:description" content="前言之前打包机升级 Xcode12 之后发现私有库发版时执行 pod lib lint 命令报错，一开始看报错信息提示以为是 Xcode12 或者 CocoaPods 的锅，想着蹲个新版本出来也许就好了，就暂时没管，打包机仍旧使用 Xcode11 发版。后来因为另外的需求需要我们升级 Xcode12，要优先解决组件发版报错问题，所以就仔细排查了下这个问题。 复现随便找一个简单的开源库，以 Holo">
@@ -421,7 +421,8 @@
 <p>在 Xcode 的 Build Settings 里查看 Architectures 模块可以看出差别：</p>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode11-build-settings-architectures.png" alt=""></p>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-build-settings-architectures.png" alt=""></p>
-<p>可以看到，Xcode11 指定了有效架构，而在 Xcode12 里将 <code>Valid Architectures</code> 这一项被移除掉了，新增了 <code>Excluded Architectures</code> 选项并默认为空。<br>当我们在某一 podspec 里加上 <code>s.user_target_xcconfig = { &#39;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#39; =&gt; &#39;arm64&#39; }</code> 命令就能在这里看到移除了模拟器环境下的 <code>arm64</code> 架构。</p>
+<p>可以看到，Xcode11 指定了有效架构，而在 Xcode12 里将 <code>Valid Architectures</code> 这一项被移除掉了，新增了 <code>Excluded Architectures</code> 选项并默认为空。</p>
+<p>Xcode12 环境下，当我们在某一 podspec 里加上 <code>s.user_target_xcconfig = { &#39;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#39; =&gt; &#39;arm64&#39; }</code> 命令就能在这里看到移除了模拟器环境下的 <code>arm64</code> 架构。当然 CocoaPods 官方十分不建议使用 <code>user_target_xcconfig</code> 来更改宿主工程的环境，但这也正是令 <code>pod lib lint</code> 通过的根本原因。</p>
 <h2 id="关于疑问-3：为什么-Pod-Example-工程编译没问题，lint-却报错？"><a href="#关于疑问-3：为什么-Pod-Example-工程编译没问题，lint-却报错？" class="headerlink" title="关于疑问 3：为什么 Pod Example 工程编译没问题，lint 却报错？"></a>关于疑问 3：为什么 Pod Example 工程编译没问题，lint 却报错？</h2><p>解决了以上问题这个问题就更简单了，我们在 Xcode 里看下 Example 工程的编译过程：</p>
 <p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-pod-example-build.png" alt=""></p>
 <p>为了更方便的查看编译过程，点击 “Export…” 按钮，能够导出一份 <code>Build HoloTableView-Example_2021-03-03T22-50-02.txt</code> 文本，在命令行通过 <code>cat</code> 命令查看下内容。由于内容很多，我们依旧用 <code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target</code> 全局搜索看看结果：</p>
