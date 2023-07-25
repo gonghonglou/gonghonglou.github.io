@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="这是一篇通过 CocoaPods 插件整合开发工具的记录文章，主要涉及到以下几部分内容： 1、Podfile 内声明公有源和私有源 source2、Podfile 内提供 dev_pods 自定义方法用于提测过程中实时拉取组件分支最新 commit3、解决 libwebp 科学上网问题：修改公有源里 podspec git 地址为 github 地址4、解决 CocoaPods bug：一旦有任一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次 CocoaPods 插件整合开发工具">
+<meta property="og:url" content="http://gonghonglou.com/2021/07/17/cocoapods-plugin-tool/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="这是一篇通过 CocoaPods 插件整合开发工具的记录文章，主要涉及到以下几部分内容： 1、Podfile 内声明公有源和私有源 source2、Podfile 内提供 dev_pods 自定义方法用于提测过程中实时拉取组件分支最新 commit3、解决 libwebp 科学上网问题：修改公有源里 podspec git 地址为 github 地址4、解决 CocoaPods bug：一旦有任一">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-07-17T09:42:44.000Z">
+<meta property="article:modified_time" content="2021-08-30T02:51:17.454Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/07/17/cocoapods-plugin-tool/"/>
+
+
+
+
+
+  <title>记一次 CocoaPods 插件整合开发工具 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/07/17/cocoapods-plugin-tool/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">记一次 CocoaPods 插件整合开发工具</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-07-17T17:42:44+08:00">
+                2021-07-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这是一篇通过 CocoaPods 插件整合开发工具的记录文章，主要涉及到以下几部分内容：</p>
+<p>1、Podfile 内声明公有源和私有源 source<br>2、Podfile 内提供 <code>dev_pods</code> 自定义方法用于提测过程中实时拉取组件分支最新 commit<br>3、解决 <code>libwebp</code> 科学上网问题：修改公有源里 podspec git 地址为 github 地址<br>4、解决 CocoaPods bug：一旦有任一组件在 podspec 里使用 <code>resources</code> 命令管理资源文件，CocoaPods 会把所有组件内的资源文件拷贝到 main bundle 里</p>
+<p>只需在 Podfile 里添加这样一行，即可解决以上问题：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">plugin <span class="string">&#x27;cocoapods-lebbay&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>而且整合了其他插件命令到 <code>cocoapods-lebbay</code> 工程内，方便用户安装和命令维护。接下来就来详细介绍下各部分的实现细节。</p>
+<h1 id="Podfile-内声明公有源和私有源-source"><a href="#Podfile-内声明公有源和私有源-source" class="headerlink" title="Podfile 内声明公有源和私有源 source"></a>Podfile 内声明公有源和私有源 source</h1><p>我们的组件化目前是采用了公有源和私有源双源的方案。为了 pod install 命令能够找到公有组件和私有组件，需要在 Podfile 里指定双源地址，如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 私有源地址</span></span><br><span class="line">source <span class="string">&#x27;https://xyz.com/ios/pod-specs.git&#x27;</span></span><br><span class="line"><span class="comment"># 公有源地址</span></span><br><span class="line">source <span class="string">&#x27;https://github.com/CocoaPods/Specs.git&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>但这样存在以下问题：<br>1、公司项目存在多个 APP，每个工程都要配置这样两行，各组件 Example 工程也存在这样的问题<br>2、公司 git 曾经换过几次地址，每次都要更换各个工程里的地址，且导致历史 tag 工程 pod install 失败<br>3、新电脑需要手动添加私有源才能工作</p>
+<p>这次新建 <code>cocoapods-lebby</code> 插件工程，就通过 CocoaPods 提供的 <code>source_provider</code> hook 时机添加 source 来统一管理源地址，源不存在时可自动添加。如下注册插件：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span><span class="symbol">:</span><span class="symbol">:HooksManager</span>.register(<span class="string">&#x27;cocoapods-lebbay&#x27;</span>, <span class="symbol">:source_provider</span>) <span class="keyword">do</span> |<span class="params">context</span>|</span><br><span class="line">    sources_manager = <span class="title class_">Pod</span><span class="symbol">:</span><span class="symbol">:Config</span>.instance.sources_manager</span><br><span class="line">    context.add_source(sources_manager.private_source)</span><br><span class="line">    context.add_source(sources_manager.public_source)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>闭包参数 <code>context</code> 对象提供了 <code>add_source</code> 方法用于添加 source 对象，这里借鉴 CocoaPods 源码做法，给 <code>Pod::Source::Manager</code> 扩展了两个方法分别提供私有源和公有源：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> <span class="title class_">Pod</span></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Source</span></span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">Manager</span></span><br><span class="line"></span><br><span class="line">      <span class="comment"># 私有源 source</span></span><br><span class="line">      <span class="keyword">def</span> <span class="title function_">private_source</span></span><br><span class="line">        url = <span class="string">&#x27;https://xyz.com/ios/pod-specs.git&#x27;</span></span><br><span class="line">        source = source_with_url(url)</span><br><span class="line">        <span class="keyword">return</span> source <span class="keyword">if</span> source</span><br><span class="line">        <span class="title class_">Command</span><span class="symbol">:</span><span class="symbol">:Repo</span><span class="symbol">:</span><span class="symbol">:Add</span>.parse([<span class="string">&#x27;lebbay-spec&#x27;</span>, url, <span class="string">&#x27;master&#x27;</span>]).run</span><br><span class="line">        source_with_url(url)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">      <span class="comment"># 公有源 source</span></span><br><span class="line">      <span class="keyword">def</span> <span class="title function_">public_source</span></span><br><span class="line">        url = <span class="string">&#x27;https://github.com/CocoaPods/Specs.git&#x27;</span></span><br><span class="line">        source = source_with_url(url)</span><br><span class="line">        <span class="keyword">return</span> source <span class="keyword">if</span> source</span><br><span class="line">        <span class="title class_">Command</span><span class="symbol">:</span><span class="symbol">:Repo</span><span class="symbol">:</span><span class="symbol">:Add</span>.parse([<span class="string">&#x27;master&#x27;</span>, url, <span class="string">&#x27;master&#x27;</span>]).run</span><br><span class="line">        source_with_url(url)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="插曲：修复-CocoaPods-bug-10764"><a href="#插曲：修复-CocoaPods-bug-10764" class="headerlink" title="插曲：修复 CocoaPods bug #10764"></a>插曲：修复 CocoaPods bug <a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/pull/10764">#10764</a></h4><p>通过 <code>source_provider</code> hook 时机添加源地址后引发了 CocoaPods 的一个小 bug。目前 CocoaPods 已将默认的公有源从 master（git）换成了 trunk（CDN），并在 <strong><a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/pull/9871">#9871</a></strong> 这个 PR 里加了个功能，即在 Podfile 里没有明确使用 master 源并且你的 repo list 里还有 master 的话，在执行 pod install 之后 CocoaPods 会打印一段警告文案提醒用户删除 master 源：</p>
+<blockquote>
+<p>[!] Your project does not explicitly specify the CocoaPods master specs repo. Since CDN is now used as the default, you may safely remove it from your repos directory via pod repo remove master. To suppress this warning please add warn_for_unused_master_specs_repo &#x3D;&gt; false to your Podfile.</p>
+</blockquote>
+<p>当然 CocoaPods 也提供了方法来关掉这个警告：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">install! <span class="string">&#x27;cocoapods&#x27;</span>, <span class="symbol">:warn_for_unused_master_specs_repo</span> =&gt; <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<p>因为现在在国内 CDN 的地址几乎都被封了，<code>pod install</code> 经常失败，尤其是组件发版时的 lint 过程。所以我们还在用 master 源。如果使用 <code>source_provider</code> hook 来添加源的话也应该是明确了在使用 master 源，并且不需要这段警告文案。查看 CocoaPods 源码（**<a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/blob/1.10.1/lib/cocoapods/installer.rb#L767-L776">installer.rb</a>**）发现，只检查了 Podfile 里的 source 写法，漏掉了插件提供 source 的场景。加上对 plugin sources 的检查的逻辑如下：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">warn_for_removing_git_master_specs_repo</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">unless</span> installation_options.warn_for_unused_master_specs_repo?</span><br><span class="line">  plugin_sources = run_source_provider_hooks</span><br><span class="line">  all_sources = podfile.sources + plugin_sources.map(&amp;<span class="symbol">:url</span>)</span><br><span class="line">  master_source = all_sources.find &#123; |<span class="params">source</span>| source == <span class="variable constant_">MASTER_SPECS_REPO_GIT_URL</span> &#125;</span><br><span class="line">  master_repo = config.sources_manager.all.find &#123; |<span class="params">s</span>| s.url == <span class="variable constant_">MASTER_SPECS_REPO_GIT_URL</span> &#125;</span><br><span class="line">  <span class="keyword">if</span> master_source.<span class="literal">nil</span>? &amp;&amp; !master_repo.<span class="literal">nil</span>?</span><br><span class="line">    <span class="variable constant_">UI</span>.warn <span class="string">&#x27;Your project does not explicitly specify the CocoaPods master specs repo. Since CDN is now used as the&#x27;</span> \</span><br><span class="line">    <span class="string">&#x27; default, you may safely remove it from your repos directory via `pod repo remove master`. To suppress this warning&#x27;</span> \</span><br><span class="line">    <span class="string">&#x27; please add `warn_for_unused_master_specs_repo =&gt; false` to your Podfile.&#x27;</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>提交了 PR：**<a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/pull/10764">Check the podfile sources and plugin sources when printing warnings without explicitly using the master source. #10764</a>** 应该会在 1.11.0 版本上线。</p>
+<h1 id="Podfile-内提供-dev-pods-自定义方法用于提测过程中实时拉取组件分支最新-commit"><a href="#Podfile-内提供-dev-pods-自定义方法用于提测过程中实时拉取组件分支最新-commit" class="headerlink" title="Podfile 内提供 dev_pods 自定义方法用于提测过程中实时拉取组件分支最新 commit"></a>Podfile 内提供 dev_pods 自定义方法用于提测过程中实时拉取组件分支最新 commit</h1><p>在组件开发过程中经常会修改几个 pod 的代码，需要一个个的将 pod 指向本地开发目录。在项目测试过程中又要将 pod 一个个指向提测分支，比如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开发阶段</span></span><br><span class="line">pod <span class="string">&#x27;PodA&#x27;</span>, <span class="symbol">:path</span> =&gt; <span class="string">&#x27;../PodA&#x27;</span></span><br><span class="line">pod <span class="string">&#x27;PodB&#x27;</span>, <span class="symbol">:path</span> =&gt; <span class="string">&#x27;../PodB&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试阶段</span></span><br><span class="line">pod <span class="string">&#x27;PodA&#x27;</span>, <span class="symbol">:git</span> =&gt; <span class="string">&#x27;https://xyz.com/ios/PodA.git&#x27;</span>, <span class="symbol">:branch</span> =&gt; <span class="string">&#x27;release/1.0.0&#x27;</span></span><br><span class="line">pod <span class="string">&#x27;PodB&#x27;</span>, <span class="symbol">:git</span> =&gt; <span class="string">&#x27;https://xyz.com/ios/PodB.git&#x27;</span>, <span class="symbol">:branch</span> =&gt; <span class="string">&#x27;release/1.0.0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>为了简化写法，我们提供了 <code>dev_pods</code> 方法，简化逻辑后思路大致如下</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dev_pods</span>(<span class="params">pods, branch = <span class="string">&#x27;&#x27;</span></span>)        </span><br><span class="line">    <span class="keyword">if</span> branch.length &gt; <span class="number">0</span></span><br><span class="line">        <span class="comment"># 测试阶段</span></span><br><span class="line">        pods.each <span class="keyword">do</span> |<span class="params">name</span>|</span><br><span class="line">            pod name, <span class="symbol">:git</span> =&gt; <span class="string">&quot;https://xyz.com/ios/<span class="subst">#&#123;name&#125;</span>.git&quot;</span>, <span class="symbol">:branch</span> =&gt; <span class="string">&quot;<span class="subst">#&#123;branch&#125;</span>&quot;</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="comment"># 开发阶段</span></span><br><span class="line">        development_path = <span class="title class_">File</span>.read(<span class="string">&#x27;./bin/.development_path&#x27;</span>).chomp</span><br><span class="line">        pods.each <span class="keyword">do</span> |<span class="params">name</span>|</span><br><span class="line">            pod name, <span class="symbol">:path</span> =&gt; <span class="string">&quot;<span class="subst">#&#123;development_path&#125;</span><span class="subst">#&#123;name&#125;</span>&quot;</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>在 <code>./bin/.development_path</code> 文件里配置本地开发目录。<br><code>dev_pods</code> 方法的用法如下：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开发阶段</span></span><br><span class="line">dev_pods [<span class="string">&#x27;PodA&#x27;</span>, <span class="string">&#x27;PodB&#x27;</span>]</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 测试阶段</span></span><br><span class="line">dev_pods [<span class="string">&#x27;PodA&#x27;</span>, <span class="string">&#x27;PodB&#x27;</span>], <span class="string">&#x27;release/1.0.0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>在测试阶段还有一个问题是，我们希望在组件的提测分支上修改了 bug、提交 commit 之后主工程 pod install 即可拉取最新代码。但因为 <code>Podfile.lock</code> 文件的存在，pod install 之后会把 commit 节点记下来，除非我们在提交 pod 改动后，再去更新主工程的 <code>Podfile.lock</code> 文件，否则是不会拉取最新代码的。</p>
+<p>为了实现这一需求，我们在 <code>dev_pods</code> 方法里修改了 <code>Podfile.lock</code> 文件，删掉 commit 节点信息，这样在拉取对应 pod 组件的时候就会拉取最新代码了。</p>
+<p>在应用过程中发现的另一问题是：tag 冲突。当组件 PodA 指向的 <code>release/1.0.0</code> 分支里 <code>podspec</code> 里的版本号是 <code>0.0.9</code>，那么主工程的 <code>Podfile.lock</code> 文件里记录的就是 <code>0.0.9</code>。当测试完成，组件 podA 发版修改版本号为 <code>1.0.0</code> 并提交到了 <code>release/1.0.0</code> 分支里，这时主工程再执行 pod install 就会报 tag 冲突。</p>
+<p>为解决这一问题，避免提测组件版本号变更影响主工程提测打包，我们的做法是如果 PodA 通过 <code>dev_pods</code> 方法指向了分支，那么在 <code>dev_pods</code> 里删掉 PodA 在 <code>Podfile.lock</code> 里的记录（只删除 version、branch、commit 信息即可），这样在 pod install 的时候就会像下载一个新的 pod 一样。</p>
+<p>问题、需求及解决思路大致如上。以前的方案是写了个 ruby 文件（<code>lebbay.rb</code>） 放在主工程目录，在 Podfile 里 <code>require &#39;./bin/lebbay.rb&#39;</code>。修改 <code>Podfile.lock</code> 文件也是脚本遍历文件内容操作字符串。现在统一整合到了 <code>cocoapods-lebbay</code> 插件里，为 Podfile 扩充了 DSL 方法，修改 <code>Podfile.lock</code> 文件可以直接使用 <code>cocoapods-core</code> 提供的 <strong><a target="_blank" rel="noopener" href="https://github.com/CocoaPods/Core/blob/master/lib/cocoapods-core/lockfile.rb">Lockfile</a></strong> 类及其方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> <span class="title class_">Pod</span></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Podfile</span></span><br><span class="line">    <span class="keyword">module</span> <span class="variable constant_">DSL</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">dev_pods</span>(<span class="params">pods, branch = <span class="string">&#x27;&#x27;</span></span>)</span><br><span class="line">      <span class="keyword">if</span> branch.length &gt; <span class="number">0</span></span><br><span class="line">        pods.each <span class="keyword">do</span> |<span class="params">name</span>|</span><br><span class="line">          pod name, <span class="symbol">:git</span> =&gt; <span class="string">&quot;https://xyz.com/ios/<span class="subst">#&#123;name&#125;</span>.git&quot;</span>, <span class="symbol">:branch</span> =&gt; <span class="string">&quot;<span class="subst">#&#123;branch&#125;</span>&quot;</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        pull_latest_code_and_resolve_conflict(pods)</span><br><span class="line">        puts <span class="string">&quot;lebbay: using remote pods with branch: <span class="subst">#&#123;branch&#125;</span>&quot;</span>.green</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        <span class="comment"># 自定义开发目录</span></span><br><span class="line">        development_path = <span class="title class_">Config</span>.instance.dev_pods_path</span><br><span class="line">        pods.each <span class="keyword">do</span> |<span class="params">name</span>|</span><br><span class="line">          pod name, <span class="symbol">:path</span> =&gt; <span class="string">&quot;<span class="subst">#&#123;development_path&#125;</span><span class="subst">#&#123;name&#125;</span>&quot;</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        puts <span class="string">&quot;lebbay: using local pods with path: <span class="subst">#&#123;development_path&#125;</span>xxx&quot;</span>.green</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#--------------------------------------#</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">pull_latest_code_and_resolve_conflict</span>(<span class="params">pods</span>)</span><br><span class="line">      <span class="comment"># 1、Podfile.lock</span></span><br><span class="line">      rewrite_lock_file(pods, <span class="title class_">Config</span>.instance.lockfile_path)</span><br><span class="line">      <span class="comment"># 2、Manifest.lock</span></span><br><span class="line">      rewrite_lock_file(pods, <span class="title class_">Config</span>.instance.sandbox.manifest_path)</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">rewrite_lock_file</span>(<span class="params">pods, lock_path</span>)</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">unless</span> lock_path.exist?</span><br><span class="line">      lock_hash = <span class="title class_">Lockfile</span>.from_file(lock_path).to_hash</span><br><span class="line">      </span><br><span class="line">      <span class="comment"># 1、PODS</span></span><br><span class="line">      lock_pods = lock_hash[<span class="string">&#x27;PODS&#x27;</span>]</span><br><span class="line">      <span class="keyword">if</span> lock_pods</span><br><span class="line">        target_pods = []</span><br><span class="line">        lock_pods.each <span class="keyword">do</span> |<span class="params">pod</span>|</span><br><span class="line">          <span class="keyword">if</span> pod.is_a? <span class="title class_">Hash</span></span><br><span class="line">            first_key = pod.keys[<span class="number">0</span>]</span><br><span class="line">            first_value = pod.values[<span class="number">0</span>]</span><br><span class="line">            <span class="keyword">if</span> (first_key.is_a? <span class="title class_">String</span>) &amp;&amp; (first_value.is_a? <span class="title class_">Array</span>)</span><br><span class="line">              <span class="keyword">next</span> <span class="keyword">if</span> is_include_key_in_pods(first_key, pods)</span><br><span class="line">              dep_pods = first_value.reject &#123; |<span class="params">dep_pod</span>| is_include_key_in_pods(dep_pod, pods) &#125;</span><br><span class="line">              target_pods &lt;&lt; (dep_pods.count &gt; <span class="number">0</span> ? &#123;first_key =&gt; dep_pods&#125; : first_key)</span><br><span class="line">              <span class="keyword">next</span></span><br><span class="line">            <span class="keyword">end</span></span><br><span class="line">            <span class="keyword">elsif</span> pod.is_a? <span class="title class_">String</span></span><br><span class="line">            <span class="keyword">next</span> <span class="keyword">if</span> is_include_key_in_pods(pod, pods)</span><br><span class="line">          <span class="keyword">end</span></span><br><span class="line">          target_pods &lt;&lt; pod</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        lock_hash[<span class="string">&#x27;PODS&#x27;</span>] = target_pods</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">      </span><br><span class="line">      <span class="comment"># 2、DEPENDENCIES</span></span><br><span class="line">      locak_dependencies = lock_hash[<span class="string">&#x27;DEPENDENCIES&#x27;</span>]</span><br><span class="line">      <span class="keyword">if</span> locak_dependencies</span><br><span class="line">        target_dependencies = []</span><br><span class="line">        locak_dependencies.each <span class="keyword">do</span> |<span class="params">dependence</span>|</span><br><span class="line">          <span class="keyword">if</span> dependence.is_a? <span class="title class_">String</span></span><br><span class="line">            <span class="keyword">next</span> <span class="keyword">if</span> is_include_key_in_pods(dependence, pods)</span><br><span class="line">          <span class="keyword">end</span></span><br><span class="line">          target_dependencies &lt;&lt; dependence</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        lock_hash[<span class="string">&#x27;DEPENDENCIES&#x27;</span>] = target_dependencies</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">      </span><br><span class="line">      <span class="title class_">Lockfile</span>.new(lock_hash).write_to_disk(lock_path)</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">is_include_key_in_pods</span>(<span class="params">target_key, pods</span>)</span><br><span class="line">      pods.each <span class="keyword">do</span> |<span class="params">pod</span>|</span><br><span class="line">        <span class="keyword">if</span> target_key.<span class="keyword">include</span>? pod</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#--------------------------------------#</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>我们同时修改了 <code>Pods/</code> 文件夹下的 <code>Manifest.lock</code> 文件，是因为 CooaPods 在 pod install 过程中会对比 lock 文件里记录的 version 版本号。若 <code>Manifest.lock</code> 文件里记录的版本没变的话，在执行 pod install 时 <code>Pods/</code> 文件夹里对应 Pod 的代码很可能是不会更新的。</p>
+<p>其中关于开发目录（<code>development_path = Config.instance.dev_pods_path</code>），给 <code>Pod::Config</code> 扩展了两个方法：设置开发目录 &amp; 读取开发目录：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> <span class="title class_">Pod</span></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Config</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 读取目录</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">dev_pods_path</span></span><br><span class="line">      config_path_file = dev_pods_path_config_file</span><br><span class="line">      dev_path = <span class="title class_">File</span>.read(config_path_file).chomp</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 设置目录</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">config_dev_pods_path</span>(<span class="params">dev_path</span>)</span><br><span class="line">      <span class="keyword">raise</span> <span class="title class_">Informative</span>, <span class="string">&quot;input can&#x27;t be nil&quot;</span> <span class="keyword">unless</span> dev_path.length &gt; <span class="number">0</span></span><br><span class="line">      dev_path += <span class="string">&#x27;/&#x27;</span> <span class="keyword">unless</span> dev_path[dev_path.length - <span class="number">1</span>] == <span class="string">&#x27;/&#x27;</span></span><br><span class="line">      </span><br><span class="line">      config_path_file = dev_pods_path_config_file</span><br><span class="line">      <span class="title class_">File</span>.open(config_path_file, <span class="string">&quot;w&quot;</span>) <span class="keyword">do</span> |<span class="params">file</span>|</span><br><span class="line">        file.syswrite(dev_path)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 配置文件</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">dev_pods_path_config_file</span></span><br><span class="line">      config_path = <span class="title class_">File</span>.expand_path(<span class="string">&#x27;~/.cocoapods-lebbay&#x27;</span>)</span><br><span class="line">      <span class="title class_">FileUtils</span>.makedirs(config_path) <span class="keyword">unless</span> <span class="title class_">File</span>.exists?config_path</span><br><span class="line">      </span><br><span class="line">      config_path_file = config_path + <span class="string">&#x27;/dev_pods_path_config&#x27;</span></span><br><span class="line">      <span class="keyword">unless</span> <span class="title class_">File</span>.exist?(config_path_file)</span><br><span class="line">        <span class="title class_">File</span>.open(config_path_file, <span class="string">&quot;w&quot;</span>) <span class="keyword">do</span> |<span class="params">file</span>|</span><br><span class="line">          file.syswrite(<span class="string">&#x27;../../&#x27;</span>)</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">      config_path_file</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>给 pod 扩展了两个方法入口分别执行这俩方法，读取开发目录（<code>pod dev-pods-path cat</code>），设置开发目录（<code>pod dev-pods-path set</code>）：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">require</span> <span class="string">&#x27;cocoapods-lebbay/cache_config&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">module</span> <span class="title class_">Pod</span></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Command</span></span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">DevPodsPath</span> &lt; <span class="title class_ inherited__">Command</span></span><br><span class="line">      <span class="variable language_">self</span>.abstract_command = <span class="literal">true</span></span><br><span class="line">      <span class="variable language_">self</span>.summary = <span class="string">&#x27;set or cat dev_pods path&#x27;</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">def</span> <span class="title function_">self</span>.options</span><br><span class="line">        []</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">Set</span> &lt; <span class="title class_ inherited__">DevPodsPath</span></span><br><span class="line">      <span class="variable language_">self</span>.summary = <span class="string">&#x27;set dev_pods path&#x27;</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">def</span> <span class="title function_">run</span></span><br><span class="line">        <span class="variable constant_">UI</span>.puts <span class="string">&quot;Please input dev_path for dev_pods command:&quot;</span>.green</span><br><span class="line">        answer = <span class="variable constant_">STDIN</span>.gets.chomp.strip</span><br><span class="line">        <span class="title class_">Config</span>.instance.config_dev_pods_path(answer)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">Cat</span> &lt; <span class="title class_ inherited__">DevPodsPath</span></span><br><span class="line">      <span class="variable language_">self</span>.summary = <span class="string">&#x27;cat dev_pods path&#x27;</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">def</span> <span class="title function_">run</span></span><br><span class="line">        <span class="variable constant_">UI</span>.puts <span class="title class_">Config</span>.instance.dev_pods_path.green</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="解决-libwebp-科学上网问题：修改公有源里-podspec-git-地址为-github-地址"><a href="#解决-libwebp-科学上网问题：修改公有源里-podspec-git-地址为-github-地址" class="headerlink" title="解决 libwebp 科学上网问题：修改公有源里 podspec git 地址为 github 地址"></a>解决 libwebp 科学上网问题：修改公有源里 podspec git 地址为 github 地址</h1><p>这个问题是因为 libwebp 的 podspec 里 git 地址是：<code>https://chromium.googlesource.com/webm/libwebp</code>，在 pod install 的时候大概率会因为网络原因而下载失败。将其改为：<code>https://github.com/webmproject/libwebp.git</code> 即可。</p>
+<p>之前的做法是在 <code>lebbay.rb</code> 脚本里提供了 <code>libwep_spec_fix</code> 方法批量修改公有源里 <code>libwebp.podspec</code> 的 git 地址，然后在 Podfile 文件里调用下这个方法。<br>现在也整合到了 <code>cocoapods-lebbay</code> 插件里，在 <code>pre_install</code> 的 hook 时机里执行：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span><span class="symbol">:</span><span class="symbol">:HooksManager</span>.register(<span class="string">&#x27;cocoapods-lebbay&#x27;</span>, <span class="symbol">:pre_install</span>) <span class="keyword">do</span> |<span class="params">context</span>|</span><br><span class="line">    target_url = <span class="string">&quot;https://chromium.googlesource.com/webm/libwebp&quot;</span></span><br><span class="line">    replace_url = <span class="string">&quot;https://github.com/webmproject/libwebp.git&quot;</span></span><br><span class="line"></span><br><span class="line">    repo_path = <span class="title class_">File</span>.expand_path(<span class="string">&#x27;~/.cocoapods/repos/master/Specs/1/9/2/libwebp/*/*.json&#x27;</span>)  </span><br><span class="line">    <span class="title class_">Dir</span>.glob(repo_path) <span class="keyword">do</span> |<span class="params">json_file</span>|</span><br><span class="line">        json_text = <span class="title class_">File</span>.read(json_file)</span><br><span class="line">        json_text = json_text.gsub(target_url, replace_url)</span><br><span class="line"></span><br><span class="line">        <span class="title class_">File</span>.open(json_file, <span class="string">&quot;w&quot;</span>) <span class="keyword">do</span> |<span class="params">file</span>|</span><br><span class="line">            file.syswrite(json_text)</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+
+<h1 id="解决-CocoaPods-bug：一旦有任一组件在-podspec-里使用-resources-命令管理资源文件，CocoaPods-会把所有组件内的资源文件拷贝到-main-bundle-里"><a href="#解决-CocoaPods-bug：一旦有任一组件在-podspec-里使用-resources-命令管理资源文件，CocoaPods-会把所有组件内的资源文件拷贝到-main-bundle-里" class="headerlink" title="解决 CocoaPods bug：一旦有任一组件在 podspec 里使用 resources 命令管理资源文件，CocoaPods 会把所有组件内的资源文件拷贝到 main bundle 里"></a>解决 CocoaPods bug：一旦有任一组件在 podspec 里使用 resources 命令管理资源文件，CocoaPods 会把所有组件内的资源文件拷贝到 main bundle 里</h1><p>关于这个问题的具体信息请查看：<a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/issues/8431">If there are one pod using xcassets via resources spec syntax, then all xcassets will be copied and compied twice during [CP] Copy Pods Resources build phase #8431</a></p>
+<p>虽然我们目前没有 pod 在使用 <code>resources</code> 命令，但为了避免三方库会引入这个问题，我们还是做了规避，在 <code>post_install</code> 的 hook 时机里修复 CocoaPods 的脚本。之前是将 <code>post_install</code> 的 hook 写在了 Podfile 里，现在放在了插件里来做：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span><span class="symbol">:</span><span class="symbol">:HooksManager</span>.register(<span class="string">&#x27;cocoapods-lebbay&#x27;</span>, <span class="symbol">:post_install</span>) <span class="keyword">do</span> |<span class="params">context</span>|</span><br><span class="line">    target_label = context.umbrella_targets.first.cocoapods_target_label</span><br><span class="line">    system <span class="string">%Q&#123;sed -i &quot;&quot; &quot;s/\\[\\[ \\$line != \\&quot;\\$&#123;PODS_ROOT&#125;</span>\\*\\<span class="string">&quot; \\]\\]/\\[\\[ \\$line != \\$&#123;PODS_ROOT&#125;\\* \\]\\]/g&quot;</span> <span class="string">&quot;./Pods/Target Support Files/<span class="subst">#&#123;target_label&#125;</span>/<span class="subst">#&#123;target_label&#125;</span>-resources.sh&quot;</span>&#125;</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># before</span></span><br><span class="line"><span class="comment">#if [[ $line != &quot;$&#123;PODS_ROOT&#125;*&quot; ]]; then</span></span><br><span class="line"><span class="comment"># changed</span></span><br><span class="line"><span class="comment">#if [[ $line != $&#123;PODS_ROOT&#125;* ]]; then</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>做完这些，各个工程里的 Podfile 文件就清爽了很多，之后再有需求的话也可以在 <code>cocoapods-lebbay</code> 插件里统一管理。<br>除了以上问题的整合，还把之前写的两个插件（组件自动化发版 <code>pod deliver</code> 命令和本地化文案词条管理 <code>pod localize</code> 命令）统一整合在了一起方便用户安装和命令维护。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/03/09/xcode12-lint-error/" rel="next" title="Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64">
+                <i class="fa fa-chevron-left"></i> Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/08/08/cocoapods-update-pod-sources/" rel="prev" title="修复 pod install 无法正确拉取 pod 代码">
+                修复 pod install 无法正确拉取 pod 代码 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Podfile-%E5%86%85%E5%A3%B0%E6%98%8E%E5%85%AC%E6%9C%89%E6%BA%90%E5%92%8C%E7%A7%81%E6%9C%89%E6%BA%90-source"><span class="nav-number">1.</span> <span class="nav-text">Podfile 内声明公有源和私有源 source</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8F%92%E6%9B%B2%EF%BC%9A%E4%BF%AE%E5%A4%8D-CocoaPods-bug-10764"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">插曲：修复 CocoaPods bug #10764</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Podfile-%E5%86%85%E6%8F%90%E4%BE%9B-dev-pods-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%96%B9%E6%B3%95%E7%94%A8%E4%BA%8E%E6%8F%90%E6%B5%8B%E8%BF%87%E7%A8%8B%E4%B8%AD%E5%AE%9E%E6%97%B6%E6%8B%89%E5%8F%96%E7%BB%84%E4%BB%B6%E5%88%86%E6%94%AF%E6%9C%80%E6%96%B0-commit"><span class="nav-number">2.</span> <span class="nav-text">Podfile 内提供 dev_pods 自定义方法用于提测过程中实时拉取组件分支最新 commit</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3-libwebp-%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E9%97%AE%E9%A2%98%EF%BC%9A%E4%BF%AE%E6%94%B9%E5%85%AC%E6%9C%89%E6%BA%90%E9%87%8C-podspec-git-%E5%9C%B0%E5%9D%80%E4%B8%BA-github-%E5%9C%B0%E5%9D%80"><span class="nav-number">3.</span> <span class="nav-text">解决 libwebp 科学上网问题：修改公有源里 podspec git 地址为 github 地址</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3-CocoaPods-bug%EF%BC%9A%E4%B8%80%E6%97%A6%E6%9C%89%E4%BB%BB%E4%B8%80%E7%BB%84%E4%BB%B6%E5%9C%A8-podspec-%E9%87%8C%E4%BD%BF%E7%94%A8-resources-%E5%91%BD%E4%BB%A4%E7%AE%A1%E7%90%86%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6%EF%BC%8CCocoaPods-%E4%BC%9A%E6%8A%8A%E6%89%80%E6%9C%89%E7%BB%84%E4%BB%B6%E5%86%85%E7%9A%84%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D%E5%88%B0-main-bundle-%E9%87%8C"><span class="nav-number">4.</span> <span class="nav-text">解决 CocoaPods bug：一旦有任一组件在 podspec 里使用 resources 命令管理资源文件，CocoaPods 会把所有组件内的资源文件拷贝到 main bundle 里</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/07/17/cocoapods-plugin-tool/';
+          this.page.identifier = '2021/07/17/cocoapods-plugin-tool/';
+          this.page.title = '记一次 CocoaPods 插件整合开发工具';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

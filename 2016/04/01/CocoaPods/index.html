@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="工欲善其事，必先利其器！在iOS开发中 CocoaPods 作为库依赖管理工具就是一把利器。 有了CocoaPods你再也不需要手动将需要的第三方库拖进你的工程、添加第三方库所依赖的framework、设置如-fno-objc-arc等编译参数、手动管理这些库的更新，当某个第三方库有依赖其他的库还要继续拖、拖、拖…… 我们只需要将所需要的第三方库声明到一个名为Podfile文件中，然后执行Pod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS的库依赖管理工具CocoaPods">
+<meta property="og:url" content="http://gonghonglou.com/2016/04/01/CocoaPods/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="工欲善其事，必先利其器！在iOS开发中 CocoaPods 作为库依赖管理工具就是一把利器。 有了CocoaPods你再也不需要手动将需要的第三方库拖进你的工程、添加第三方库所依赖的framework、设置如-fno-objc-arc等编译参数、手动管理这些库的更新，当某个第三方库有依赖其他的库还要继续拖、拖、拖…… 我们只需要将所需要的第三方库声明到一个名为Podfile文件中，然后执行Pod">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/cocoapods/cocoapods-icon.png">
+<meta property="og:image" content="http://image.gonghonglou.com/CocoaPods/searchAFNetworking.png">
+<meta property="og:image" content="http://image.gonghonglou.com/CocoaPods/podInstall.png">
+<meta property="og:image" content="http://image.gonghonglou.com/CocoaPods/Framework.png">
+<meta property="og:image" content="http://image.gonghonglou.com/CocoaPods/cocoapods_push.png">
+<meta property="article:published_time" content="2016-04-01T07:17:10.000Z">
+<meta property="article:modified_time" content="2021-10-17T08:45:16.451Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/cocoapods/cocoapods-icon.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2016/04/01/CocoaPods/"/>
+
+
+
+
+
+  <title>iOS的库依赖管理工具CocoaPods | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2016/04/01/CocoaPods/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS的库依赖管理工具CocoaPods</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-01T15:17:10+08:00">
+                2016-04-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>工欲善其事，必先利其器！在iOS开发中 <a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods">CocoaPods</a> 作为库依赖管理工具就是一把利器。</p>
+<p>有了CocoaPods你再也不需要手动将需要的第三方库拖进你的工程、添加第三方库所依赖的framework、设置如<code>-fno-objc-arc</code>等编译参数、手动管理这些库的更新，当某个第三方库有依赖其他的库还要继续拖、拖、拖……</p>
+<p>我们只需要将所需要的第三方库声明到一个名为<code>Podfile</code>文件中，然后执行<code>Pod install</code>命令就OK了，CocoaPods就会自动去下载我们所需要库，并为我的工程设置好相应的系统依赖和编译参数。 </p>
+<p><img src="http://image.gonghonglou.com/cocoapods/cocoapods-icon.png" alt="CocoaPods"></p>
+<h2 id="安装CocoaPods"><a href="#安装CocoaPods" class="headerlink" title="安装CocoaPods"></a>安装CocoaPods</h2><p>CocoaPods依赖于Ruby环境，刚好Mac下自带Ruby，使用Ruby的gem命令即可安装CocoaPods。<br>为防止因gem太老而引发问题，建议执行如下命令先更新gem：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> sudo gem update --<span class="keyword">system</span></span><br></pre></td></tr></table></figure>
+<p>执行如下命令安装CocoaPods：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gem <span class="keyword">install</span> cocoapods</span><br></pre></td></tr></table></figure>
+<p>如果执行上述命令后没有反应，那是因为Ruby的软件源 <a target="_blank" rel="noopener" href="https://rubygems.org/">https://rubygems.org</a> 使用的是亚马逊的云服务而被墙了（GFW的伟大。。。）<br>可以用淘宝的Ruby镜像来访问cocoapods，依次执行如下命令将官方的Ruby源替换成国内淘宝的源</p>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># $ gem sources --remove https:<span class="comment">//rubygems.org/</span></span></span><br><span class="line"><span class="meta"># $ gem sources -a https:<span class="comment">//ruby.taobao.org/</span></span></span><br></pre></td></tr></table></figure>
+<p>执行如下命令验证Ruby镜像的确是taobao的：</p>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># $ gem sources -l</span></span><br></pre></td></tr></table></figure>
+<p>出现如下文字才说明上面的命令是执行成功的：</p>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># *** CURRENT SOURCES ***</span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="meta"># https:<span class="comment">//ruby.taobao.org/</span></span></span><br></pre></td></tr></table></figure>
+<p>此时，再次执行gem命令安装CocoaPods：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>sudo gem install cocoapods</span><br><span class="line"><span class="variable">$ </span>pod setup</span><br></pre></td></tr></table></figure>
+<p>稍等片刻 即可安装成功。    </p>
+<blockquote>
+<p>注： <a target="_blank" rel="noopener" href="http://guides.cocoapods.org/terminal/commands.html#pod_setup"><code>pod setup</code></a> 是Cocoapods将它的信息下载到 <code>~/.cocoapods/repos</code> 目录下。即使在安装时不执行此命令，在初次执行 <code>pod install</code> 命令时，系统也会自动执行 <code>pod setup</code></p>
+</blockquote>
+<h4 id="——10-27更新-以下————————————————"><a href="#——10-27更新-以下————————————————" class="headerlink" title="——10.27更新 以下————————————————"></a>——10.27更新 以下————————————————</h4><p>ruby.taobao.org 停止更新了，使用 cocoapods 的同学，请更新到 <a target="_blank" rel="noopener" href="https://gems.ruby-china.org/">ruby china</a> 的源。更新方法：<br>使用如下命令查看镜像源：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>gem sources -l</span><br></pre></td></tr></table></figure>
+
+<p>更改镜像源：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gem sources --add https:<span class="regexp">//g</span>ems.ruby-china.org<span class="regexp">/ --remove https:/</span><span class="regexp">/rubygems.org/</span></span><br><span class="line">or</span><br><span class="line">$ gem sources --add https:<span class="regexp">//g</span>ems.ruby-china.org<span class="regexp">/ --remove https:/</span><span class="regexp">/ruby.taobao.org/</span></span><br></pre></td></tr></table></figure>
+<h4 id="——10-27更新-以上————————————————"><a href="#——10-27更新-以上————————————————" class="headerlink" title="——10.27更新 以上————————————————"></a>——10.27更新 以上————————————————</h4><h2 id="升级CocoaPods"><a href="#升级CocoaPods" class="headerlink" title="升级CocoaPods"></a>升级CocoaPods</h2><p>升级CocoaPods非常简单，使用Ruby的gem命令：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gem update cocoapods           <span class="regexp">//</span> 更新至最新版</span><br><span class="line">or</span><br><span class="line">$ sudo gem update cocoapods --pre     <span class="regexp">//</span> 更新至预览版</span><br></pre></td></tr></table></figure>
+
+<p>当然执行如下命令也可以更新：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gem install cocoapods           <span class="regexp">//</span> 更新至最新版</span><br><span class="line">or</span><br><span class="line">$ sudo gem install cocoapods --pre     <span class="regexp">//</span> 更新至预览版</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：OS X 10.11之后升级CocoaPods会有问题。解决方案参见下一篇博客：<a href="http://gonghonglou.com/2016/04/01/UpdatePodsQue">解决OS X 10.11之后CocoaPods的升级问题</a></p>
+</blockquote>
+<h2 id="降级CocoaPods"><a href="#降级CocoaPods" class="headerlink" title="降级CocoaPods"></a>降级CocoaPods</h2><p>有时我们需要降低CocoaPods版本来解决某些第三方库的兼容问题，例如<a target="_blank" rel="noopener" href="https://github.com/RestKit/RestKit">RestKit</a>不兼容CocoaPods的<code>0.39.0</code>版本，降级到<code>0.38.2</code>就OK了。</p>
+<h4 id="移除RubyGems中的Cocoapods程序包"><a href="#移除RubyGems中的Cocoapods程序包" class="headerlink" title="移除RubyGems中的Cocoapods程序包"></a>移除RubyGems中的Cocoapods程序包</h4><p>查看<a target="_blank" rel="noopener" href="http://baike.baidu.com/view/1772268.htm">gems</a>中本地程序包，执行如下命令：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>gem list</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：</p>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">*** LOCAL GEMS ***</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">activesupport</span> <span class="params">(<span class="number">4.2</span>.<span class="number">5.2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">bigdecimal</span> <span class="params">(<span class="number">1.2</span>.<span class="number">8</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">claide</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">1</span>, <span class="number">0.9</span>.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">4</span>, <span class="number">0.39</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">core</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">4</span>, <span class="number">0.39</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">deintegrate</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">downloader</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">1</span>, <span class="number">0.9</span>.<span class="number">3</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">plugins</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">1</span>, <span class="number">0.4</span>.<span class="number">2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">search</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">1</span>, <span class="number">0.1</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">stats</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">3</span>, <span class="number">0.6</span>.<span class="number">2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">trunk</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">2</span>, <span class="number">0.6</span>.<span class="number">4</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">cocoapods</span>-<span class="title">try</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">2</span>, <span class="number">0.5</span>.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">colored</span> <span class="params">(<span class="number">1.2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">did_you_mean</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">escape</span> <span class="params">(<span class="number">0.0</span>.<span class="number">4</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">fourflusher</span> <span class="params">(<span class="number">0.3</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">fuzzy_match</span> <span class="params">(<span class="number">2.0</span>.<span class="number">4</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">i18n</span> <span class="params">(<span class="number">0.7</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">io</span>-<span class="title">console</span> <span class="params">(<span class="number">0.4</span>.<span class="number">5</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">json</span> <span class="params">(<span class="number">1.8</span>.<span class="number">3</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">minitest</span> <span class="params">(<span class="number">5.8</span>.<span class="number">3</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">molinillo</span> <span class="params">(<span class="number">0.4</span>.<span class="number">4</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">nap</span> <span class="params">(<span class="number">1.1</span>.<span class="number">0</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">net</span>-<span class="title">telnet</span> <span class="params">(<span class="number">0.1</span>.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">netrc</span> <span class="params">(<span class="number">0.7</span>.<span class="number">8</span>)</span>     </span></span><br><span class="line"><span class="function"><span class="title">power_assert</span> <span class="params">(<span class="number">0.2</span>.<span class="number">6</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">psych</span> <span class="params">(<span class="number">2.0</span>.<span class="number">17</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">rake</span> <span class="params">(<span class="number">10.4</span>.<span class="number">2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">rdoc</span> <span class="params">(<span class="number">4.2</span>.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">rubygems</span>-<span class="title">update</span> <span class="params">(<span class="number">2.6</span>.<span class="number">1</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">test</span>-<span class="title">unit</span> <span class="params">(<span class="number">3.1</span>.<span class="number">5</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">thread_safe</span> <span class="params">(<span class="number">0.3</span>.<span class="number">5</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">tzinfo</span> <span class="params">(<span class="number">1.2</span>.<span class="number">2</span>)</span>    </span></span><br><span class="line"><span class="function"><span class="title">xcodeproj</span> <span class="params">(<span class="number">1.0</span>.<span class="number">0</span>.beta.<span class="number">3</span>, <span class="number">0.28</span>.<span class="number">2</span>)</span>        </span></span><br></pre></td></tr></table></figure>
+
+<p>其中包含的CocoaPods版本：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">cocoapods</span> (<span class="number">1</span>.<span class="number">0</span>.<span class="number">0</span>.beta.<span class="number">4</span>, <span class="number">0</span>.<span class="number">39</span>.<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+
+<p>移除指定版本cocoapods如1.0.0.beta.4，执行如下命令：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> sudo gem uninstall cocoapods -v <span class="number">1.0</span><span class="number">.0</span>.<span class="built_in">beta</span><span class="number">.4</span></span><br></pre></td></tr></table></figure>
+<p>成功删除则输出：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Successfully</span> uninstalled cocoapods-<span class="number">1</span>.<span class="number">0</span>.<span class="number">0</span>.beta.<span class="number">4</span></span><br></pre></td></tr></table></figure>
+<p>还有一个0.39.0版本，移除程序包，执行如下命令：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>sudo gem uninstall cocoapods -v <span class="number">0.39</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>当移除最后一个版本时，询问：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Remove</span> executables:</span><br><span class="line">  pod, sandbox-pod</span><br><span class="line"></span><br><span class="line">  <span class="keyword">in</span> addition <span class="keyword">to</span> the gem? [Yn]</span><br></pre></td></tr></table></figure>
+
+<p>按下回车键删除pod。查看CocoaPods组件的安装目录，执行命令<code>$ which pod </code>所得目录下的<code>pod</code>文件随即删除。    </p>
+<h4 id="安装指定版本的Cocoapods程序包"><a href="#安装指定版本的Cocoapods程序包" class="headerlink" title="安装指定版本的Cocoapods程序包"></a>安装指定版本的Cocoapods程序包</h4><p>安装指定版本的CocoaPods 如0.39.0，执行如下命令：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gem <span class="keyword">install</span> cocoapods -v <span class="number">0.39</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：若不指定版本，即命令如<code>sudo gem install cocoapods</code>则默认安装最新版。    </p>
+</blockquote>
+<p>安装成功后，执行命令查看版本号：</p>
+<figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod <span class="comment">--version</span></span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">0</span>.<span class="number">39</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<h2 id="使用CocoaPods"><a href="#使用CocoaPods" class="headerlink" title="使用CocoaPods"></a>使用CocoaPods</h2><h4 id="搜索第三方库"><a href="#搜索第三方库" class="headerlink" title="搜索第三方库"></a>搜索第三方库</h4><p>为判断某第三方库（如AFNetworking）是否支持CocoaPods，执行如下命令来搜索：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>pod search AFNetworking</span><br></pre></td></tr></table></figure>
+<p>若如下图所示，则可用CocoaPods管理AFNetworking<br><img src="http://image.gonghonglou.com/CocoaPods/searchAFNetworking.png" alt="searchAFNetworking"></p>
+<h4 id="创建Podfile的文件"><a href="#创建Podfile的文件" class="headerlink" title="创建Podfile的文件"></a>创建<code>Podfile</code>的文件</h4><p>CocoaPods就可以根据<code>Podfile</code>文件里的内容来帮你下载你所需要的库。<a target="_blank" rel="noopener" href="https://guides.cocoapods.org/using/the-podfile.html">点击前往</a>CocoaPods官方对<code>Podfile</code>文件的介绍。<br>终端<code>cd</code>到你的项目所在目录下，创建<code>Podfile</code>文件：</p>
+<figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>vim Podfile</span><br></pre></td></tr></table></figure>
+
+<p>按下<code>i</code>键进入输入状态，在<code>Podfile</code>文件里输入以下文字：</p>
+<figure class="highlight delphi"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">platform</span> :ios, <span class="string">&#x27;8.0&#x27;</span></span><br><span class="line">    </span><br><span class="line">target <span class="string">&#x27;Your_App_Name&#x27;</span> <span class="keyword">do</span></span><br><span class="line">pod <span class="string">&#x27;AFNetworking&#x27;</span>, <span class="string">&#x27;~&gt; 3.0&#x27;</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>按下<code>esc</code>键退出输入。然后保存退出，命令是<code>:wq</code>。你当然可以使用<code>vim</code>之外的编辑软件来编辑<code>Podfile</code>文件。</p>
+<blockquote>
+<p>注：cocoapods-1.0.0.beta版本后规定<code>Podfile</code>文件必须如上所示格式（加上<code>target</code>）</p>
+</blockquote>
+<blockquote>
+<p>当然，采用创建<code>Podfile</code>文件的另一种方式，终端<code>cd</code>到你的项目所在目录下执行命令 <code>pod init</code> 会自动生成格式，自己试一下你会喜欢的～</p>
+</blockquote>
+<p>终端<code>cd</code>到你的项目所在目录下执行如下命令来利用CocoPods下载第三方库：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod <span class="keyword">install</span></span><br></pre></td></tr></table></figure>
+<p>如下图所示则下载成功：<br><img src="http://image.gonghonglou.com/CocoaPods/podInstall.png" alt="pod install"></p>
+<blockquote>
+<p>提示：[!] Please close any current Xcode sessions and use <code>Your_App_Name.xcworkspace</code> for this project from now on.</p>
+</blockquote>
+<p>打开<code>Your_App_Name.xcworkspace</code> 工程之后会看到 <code>Pods</code> 文件，<code>AFNetwoking</code>已经成功导入项目了。 </p>
+<p>你或许应当<a target="_blank" rel="noopener" href="https://guides.cocoapods.org/using/pod-install-vs-update.html">点击前往</a>CocoaPods官网查看对<code>pod install vs. pod update</code>的介绍。</p>
+<blockquote>
+<p>注：当你 <code>clone</code> 别人的项目到本地后也需要终端<code>cd</code>到项目所在目录下执行命令 <code>$ pod install</code></p>
+</blockquote>
+<h4 id="关于Podfile-lock的文件"><a href="#关于Podfile-lock的文件" class="headerlink" title="关于Podfile.lock的文件"></a>关于<code>Podfile.lock</code>的文件</h4><p>执行<code>pod install</code>之后，CocoaPods会生成一个名为<code>Podfile.lock</code>的文件。并锁定当前各依赖库的版本，之后如果多次执行<code>pod install</code>或者团队中的其它人check下来这份包含<code>Podfile.lock</code>文件的工程后再执行<code>pod install</code>命令时，获取下来的Pods依赖库的版本就和最开始用户获取到的版本一致。如果没有<code>Podfile.lock</code>文件，执行<code>pod install</code>命令会获取第三方库的最新版本，这就有可能造成同一个团队使用的依赖库版本不一致，这对团队协作的危害无疑是灾难性的！<br>在这种情况下，如果团队想使用当前最新版本的依赖库，有两种方案可修改<code>Podfile.lock</code>的纪录：    </p>
+<ul>
+<li>更改<code>Podfile</code>中各依赖库的版本</li>
+<li>执行<code>pod update</code>命令</li>
+</ul>
+<p>鉴于<code>Podfile.lock</code>文件对团队协作如此重要，我们应该将它添加到版本控制里。</p>
+<p><a target="_blank" rel="noopener" href="http://guides.cocoapods.org/using/using-cocoapods.html#should-i-ignore-the-pods-directory-in-source-control">点击前往</a>CocoaPods官网查看对<code>Podfile.lock</code>的介绍。</p>
+<blockquote>
+<p>补充：有时执行<code>pod update</code>命令会特别慢，可以尝试使用如下命令：</p>
+</blockquote>
+<blockquote>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod <span class="keyword">update</span> --<span class="keyword">verbose</span> --<span class="keyword">no</span>-repo-<span class="keyword">update</span></span><br></pre></td></tr></table></figure>
+<p><code>pod install</code>命令同理：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod install --<span class="keyword">verbose</span> --<span class="keyword">no</span>-repo-<span class="keyword">update</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<h2 id="发布自己的开源框架到CocoaPods"><a href="#发布自己的开源框架到CocoaPods" class="headerlink" title="发布自己的开源框架到CocoaPods"></a>发布自己的开源框架到CocoaPods</h2><p>你需要如下图创建一个Framework来打造你自己的开源框架</p>
+<p><img src="http://image.gonghonglou.com/CocoaPods/Framework.png" alt="Framework"></p>
+<p>在工程目录下添加一份开源协议文件，一般为“LICENSE”，在 github 上新建仓库时可以同时新建 README.md 文件及 LICENSE 文件。</p>
+<p>在开始之前你应当使用邮箱账号<a target="_blank" rel="noopener" href="https://guides.cocoapods.org/making/getting-setup-with-trunk.html">注册 CocoaPods</a>：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>pod trunk register my_name<span class="variable">@example</span>.com <span class="string">&#x27;my_name&#x27;</span> --description=<span class="string">&#x27;macbook pro&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>随后会收到一份验证邮件，点击链接进行验证，之后通过以下命令查看注册结果：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod trunk <span class="keyword">me</span></span><br></pre></td></tr></table></figure>
+<p>结果应为：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">Name:     my_name</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Email:    my_name@example.com</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Since:    August 28th, 05:45</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Pods:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">my_framework_name</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Sessions:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">August 28th, 05:45 - January 3rd, 2018 10:00. IP: 116.226.129.252</span></span><br><span class="line">  <span class="attribute">Description</span><span class="punctuation">:</span> <span class="string">macbook pro</span></span><br></pre></td></tr></table></figure>
+
+<p>加下来就是正式开始推送自己的框架到 CocoaPods，<br>发布自己的开源框架到CocoaPods同样需要一个类似<code>Podfile</code>的文件来告诉CocoaPods我们开源库的名称、版本、作者、描述、地址、所需的framework、依赖库等，这个文件叫<code>my_framework_name.podspec</code>，开始创建这个文件</p>
+<p>终端<code>cd</code>到工程目录下，执行如下命令：</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod <span class="keyword">spec</span> create my_framework_name</span><br></pre></td></tr></table></figure>
+<p>这样在你的工程目录下会生成一个<code>my_framework_name.podspec</code>文件，大概内容为（将对应名称修改为你自己的）：</p>
+<figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Pod::Spec.<span class="keyword">new</span> <span class="keyword">do</span> |s|</span><br><span class="line">  s.name         = <span class="string">&quot;DJLSplitCollectionView&quot;</span></span><br><span class="line">  s.summary      = <span class="string">&quot;It is my first framework.&quot;</span></span><br><span class="line">  s.version      = <span class="string">&quot;0.0.1&quot;</span></span><br><span class="line">  s.license      = &#123; :<span class="function"><span class="params">type</span> =&gt;</span> <span class="string">&#x27;MIT&#x27;</span>, :<span class="function"><span class="params">file</span> =&gt;</span> <span class="string">&#x27;LICENSE&#x27;</span> &#125;</span><br><span class="line">  s.author       = &#123; <span class="string">&quot;gonghonglou&quot;</span> =&gt; <span class="string">&quot;gonghonglou@gmail.com&quot;</span> &#125;</span><br><span class="line">  s.social_media_url = <span class="string">&#x27;http://gonghonglou.com&#x27;</span></span><br><span class="line">  s.homepage     = <span class="string">&quot;https://github.com/gonghonglou/DJLSplitCollectionView&quot;</span></span><br><span class="line">  s.platform     = :ios, <span class="string">&#x27;8.0&#x27;</span></span><br><span class="line">  s.ios.deployment_target = <span class="string">&#x27;8.0&#x27;</span></span><br><span class="line">  s.source       = &#123; :<span class="function"><span class="params">git</span> =&gt;</span> <span class="string">&quot;https://github.com/gonghonglou/DJLSplitCollectionView.git&quot;</span>, :<span class="function"><span class="params">tag</span> =&gt;</span> s.version.to_s &#125;</span><br><span class="line">  </span><br><span class="line">  s.requires_arc = <span class="literal">true</span></span><br><span class="line">  s.source_files = <span class="string">&#x27;DJLSplitCollectionView/*.&#123;h,m&#125;&#x27;</span></span><br><span class="line">  s.public_header_files = <span class="string">&#x27;DJLSplitCollectionView/*.&#123;h&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line">  s.framework  = <span class="string">&quot;UIKit&quot;</span></span><br><span class="line"></span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+
+<p>然后执行如下命令</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="keyword">tag</span> <span class="title">0</span>.<span class="number">0.1</span>	// 给框架打上 <span class="keyword">tag</span></span><br><span class="line"><span class="title">$</span> git push origin --tags	// 将 <span class="keyword">tag</span> <span class="title">推送到 github</span></span><br></pre></td></tr></table></figure>
+<p>检查 podspec 语法和项目是否正常编译，执行如下命令：</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod <span class="keyword">spec</span> lint my_framework_name.podspec</span><br></pre></td></tr></table></figure>
+<p>确保没有任何 error 和 warning ，然后推送 podspec 到 CocoaPods 的主仓库就可以了</p>
+<figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pod trunk <span class="built_in">push</span> my_framework_name.podspec    <span class="comment">// 提交到 CocoaPods 中心仓库</span></span><br></pre></td></tr></table></figure>
+<p>成功后结果应该为：</p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Updating spec repo <span class="code">`master`</span></span><br><span class="line">Validating podspec</span><br><span class="line"><span class="code"> -&gt; DJLSplitCollectionView (0.0.1)</span></span><br><span class="line"></span><br><span class="line">Updating spec repo <span class="code">`master`</span></span><br><span class="line"></span><br><span class="line"><span class="code">--------------------------------------------------------------------------------</span></span><br><span class="line"><span class="code"> 🎉  Congrats</span></span><br><span class="line"><span class="code"></span></span><br><span class="line"><span class="code"> 🚀  DJLSplitCollectionView (0.0.1) successfully published</span></span><br><span class="line"><span class="code"> 📅  August 28th, 09:39</span></span><br><span class="line"><span class="code"> 🌎  https://cocoapods.org/pods/DJLSplitCollectionView</span></span><br><span class="line"><span class="code"> 👍  Tell your friends!</span></span><br><span class="line"><span class="code">--------------------------------------------------------------------------------</span></span><br></pre></td></tr></table></figure>
+<p>如图：<img src="http://image.gonghonglou.com/CocoaPods/cocoapods_push.png" alt="pod trunk push"></p>
+<p>大功告成，几秒或者几分钟后 <code>pod search my_framework_name</code> 搜索一下吧～<br>如果搜不到的话，建议执行如下方法：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rm ~<span class="regexp">/Library/</span>Caches<span class="regexp">/CocoaPods/</span>search_index.json</span><br><span class="line">pod search my_framework_name</span><br></pre></td></tr></table></figure>
+
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://guides.cocoapods.org/using/index.html">Using CocoaPods</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.superqq.com/blog/2014/10/16/cocoapodsan-zhuang-he-shi-yong-jiao-cheng/">CocoaPods安装和使用教程</a> </li>
+<li><a target="_blank" rel="noopener" href="http://blog.devtang.com/2014/05/25/use-cocoapod-to-manage-ios-lib-dependency/">用CocoaPods做iOS程序的依赖管理</a> </li>
+<li><a target="_blank" rel="noopener" href="https://onevcat.com/2016/01/create-framework/">如何打造一个让人愉快的框架</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/17/meet-ReactiveCocoa/" rel="next" title="初识ReactiveCocoa">
+                <i class="fa fa-chevron-left"></i> 初识ReactiveCocoa
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/01/update-pods-que/" rel="prev" title="解决OS X 10.11之后CocoaPods的升级问题">
+                解决OS X 10.11之后CocoaPods的升级问题 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85CocoaPods"><span class="nav-number">1.</span> <span class="nav-text">安装CocoaPods</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%80%94%E2%80%9410-27%E6%9B%B4%E6%96%B0-%E4%BB%A5%E4%B8%8B%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94"><span class="nav-number">1.0.1.</span> <span class="nav-text">——10.27更新 以下————————————————</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%80%94%E2%80%9410-27%E6%9B%B4%E6%96%B0-%E4%BB%A5%E4%B8%8A%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94%E2%80%94"><span class="nav-number">1.0.2.</span> <span class="nav-text">——10.27更新 以上————————————————</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%87%E7%BA%A7CocoaPods"><span class="nav-number">2.</span> <span class="nav-text">升级CocoaPods</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%8D%E7%BA%A7CocoaPods"><span class="nav-number">3.</span> <span class="nav-text">降级CocoaPods</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4RubyGems%E4%B8%AD%E7%9A%84Cocoapods%E7%A8%8B%E5%BA%8F%E5%8C%85"><span class="nav-number">3.0.1.</span> <span class="nav-text">移除RubyGems中的Cocoapods程序包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E6%8C%87%E5%AE%9A%E7%89%88%E6%9C%AC%E7%9A%84Cocoapods%E7%A8%8B%E5%BA%8F%E5%8C%85"><span class="nav-number">3.0.2.</span> <span class="nav-text">安装指定版本的Cocoapods程序包</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8CocoaPods"><span class="nav-number">4.</span> <span class="nav-text">使用CocoaPods</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%90%9C%E7%B4%A2%E7%AC%AC%E4%B8%89%E6%96%B9%E5%BA%93"><span class="nav-number">4.0.1.</span> <span class="nav-text">搜索第三方库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAPodfile%E7%9A%84%E6%96%87%E4%BB%B6"><span class="nav-number">4.0.2.</span> <span class="nav-text">创建Podfile的文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E4%BA%8EPodfile-lock%E7%9A%84%E6%96%87%E4%BB%B6"><span class="nav-number">4.0.3.</span> <span class="nav-text">关于Podfile.lock的文件</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%91%E5%B8%83%E8%87%AA%E5%B7%B1%E7%9A%84%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6%E5%88%B0CocoaPods"><span class="nav-number">5.</span> <span class="nav-text">发布自己的开源框架到CocoaPods</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-number">6.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2016/04/01/CocoaPods/';
+          this.page.identifier = '2016/04/01/CocoaPods/';
+          this.page.title = 'iOS的库依赖管理工具CocoaPods';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

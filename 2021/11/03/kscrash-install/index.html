@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="KSCrash 是业界知名的 Crash 收集框架，其功能想必不用过多介绍。本系列笔记主要是想搞清楚这个框架是如何使用的、如何捕获到崩溃的、如何收集崩溃的。 使用示例12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152- (void) installCrashH">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KSCrash 源码笔记 - 安装篇">
+<meta property="og:url" content="http://gonghonglou.com/2021/11/03/kscrash-install/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="KSCrash 是业界知名的 Crash 收集框架，其功能想必不用过多介绍。本系列笔记主要是想搞清楚这个框架是如何使用的、如何捕获到崩溃的、如何收集崩溃的。 使用示例12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152- (void) installCrashH">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-11-03T11:11:22.000Z">
+<meta property="article:modified_time" content="2021-11-07T06:35:51.170Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/11/03/kscrash-install/"/>
+
+
+
+
+
+  <title>KSCrash 源码笔记 - 安装篇 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/11/03/kscrash-install/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">KSCrash 源码笔记 - 安装篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-11-03T19:11:22+08:00">
+                2021-11-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a target="_blank" rel="noopener" href="https://github.com/kstenerud/KSCrash">KSCrash</a> 是业界知名的 Crash 收集框架，其功能想必不用过多介绍。本系列笔记主要是想搞清楚这个框架是如何使用的、如何捕获到崩溃的、如何收集崩溃的。</p>
+<h1 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>) installCrashHandler</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Create an installation (choose one)</span></span><br><span class="line"><span class="comment">//    KSCrashInstallation* installation = [self makeStandardInstallation];</span></span><br><span class="line">    KSCrashInstallation* installation = [self makeEmailInstallation];</span><br><span class="line"><span class="comment">//    KSCrashInstallation* installation = [self makeHockeyInstallation];</span></span><br><span class="line"><span class="comment">//    KSCrashInstallation* installation = [self makeQuincyInstallation];</span></span><br><span class="line"><span class="comment">//    KSCrashInstallation *installation = [self makeVictoryInstallation];</span></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Install the crash handler. This should be done as early as possible.</span></span><br><span class="line">    <span class="comment">// This will record any crashes that occur, but it doesn&#x27;t automatically send them.</span></span><br><span class="line">    [installation install];</span><br><span class="line">    [KSCrash sharedInstance].deleteBehaviorAfterSendAll = KSCDeleteNever; <span class="comment">// <span class="doctag">TODO:</span> Remove this</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Send all outstanding reports. You can do this any time; it doesn&#x27;t need</span></span><br><span class="line">    <span class="comment">// to happen right as the app launches. Advanced-Example shows how to defer</span></span><br><span class="line">    <span class="comment">// displaying the main view controller until crash reporting completes.</span></span><br><span class="line">    [installation sendAllReportsWithCompletion:^(NSArray* reports, BOOL completed, NSError* error)</span><br><span class="line">     &#123;</span><br><span class="line">         <span class="keyword">if</span>(completed)</span><br><span class="line">         &#123;</span><br><span class="line">             NSLog(@<span class="string">&quot;Sent %d reports&quot;</span>, (<span class="type">int</span>)[reports count]);</span><br><span class="line">         &#125;</span><br><span class="line">         <span class="keyword">else</span></span><br><span class="line">         &#123;</span><br><span class="line">             NSLog(@<span class="string">&quot;Failed to send reports: %@&quot;</span>, error);</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (KSCrashInstallation*) makeEmailInstallation</span><br><span class="line">&#123;</span><br><span class="line">    NSString* emailAddress = @<span class="string">&quot;your@email.here&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    KSCrashInstallationEmail* email = [KSCrashInstallationEmail sharedInstance];</span><br><span class="line">    email.recipients = @[emailAddress];</span><br><span class="line">    email.subject = @<span class="string">&quot;Crash Report&quot;</span>;</span><br><span class="line">    email.message = @<span class="string">&quot;This is a crash report&quot;</span>;</span><br><span class="line">    email.filenameFmt = @<span class="string">&quot;crash-report-%d.txt.gz&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    [email addConditionalAlertWithTitle:@<span class="string">&quot;Crash Detected&quot;</span></span><br><span class="line">                                message:@<span class="string">&quot;The app crashed last time it was launched. Send a crash report?&quot;</span></span><br><span class="line">                              yesAnswer:@<span class="string">&quot;Sure!&quot;</span></span><br><span class="line">                               noAnswer:@<span class="string">&quot;No thanks&quot;</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Uncomment to send Apple style reports instead of JSON.</span></span><br><span class="line">    [email setReportStyle:KSCrashEmailReportStyleApple useDefaultFilenameFormat:YES];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> email;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是 KSCrash 官方提供的示例代码，支持通过 url、email 等方法上报日志。</p>
+<h1 id="注册篇"><a href="#注册篇" class="headerlink" title="注册篇"></a>注册篇</h1><p>从上一整节使用示例里也能看到，KSCrash 的注册关键在于 <code>[installation install];</code> 这行方法，进行注册后才能进行 Crash 的捕获。该方法的具体内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>) install</span><br><span class="line">&#123;</span><br><span class="line">    KSCrash* handler = [KSCrash sharedInstance];</span><br><span class="line">    @synchronized(handler)</span><br><span class="line">    &#123;</span><br><span class="line">        g_crashHandlerData = self.crashHandlerData;</span><br><span class="line">        handler.onCrash = crashCallback;</span><br><span class="line">        [handler install];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述方法又调用了 KSCrash 类的 <code>install</code> 方法，该方法的具体内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">- (BOOL) install</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 调用 kscrash_install 进行注册操作。传入 bundle name 和崩溃日志的存储路径</span></span><br><span class="line">    _monitoring = kscrash_install(self.bundleName.UTF8String,</span><br><span class="line">                                          self.basePath.UTF8String);</span><br><span class="line">    <span class="keyword">if</span>(self.monitoring == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述方法又调用了 <code>kscrash_install</code> 方法，该方法的具体内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">KSCrashMonitorType <span class="title function_">kscrash_install</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* appName, <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> installPath)</span></span><br><span class="line">&#123;</span><br><span class="line">    KSLOG_DEBUG(<span class="string">&quot;Installing crash reporter.&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(g_installed)</span><br><span class="line">    &#123;</span><br><span class="line">        KSLOG_DEBUG(<span class="string">&quot;Crash reporter already installed.&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> g_monitoring;</span><br><span class="line">    &#125;</span><br><span class="line">    g_installed = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> path[KSFU_MAX_PATH_LENGTH];</span><br><span class="line">    <span class="built_in">snprintf</span>(path, <span class="keyword">sizeof</span>(path), <span class="string">&quot;%s/Reports&quot;</span>, installPath);</span><br><span class="line">    ksfu_makePath(path);</span><br><span class="line">    kscrs_initialize(appName, path);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">snprintf</span>(path, <span class="keyword">sizeof</span>(path), <span class="string">&quot;%s/Data&quot;</span>, installPath);</span><br><span class="line">    ksfu_makePath(path);</span><br><span class="line">    <span class="built_in">snprintf</span>(path, <span class="keyword">sizeof</span>(path), <span class="string">&quot;%s/Data/CrashState.json&quot;</span>, installPath);</span><br><span class="line">    kscrashstate_initialize(path);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">snprintf</span>(g_consoleLogPath, <span class="keyword">sizeof</span>(g_consoleLogPath), <span class="string">&quot;%s/Data/ConsoleLog.txt&quot;</span>, installPath);</span><br><span class="line">    <span class="keyword">if</span>(g_shouldPrintPreviousLog)</span><br><span class="line">    &#123;</span><br><span class="line">        printPreviousLog(g_consoleLogPath);</span><br><span class="line">    &#125;</span><br><span class="line">    kslog_setLogFilename(g_consoleLogPath, <span class="literal">true</span>);</span><br><span class="line">    </span><br><span class="line">    ksccd_init(<span class="number">60</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 保存 onCrash 到 g_onExceptionEvent</span></span><br><span class="line">    kscm_setEventCallback(onCrash);</span><br><span class="line">    <span class="comment">// 添加监控，捕获崩溃时会调用 g_onExceptionEvent 即 onCrash 方法</span></span><br><span class="line">    KSCrashMonitorType monitors = kscrash_setMonitoring(g_monitoring);</span><br><span class="line"></span><br><span class="line">    KSLOG_DEBUG(<span class="string">&quot;Installation complete.&quot;</span>);</span><br><span class="line"></span><br><span class="line">    notifyOfBeforeInstallationState();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> monitors;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，调用了关键方法 <code>kscm_setEventCallback</code> 和 <code>kscrash_setMonitoring</code>。</p>
+<h2 id="kscm-setEventCallback"><a href="#kscm-setEventCallback" class="headerlink" title="kscm_setEventCallback"></a>kscm_setEventCallback</h2><p><code>kscm_setEventCallback</code> 方法用于将的入参为 <code>onCrash</code> 回调方法保存起来，在捕获到 Crash 之后进行统一调用。</p>
+<p><code>onCrash</code> 方法很关键，后期捕获到各种类型的 Crash 后都会调用这个方法。这里先贴下代码，后边在捕获到 Crash 之后的流程里再具体分析。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">onCrash</span><span class="params">(<span class="keyword">struct</span> KSCrash_MonitorContext* monitorContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (monitorContext-&gt;currentSnapshotUserReported == <span class="literal">false</span>) &#123;</span><br><span class="line">        KSLOG_DEBUG(<span class="string">&quot;Updating application state to note crash.&quot;</span>);</span><br><span class="line">        kscrashstate_notifyAppCrash();</span><br><span class="line">    &#125;</span><br><span class="line">    monitorContext-&gt;consoleLogPath = g_shouldAddConsoleLogToReport ? g_consoleLogPath : <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(monitorContext-&gt;crashedDuringCrashHandling)</span><br><span class="line">    &#123;</span><br><span class="line">        kscrashreport_writeRecrashReport(monitorContext, g_lastCrashReportFilePath);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">char</span> crashReportFilePath[KSFU_MAX_PATH_LENGTH];</span><br><span class="line">        <span class="type">int64_t</span> reportID = kscrs_getNextCrashReport(crashReportFilePath);</span><br><span class="line">        <span class="built_in">strncpy</span>(g_lastCrashReportFilePath, crashReportFilePath, <span class="keyword">sizeof</span>(g_lastCrashReportFilePath));</span><br><span class="line">        kscrashreport_writeStandardReport(monitorContext, crashReportFilePath);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(g_reportWrittenCallback)</span><br><span class="line">        &#123;</span><br><span class="line">            g_reportWrittenCallback(reportID);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们来看下 <code>kscm_setEventCallback</code> 方法的具体内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">kscm_setEventCallback</span><span class="params">(<span class="type">void</span> (*onEvent)(<span class="keyword">struct</span> KSCrash_MonitorContext* monitorContext))</span></span><br><span class="line">&#123;</span><br><span class="line">    g_onExceptionEvent = onEvent;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>kscm_setEventCallback</code> 方法只是把传入的 <code>onCrash</code> 方法赋值给了 <code>g_onExceptionEvent</code> 全局变量。尝试在工程中全局搜索 <code>g_onExceptionEvent</code>，会发现这个方法被调用的地方，在 <code>kscm_handleException</code> 这个方法里，该方法的具体内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">kscm_handleException</span><span class="params">(<span class="keyword">struct</span> KSCrash_MonitorContext* context)</span></span><br><span class="line">&#123;</span><br><span class="line">    context-&gt;requiresAsyncSafety = g_requiresAsyncSafety;</span><br><span class="line">    <span class="keyword">if</span>(g_crashedDuringExceptionHandling)</span><br><span class="line">    &#123;</span><br><span class="line">        context-&gt;crashedDuringCrashHandling = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; g_monitorsCount; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        Monitor* monitor = &amp;g_monitors[i];</span><br><span class="line">        <span class="keyword">if</span>(isMonitorEnabled(monitor))</span><br><span class="line">        &#123;</span><br><span class="line">            addContextualInfoToEvent(monitor, context);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用 onCrash 方法</span></span><br><span class="line">    g_onExceptionEvent(context);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (context-&gt;currentSnapshotUserReported) &#123;</span><br><span class="line">        g_handlingFatalException = <span class="literal">false</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(g_handlingFatalException &amp;&amp; !g_crashedDuringExceptionHandling) &#123;</span><br><span class="line">            KSLOG_DEBUG(<span class="string">&quot;Exception is fatal. Restoring original handlers.&quot;</span>);</span><br><span class="line">            kscm_setActiveMonitors(KSCrashMonitorTypeNone);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>尝试在工程中全局搜索下 <code>kscm_handleException</code>，会发现这个方法在各种类型 Crash 被捕获的时候会被调用。</p>
+<h2 id="kscrash-setMonitoring"><a href="#kscrash-setMonitoring" class="headerlink" title="kscrash_setMonitoring"></a>kscrash_setMonitoring</h2><p><code>kscrash_setMonitoring</code> 方法用于设置对各种 Crash 类型的监控。</p>
+<p>我们来看下 <code>kscrash_setMonitoring</code> 方法的具体内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">KSCrashMonitorType <span class="title function_">kscrash_setMonitoring</span><span class="params">(KSCrashMonitorType monitors)</span></span><br><span class="line">&#123;</span><br><span class="line">    g_monitoring = monitors;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(g_installed)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 设置崩溃监控</span></span><br><span class="line">        kscm_setActiveMonitors(monitors);</span><br><span class="line">        <span class="keyword">return</span> kscm_getActiveMonitors();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Return what we will be monitoring in future.</span></span><br><span class="line">    <span class="keyword">return</span> g_monitoring;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述方法根据 <code>g_installed</code> 标记位判断是否进行崩溃监控。调用了 <code>kscm_setActiveMonitors</code> 方法，该方法的具体内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">kscm_setActiveMonitors</span><span class="params">(KSCrashMonitorType monitorTypes)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 1. 判断是否为 Debug 环境、判断 monitorTypes 是否包含 KSCrashMonitorTypeDebuggerUnsafe 选项</span></span><br><span class="line">    <span class="keyword">if</span>(ksdebug_isBeingTraced() &amp;&amp; (monitorTypes &amp; KSCrashMonitorTypeDebuggerUnsafe))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">static</span> <span class="type">bool</span> hasWarned = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">if</span>(!hasWarned)</span><br><span class="line">        &#123;</span><br><span class="line">            hasWarned = <span class="literal">true</span>;</span><br><span class="line">            KSLOGBASIC_WARN(<span class="string">&quot;    ************************ Crash Handler Notice ************************&quot;</span>);</span><br><span class="line">            KSLOGBASIC_WARN(<span class="string">&quot;    *     App is running in a debugger. Masking out unsafe monitors.     *&quot;</span>);</span><br><span class="line">            KSLOGBASIC_WARN(<span class="string">&quot;    * This means that most crashes WILL NOT BE RECORDED while debugging! *&quot;</span>);</span><br><span class="line">            KSLOGBASIC_WARN(<span class="string">&quot;    **********************************************************************&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 将 monitorTypes 仅保留 KSCrashMonitorTypeDebuggerSafe 选项</span></span><br><span class="line">        monitorTypes &amp;= KSCrashMonitorTypeDebuggerSafe;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 2. 判断是否要求异步安全、判断 monitorTypes 是否包含 KSCrashMonitorTypeAsyncUnsafe 选项</span></span><br><span class="line">    <span class="keyword">if</span>(g_requiresAsyncSafety &amp;&amp; (monitorTypes &amp; KSCrashMonitorTypeAsyncUnsafe))</span><br><span class="line">    &#123;</span><br><span class="line">        KSLOG_DEBUG(<span class="string">&quot;Async-safe environment detected. Masking out unsafe monitors.&quot;</span>);</span><br><span class="line">        <span class="comment">// 将 monitorTypes 仅保留 KSCrashMonitorTypeAsyncSafe 选项</span></span><br><span class="line">        monitorTypes &amp;= KSCrashMonitorTypeAsyncSafe;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    KSLOG_DEBUG(<span class="string">&quot;Changing active monitors from 0x%x tp 0x%x.&quot;</span>, g_activeMonitors, monitorTypes);</span><br><span class="line"></span><br><span class="line">    KSCrashMonitorType activeMonitors = KSCrashMonitorTypeNone;</span><br><span class="line">    <span class="comment">// 3. 根据 g_monitorsCount 遍历 g_monitors 数组</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; g_monitorsCount; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 3.1. 获取 monitor</span></span><br><span class="line">        Monitor* monitor = &amp;g_monitors[i];</span><br><span class="line">        <span class="comment">// 3.2. 判断该 monitor 是否要被监控</span></span><br><span class="line">        <span class="type">bool</span> isEnabled = monitor-&gt;monitorType &amp; monitorTypes;</span><br><span class="line">        <span class="comment">// 3.3. 设置该 monitor 是否被监控</span></span><br><span class="line">        setMonitorEnabled(monitor, isEnabled);</span><br><span class="line">        <span class="keyword">if</span>(isMonitorEnabled(monitor))</span><br><span class="line">        &#123;</span><br><span class="line">            activeMonitors |= monitor-&gt;monitorType;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            activeMonitors &amp;= ~monitor-&gt;monitorType;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    KSLOG_DEBUG(<span class="string">&quot;Active monitors are now 0x%x.&quot;</span>, activeMonitors);</span><br><span class="line">    g_activeMonitors = activeMonitors;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>KSCrash 做了 Debug 监控，通过 <code>ksdebug_isBeingTraced()</code> 方法判断当前是否为 Debug 环境：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> <span class="title function_">ksdebug_isBeingTraced</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">kinfo_proc</span> <span class="title">procInfo</span>;</span></span><br><span class="line">    <span class="type">size_t</span> structSize = <span class="keyword">sizeof</span>(procInfo);</span><br><span class="line">    <span class="type">int</span> mib[] = &#123;CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()&#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(sysctl(mib, <span class="keyword">sizeof</span>(mib)/<span class="keyword">sizeof</span>(*mib), &amp;procInfo, &amp;structSize, <span class="literal">NULL</span>, <span class="number">0</span>) != <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        KSLOG_ERROR(<span class="string">&quot;sysctl: %s&quot;</span>, strerror(errno));</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> (procInfo.kp_proc.p_flag &amp; P_TRACED) != <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再回到 <code>kscm_setActiveMonitors</code> 方法，首先做的是判断当前为 Debug 环境的话，就剔除掉对 MachException、Signal、CPPException、NSException 这几类 Crash 的监控。<br>具体做法就是根据传入的 monitorTypes 和 KSCrashMonitorTypeDebuggerUnsafe 做与操作判断：<br><code>(monitorTypes &amp; KSCrashMonitorTypeDebuggerUnsafe)</code></p>
+<p>结果为 true 的话，将 monitorTypes 只保留 KSCrashMonitorTypeDebuggerSafe 选项：<br><code>monitorTypes &amp;= KSCrashMonitorTypeDebuggerSafe;</code></p>
+<p>KSCrashMonitorTypeDebuggerUnsafe 和 KSCrashMonitorTypeDebuggerSafe 的定义为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> KSCrashMonitorTypeAll              \</span></span><br><span class="line"><span class="meta">(                                          \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeMachException      | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeSignal             | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeCPPException       | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeNSException        | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeMainThreadDeadlock | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeUserReported       | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeSystem             | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeApplicationState   | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeZombie               \</span></span><br><span class="line"><span class="meta">)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> KSCrashMonitorTypeDebuggerUnsafe   \</span></span><br><span class="line"><span class="meta">(                                          \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeMachException      | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeSignal             | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeCPPException       | \</span></span><br><span class="line"><span class="meta">    KSCrashMonitorTypeNSException          \</span></span><br><span class="line"><span class="meta">)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** Monitors that are safe to enable in a debugger. */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> KSCrashMonitorTypeDebuggerSafe (KSCrashMonitorTypeAll &amp; (~KSCrashMonitorTypeDebuggerUnsafe))</span></span><br></pre></td></tr></table></figure>
+
+<p>g_monitorsCount 的数据来自：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> g_monitorsCount = <span class="keyword">sizeof</span>(g_monitors) / <span class="keyword">sizeof</span>(*g_monitors);</span><br></pre></td></tr></table></figure>
+
+<p>g_monitors 的数据来自：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> Monitor g_monitors[] =</span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> KSCRASH_HAS_MACH</span></span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeMachException,</span><br><span class="line">        .getAPI = kscm_machexception_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> KSCRASH_HAS_SIGNAL</span></span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeSignal,</span><br><span class="line">        .getAPI = kscm_signal_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> KSCRASH_HAS_OBJC</span></span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeNSException,</span><br><span class="line">        .getAPI = kscm_nsexception_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeMainThreadDeadlock,</span><br><span class="line">        .getAPI = kscm_deadlock_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeZombie,</span><br><span class="line">        .getAPI = kscm_zombie_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeCPPException,</span><br><span class="line">        .getAPI = kscm_cppexception_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeUserReported,</span><br><span class="line">        .getAPI = kscm_user_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeSystem,</span><br><span class="line">        .getAPI = kscm_system_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        .monitorType = KSCrashMonitorTypeApplicationState,</span><br><span class="line">        .getAPI = kscm_appstate_getAPI,</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这个 g_monitors 数组包含了 KSCrash 支持的各种崩溃监控。</p>
+<p>遍历 g_monitors 数组，对每一项 monitor 进行 <code>setMonitorEnabled</code> 方法的调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">inline</span> <span class="type">void</span> <span class="title function_">setMonitorEnabled</span><span class="params">(Monitor* monitor, <span class="type">bool</span> isEnabled)</span></span><br><span class="line">&#123;</span><br><span class="line">    KSCrashMonitorAPI* api = getAPI(monitor);</span><br><span class="line">    <span class="keyword">if</span>(api != <span class="literal">NULL</span> &amp;&amp; api-&gt;setEnabled != <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        api-&gt;setEnabled(isEnabled);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在各种支持的崩溃类型里，会实现 setEnabled 方法，进行对各自崩溃类型的监控。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>到这里，KSCrash 的注册流程就很清楚了，通过注册 install 方法，调用 kscm_setEventCallback 方法将 onCrash 传递给一个全局变量，在各种类型的 Crash 被捕获时会调用这个 onCrash 方法。调用 kscrash_setMonitoring 方法中对各种类型的崩溃进行添加监控。</p>
+<p>对于各种类型的崩溃是如何添加监控，以及捕获到崩溃之后是如果处理崩溃的，我们在后续篇章中再展开分析。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/09/04/FBRetainCycleDetector/" rel="next" title="FBRetainCycleDetector 源码笔记">
+                <i class="fa fa-chevron-left"></i> FBRetainCycleDetector 源码笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/11/03/kscrash-catch/" rel="prev" title="KSCrash 源码笔记 - 捕获篇">
+                KSCrash 源码笔记 - 捕获篇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.</span> <span class="nav-text">使用示例</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E7%AF%87"><span class="nav-number">2.</span> <span class="nav-text">注册篇</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#kscm-setEventCallback"><span class="nav-number">2.1.</span> <span class="nav-text">kscm_setEventCallback</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kscrash-setMonitoring"><span class="nav-number">2.2.</span> <span class="nav-text">kscrash_setMonitoring</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/11/03/kscrash-install/';
+          this.page.identifier = '2021/11/03/kscrash-install/';
+          this.page.title = 'KSCrash 源码笔记 - 安装篇';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

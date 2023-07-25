@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
+<meta property="og:url" content="http://gonghonglou.com/2019/07/07/crash-guard-container/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。 这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：从 SafeK">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-07-07T12:00:00.000Z">
+<meta property="article:modified_time" content="2020-03-14T13:00:37.335Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2019/07/07/crash-guard-container/"/>
+
+
+
+
+
+  <title>Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.） | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/07/07/crash-guard-container/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-07T20:00:00+08:00">
+                2019-07-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>数组越界这类的 Crash 是最简单的也是最容易出现，业务开发过程中很可能操作某个 NSArray 类型的对象时忘记判空或者忘记长度判断而造成数组越界崩溃。所以最好是在线上环境接入这类的 Crash 防护。当然，在开发环境下最好不要接入，避免纵容开发者出现这类遗忘判断的错误。</p>
+<p>这类崩溃的防护方案无非就是 Hook 可能产生 Crash 的类的相关方法。之前有过一篇文章是讲这类防护的：<a href="http://gonghonglou.com/2017/09/07/analyse-safekit/">从 SafeKit 看异常保护及 Method Swizzling 使用分析</a><br>但 <a target="_blank" rel="noopener" href="https://github.com/JJMM/SafeKit">SafeKit</a> 并未 Hook 全可能出现 Crash 的类及其方法，尤其是 NSArray 类簇。</p>
+<p>关于类簇这里是苹果官网文档：<a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/General/Conceptual/CocoaEncyclopedia/ClassClusters/ClassClusters.html">Class Clusters</a><br>以及 sunnyxx 在 <a target="_blank" rel="noopener" href="https://blog.sunnyxx.com/2014/12/18/class-cluster/">从NSArray看类簇</a> 文章里的说法：</p>
+<blockquote>
+<p>Class Clusters（类簇）是抽象工厂模式在 iOS 下的一种实现，众多常用类，如 NSString，NSArray，NSDictionary，NSNumber 都运作在这一模式下，它是接口简单性和扩展性的权衡体现，在我们完全不知情的情况下，偷偷隐藏了很多具体的实现类，只暴露出简单的接口。</p>
+</blockquote>
+<p>我们来仔细打印下看看：</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NSArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;arr alloc:%@&quot;</span>, [NSArray alloc].class); <span class="comment">// __NSPlaceholderArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;arr init:%@&quot;</span>, [[NSArray alloc] init].class); <span class="comment">// __NSArray0</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;arr:%@&quot;</span>, [@[] class]); <span class="comment">// __NSArray0</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;arr:%@&quot;</span>, [@[<span class="variable">@1</span>] class]); <span class="comment">// __NSSingleObjectArrayI</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;arr:%@&quot;</span>, [@[<span class="variable">@1</span>, <span class="variable">@2</span>] class]); <span class="comment">// __NSArrayI</span></span><br><span class="line">    </span><br><span class="line"><span class="comment">// NSMutableArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutA alloc:%@&quot;</span>, [NSMutableArray alloc].class); <span class="comment">// __NSPlaceholderArray</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutA init:%@&quot;</span>, [[NSMutableArray alloc] init].class); <span class="comment">// __NSArrayM</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutA:%@&quot;</span>, [@[].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutA:%@&quot;</span>, [@[<span class="variable">@1</span>].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutA:%@&quot;</span>, [@[<span class="variable">@1</span>, <span class="variable">@2</span>].mutableCopy class]); <span class="comment">// __NSArrayM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;dict alloc:%@&quot;</span>, [NSDictionary alloc].class); <span class="comment">// __NSPlaceholderDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;dict init:%@&quot;</span>, [[NSDictionary alloc] init].class); <span class="comment">// __NSDictionary0</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;dict:%@&quot;</span>, [@&#123;&#125; class]); <span class="comment">// __NSDictionary0</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;dict:%@&quot;</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>&#125; class]); <span class="comment">// __NSSingleEntryDictionaryI</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;dict:%@&quot;</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>, <span class="variable">@2</span>:<span class="variable">@2</span>&#125; class]); <span class="comment">// __NSDictionaryI</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSMutableDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutD alloc:%@&quot;</span>, [NSMutableDictionary alloc].class); <span class="comment">// __NSPlaceholderDictionary</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutD init:%@&quot;</span>, [[NSMutableDictionary alloc] init].class); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutD:%@&quot;</span>, [@&#123;&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutD:%@&quot;</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;mutD:%@&quot;</span>, [@&#123;<span class="variable">@1:</span><span class="variable">@1</span>, <span class="variable">@2</span>:<span class="variable">@2</span>&#125;.mutableCopy class]); <span class="comment">// __NSDictionaryM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSString</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;str:%@&quot;</span>, [@<span class="string">&quot;&quot;</span> class]); <span class="comment">// __NSCFConstantString</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// NSNumber</span></span><br><span class="line"><span class="selector-tag">NSLog</span>(@<span class="string">&quot;num:%@&quot;</span>, [<span class="variable">@1</span> class]); <span class="comment">// __NSCFNumber</span></span><br></pre></td></tr></table></figure>
+
+<p>以 NSArray 为例，他在 alloc 阶段生成的是 <code>__NSPlaceholderArray</code> 的中间对象，然后在 init 阶段给这个中间对象发消息，由它做工厂，生成真正的对象。其中 NSMutableArray 生成的都是 <code>__NSArrayM</code> 类型，M 代表的就是 Mutable。NSArray 则区分了数组里：包含 0 个对象时生成的是 <code>__NSArray0</code> 类型，包含 1 个对象生成的是 <code>__NSSingleObjectArrayI</code> 类型，包含多个对象时生成的是 <code>__NSArrayI</code> 类型。</p>
+<p>NSDictionary 同样是类似的。那我们的防护方案里则是 Hook 全这些类型，比如 NSArray 的 Category：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">+</span> (void)load &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// [NSArray alloc]</span></span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSPlaceholderArray&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(initWithObjects:count:) withMethod:<span class="meta">@selector</span>(initWithObjects_guard:count:) error:<span class="literal">nil</span>];</span><br><span class="line">    <span class="comment">// @[]</span></span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSArray0&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(objectAtIndex:) withMethod:<span class="meta">@selector</span>(guard_objectAtIndex:) error:<span class="literal">nil</span>];</span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSArray0&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(arrayByAddingObject:) withMethod:<span class="meta">@selector</span>(guard_arrayByAddingObject:) error:<span class="literal">nil</span>];</span><br><span class="line">    <span class="comment">// @[@1]</span></span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSSingleObjectArrayI&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(objectAtIndex:) withMethod:<span class="meta">@selector</span>(guard_objectAtIndex:) error:<span class="literal">nil</span>];</span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSSingleObjectArrayI&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(arrayByAddingObject:) withMethod:<span class="meta">@selector</span>(guard_arrayByAddingObject:) error:<span class="literal">nil</span>];</span><br><span class="line">    <span class="comment">// @[@1, @2]</span></span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSArrayI&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(objectAtIndex:) withMethod:<span class="meta">@selector</span>(guard_objectAtIndex:) error:<span class="literal">nil</span>];</span><br><span class="line">    [<span class="type">NSClassFromString</span>(@<span class="string">&quot;__NSArrayI&quot;</span>) jr_swizzleMethod:<span class="meta">@selector</span>(arrayByAddingObject:) withMethod:<span class="meta">@selector</span>(guard_arrayByAddingObject:) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (instancetype)initWithObjects_guard:(id <span class="operator">*</span>)objects count:(<span class="type">NSUInteger</span>)cnt &#123;</span><br><span class="line">    <span class="type">NSUInteger</span> newCnt <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">NSUInteger</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> cnt; i<span class="operator">++</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="operator">!</span>objects[i]) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        newCnt<span class="operator">++</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">self</span> <span class="operator">=</span> [<span class="keyword">self</span> initWithObjects_guard:objects count:newCnt];</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (id)guard_objectAtIndex:(<span class="type">NSUInteger</span>)index &#123;</span><br><span class="line">    <span class="keyword">if</span> (index <span class="operator">&gt;=</span> [<span class="keyword">self</span> count]) &#123;</span><br><span class="line">        <span class="comment">// 收集堆栈，上报 Crash</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> guard_objectAtIndex:index];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (<span class="type">NSArray</span> <span class="operator">*</span>)guard_arrayByAddingObject:(id)anObject &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="operator">!</span>anObject) &#123;</span><br><span class="line">        <span class="comment">// 收集堆栈，上报 Crash</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> guard_arrayByAddingObject:anObject];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当然 NSArray、NSMutableArray、NSDictionary、NSMutableDictionary、NSString、NSMutableString、NSNumber 这些类都提供了跟多的方法，只要细心仔细的将他们全 Hook 掉就好了。当然实际开发中可能常用的就那么几个方法，Hook 那些就已经足够了。</p>
+<p>线上接入了这类的防护之后要比前边的文章讲的 Unrecognized Selector Crash 和 EXC_BAD_ACCESS Crash 更容易造成业务逻辑的错乱，毕竟业务逻辑中不可避免的要用到大量的 NSArray、NSDictionary 类，可能在接入这类防护后会操成点击无响应或者页面卡死，有时候这种情况甚至比程序崩溃还让用户崩溃，所以也要看实际开发需要的取舍。在接入防护后尤其要做好堆栈收集，上报 Crash 的工作，及时解决掉问题。</p>
+<p>Demo 地址：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/DemoRepo/tree/master/GHLCrashGuard/GHLCrashGuard/Classes/Container">GHLCrashGuard：GHLCrashGuard&#x2F;Classes&#x2F;Container</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/06/crash-guard-bad-access/" rel="next" title="Crash 防护方案（二）：EXC_BAD_ACCESS">
+                <i class="fa fa-chevron-left"></i> Crash 防护方案（二）：EXC_BAD_ACCESS
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/07/crash-guard-nstimer/" rel="prev" title="Crash 防护方案（四）：NSTimer">
+                Crash 防护方案（四）：NSTimer <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2019/07/07/crash-guard-container/';
+          this.page.identifier = '2019/07/07/crash-guard-container/';
+          this.page.title = 'Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

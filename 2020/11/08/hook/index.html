@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="之前在实现 组件化分发生命周期 - AOP 方案 过程中用到了 Aspects 这个库，所以当时又仔细看了看源码，借鉴了些消息分发的写法。后来又为了性能考虑用 libffi 这个库替换了 Aspects 的实现 ，参考了 Stinger 这个库的实现。本质上都是在做 Hook 操作，加上最近看了些 fishhook 的原理，涉及了很多 Mach-O 等底层原理，所以打算把 iOS 里的一些 Hoo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="细数 iOS 里的 Hook 方案">
+<meta property="og:url" content="http://gonghonglou.com/2020/11/08/hook/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="之前在实现 组件化分发生命周期 - AOP 方案 过程中用到了 Aspects 这个库，所以当时又仔细看了看源码，借鉴了些消息分发的写法。后来又为了性能考虑用 libffi 这个库替换了 Aspects 的实现 ，参考了 Stinger 这个库的实现。本质上都是在做 Hook 操作，加上最近看了些 fishhook 的原理，涉及了很多 Mach-O 等底层原理，所以打算把 iOS 里的一些 Hoo">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/hook/method_swizzling.png">
+<meta property="og:image" content="http://image.gonghonglou.com/hook/isa-swizzling.png">
+<meta property="og:image" content="http://image.gonghonglou.com/hook/launch.png">
+<meta property="og:image" content="http://image.gonghonglou.com/hook/macho.png">
+<meta property="og:image" content="http://image.gonghonglou.com/hook/fishhook.png">
+<meta property="article:published_time" content="2020-11-07T16:08:14.000Z">
+<meta property="article:modified_time" content="2020-11-08T08:14:30.140Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/hook/method_swizzling.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/11/08/hook/"/>
+
+
+
+
+
+  <title>细数 iOS 里的 Hook 方案 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/11/08/hook/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">细数 iOS 里的 Hook 方案</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-11-08T00:08:14+08:00">
+                2020-11-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>之前在实现 <a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a> 过程中用到了 <a target="_blank" rel="noopener" href="https://github.com/steipete/Aspects">Aspects</a> 这个库，所以当时又仔细看了看源码，借鉴了些消息分发的写法。后来又为了性能考虑用 <a target="_blank" rel="noopener" href="https://github.com/libffi/libffi">libffi</a> 这个库替换了 Aspects 的实现 ，参考了 <a target="_blank" rel="noopener" href="https://github.com/eleme/Stinger">Stinger</a> 这个库的实现。本质上都是在做 Hook 操作，加上最近看了些 <a target="_blank" rel="noopener" href="https://github.com/facebook/fishhook">fishhook</a> 的原理，涉及了很多 Mach-O 等底层原理，所以打算把 iOS 里的一些 Hook 方案列一下，做个笔记总结，就是这篇文章的初衷了。</p>
+<p>看了一段时间的底层原理就有些倦怠了，所以计划了一场组内分享驱动着看完了 fishhook 相关的知识。Demo 和 keynote 放在了 GitHub上，地址在这：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/HookDemo">https://github.com/gonghonglou/HookDemo</a></p>
+<h1 id="Preview"><a href="#Preview" class="headerlink" title="Preview"></a>Preview</h1><blockquote>
+<p>1、Method Swizzling<br>2、Message Forwarding<br>3、libffi<br>4、fishhook<br>5、静态库插桩</p>
+<p>6、基于桥的全量方法 Hook 方案 TrampoLineHook<br>7、Dobby &#x2F; Frida</p>
+</blockquote>
+<h1 id="小试牛刀：Method-Swizzling"><a href="#小试牛刀：Method-Swizzling" class="headerlink" title="小试牛刀：Method Swizzling"></a>小试牛刀：Method Swizzling</h1><p>这是 iOS 里最基础最原生的 Hook 方法了，当然也是性能最好的选择。本质上就是交换两个方法的 IMP（函数指针），即：</p>
+<p><img src="http://image.gonghonglou.com/hook/method_swizzling.png" alt="Method Swizzling"></p>
+<p>常见的写法也很简单：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">HookDemoObj</span> (<span class="title">HK</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">dispatch_once_t</span> onceToken;</span><br><span class="line">    <span class="built_in">dispatch_once</span>(&amp;onceToken, ^&#123;</span><br><span class="line">        Class <span class="keyword">class</span> = [<span class="keyword">self</span> <span class="keyword">class</span>];</span><br><span class="line"></span><br><span class="line">        SEL originalSelector = <span class="keyword">@selector</span>(loopLogWithCount:);</span><br><span class="line">        SEL swizzledSelector = <span class="keyword">@selector</span>(hook_loopLogWithCount:);</span><br><span class="line"></span><br><span class="line">        Method originalMethod = class_getInstanceMethod(<span class="keyword">class</span>, originalSelector);</span><br><span class="line">        Method swizzledMethod = class_getInstanceMethod(<span class="keyword">class</span>, swizzledSelector);</span><br><span class="line"></span><br><span class="line">        <span class="type">BOOL</span> success = class_addMethod(<span class="keyword">class</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</span><br><span class="line">        <span class="keyword">if</span> (success) &#123;</span><br><span class="line">            class_replaceMethod(<span class="keyword">class</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            method_exchangeImplementations(originalMethod, swizzledMethod);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)hook_loopLogWithCount:(<span class="built_in">NSInteger</span>)count &#123;</span><br><span class="line">    [<span class="keyword">self</span> hook_loopLogWithCount:count];</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;hook after count: %d&quot;</span>, count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的也就是以下几点：</p>
+<p>1、为什么 load 时机 可以成功执行？</p>
+<p>1.1、启动 dyld（the dynamic link editor）将应用程序加载到二进制中<br>1.2、Runtime 向 dyld 中注册回调函数<br>1.3、通过 ImageLoader 将所有的 image 加载到内存中<br>1.4、dyld 在 image 发生改变时，主动调用回调函数<br>1.5、Runtime 接收到 dyld 的函数回调，开始 map_images、load_images等操作，并回调 +load 方法<br>1.6、调用 mian 函数</p>
+<p>其中 3、4、5会执行多次，在 ImageLoader 加载新的 image 进内存后就会执行一次<br>ImageLoader 是 image 的加载器，image 可以理解为编译后的二进制</p>
+<p>2、dispatch_once 保证，避免方法被多次交换。</p>
+<p>3、调用原方法，因为方法已经被交换过了，所以这里调用 <code>[self hook_loopLogWithCount:count];</code> 即执行的是原函数（originalIMP）。</p>
+<h1 id="穿针引线：Message-Forwarding"><a href="#穿针引线：Message-Forwarding" class="headerlink" title="穿针引线：Message Forwarding"></a>穿针引线：Message Forwarding</h1><p>主要是 <a target="_blank" rel="noopener" href="https://github.com/steipete/Aspects">Aspects</a> 的原理，让目标方法在被执行时直接进入快速消息转发流程，在最后的 <code>forwardInvocation:</code> 方法里拿到 <code>NSInvocation</code> 对象，即包含了被调用方法的所有信息，主要是参数个数，参数值。然后在调用原方法之前或之后调用传入的 Block。</p>
+<p>看一下 Aspects 的使用：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HookDemoObj *forwardingObj = [HookDemoObj new];</span><br><span class="line"><span class="comment">// 无参数的 block</span></span><br><span class="line">[forwardingObj aspect_hookSelector:<span class="keyword">@selector</span>(logString:) withOptions:AspectPositionAfter usingBlock: ^&#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;Aspects after&quot;</span>); <span class="comment">// Aspects after</span></span><br><span class="line">&#125; error:<span class="literal">nil</span>];</span><br><span class="line"><span class="comment">// 有参数的 block</span></span><br><span class="line">[forwardingObj aspect_hookSelector:<span class="keyword">@selector</span>(logString:) withOptions:AspectPositionAfter usingBlock: ^(<span class="type">id</span>&lt;AspectInfo&gt; info, <span class="built_in">NSString</span> *str)&#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;Aspects after: %@&quot;</span>, str); <span class="comment">// Aspects after: abc</span></span><br><span class="line">&#125; error:<span class="literal">nil</span>];</span><br><span class="line">[forwardingObj logString:<span class="string">@&quot;abc&quot;</span>];</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的有以下几点：</p>
+<p>1、isa-swizzling 的应用<br>2、消息转发流程。如何不重写 “methodSignatureForSelector:” 方法也能进入 “forwardInvocation:” 阶段？<br>3、如何获取 block NSMethodSignature？并且在不定参数情况下执行 block？</p>
+<p>关于isa-swizzling 的应用：isa-swizzling 的原理如下图。即 KVO 的基本原理：原来的对象 isa 指向一个 class，通过 runtime 动态创建一个 class 的子类，并将原来对象的 isa 指向这个新建的子类，重写这个子类 getter、setter 即可。</p>
+<p><img src="http://image.gonghonglou.com/hook/isa-swizzling.png" alt="isa-swizzling"></p>
+<p>Aspects 的应用：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Default case. Create dynamic subclass.</span></span><br><span class="line"><span class="keyword">const</span> <span class="type">char</span> *subclassName = [className stringByAppendingString:AspectsSubclassSuffix].UTF8String;</span><br><span class="line">Class subclass = objc_getClass(subclassName);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断目标类是否创建过</span></span><br><span class="line"><span class="keyword">if</span> (subclass == <span class="literal">nil</span>) &#123;</span><br><span class="line">    <span class="comment">// 动态创建子类</span></span><br><span class="line">    subclass = objc_allocateClassPair(baseClass, subclassName, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (subclass == <span class="literal">nil</span>) &#123;</span><br><span class="line">        <span class="built_in">NSString</span> *errrorDesc = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;objc_allocateClassPair failed to allocate class %s.&quot;</span>, subclassName];</span><br><span class="line">        AspectError(AspectErrorFailedToAllocateClassPair, errrorDesc);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 交换 forwardInvocation: 方法</span></span><br><span class="line">    aspect_swizzleForwardInvocation(subclass);</span><br><span class="line">    <span class="comment">// 重写 class 方法</span></span><br><span class="line">    aspect_hookedGetClass(subclass, statedClass);</span><br><span class="line">    aspect_hookedGetClass(object_getClass(subclass), statedClass);</span><br><span class="line">    <span class="comment">// 注册动态创建的类</span></span><br><span class="line">    objc_registerClassPair(subclass);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 修改 isa 指针指向新创建的子类</span></span><br><span class="line">object_setClass(<span class="keyword">self</span>, subclass);</span><br></pre></td></tr></table></figure>
+
+<p>关于消息转发流程：正常的消息转发流程如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="type">BOOL</span>)resolveInstanceMethod:(SEL)sel &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;1:%@&quot;</span>, <span class="built_in">NSStringFromSelector</span>(_cmd));</span><br><span class="line">    <span class="keyword">return</span> [<span class="variable language_">super</span> resolveInstanceMethod:sel];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;2:%@&quot;</span>, <span class="built_in">NSStringFromSelector</span>(_cmd));</span><br><span class="line">    <span class="keyword">return</span> [<span class="variable language_">super</span> forwardingTargetForSelector:aSelector];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">NSMethodSignature</span> *)methodSignatureForSelector:(SEL)aSelector &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;3:%@&quot;</span>, <span class="built_in">NSStringFromSelector</span>(_cmd));</span><br><span class="line">    <span class="keyword">return</span> [<span class="variable language_">super</span> methodSignatureForSelector:aSelector];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)forwardInvocation:(<span class="built_in">NSInvocation</span> *)anInvocation &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;4:%@&quot;</span>, <span class="built_in">NSStringFromSelector</span>(_cmd));</span><br><span class="line">    [<span class="variable language_">super</span> forwardInvocation:anInvocation];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意，必须实现 <code>methodSignatureForSelector:</code> 方法返回 <code>NSMethodSignature</code> 才会进入 <code>forwardInvocation:</code> 方法。但 Aspects 并没有实现 <code>methodSignatureForSelector:</code> 方法。Aspects 的做法是：把要 hook 的方法通过 <code>class_replaceMethod()</code> 接口指向 <code>_objc_msgForward</code>，这是一个全局 IMP，OC 调用方法不存在时都会转发到这个 IMP 上，直接把方法替换成这个 IMP，这样调用 hook 方法时就会走到 <code>forwardInvocation:</code>：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Method targetMethod = class_getInstanceMethod(klass, selector);</span><br><span class="line"><span class="keyword">const</span> <span class="type">char</span> *typeEncoding = method_getTypeEncoding(targetMethod);</span><br><span class="line">class_replaceMethod(klass, selector, _objc_msgForward, typeEncoding);</span><br></pre></td></tr></table></figure>
+
+<p>关于 Block NSMethodSignature 和调用：</p>
+<p>这里 <a target="_blank" rel="noopener" href="https://opensource.apple.com/source/libclosure/libclosure-73/Block_private.h.auto.html">Block_layout</a> 是 Block 的源码，Block 的结构体内容是：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> BLOCK_DESCRIPTOR_1 1</span></span><br><span class="line"><span class="keyword">struct</span> Block_descriptor_1 &#123;</span><br><span class="line">    uintptr_t reserved;</span><br><span class="line">    uintptr_t size;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BLOCK_DESCRIPTOR_2 1</span></span><br><span class="line"><span class="keyword">struct</span> Block_descriptor_2 &#123;</span><br><span class="line">    <span class="comment">// requires BLOCK_HAS_COPY_DISPOSE</span></span><br><span class="line">    BlockCopyFunction <span class="keyword">copy</span>;</span><br><span class="line">    BlockDisposeFunction dispose;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BLOCK_DESCRIPTOR_3 1</span></span><br><span class="line"><span class="keyword">struct</span> Block_descriptor_3 &#123;</span><br><span class="line">    <span class="comment">// requires BLOCK_HAS_SIGNATURE</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *signature;</span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *layout;     <span class="comment">// contents depend on BLOCK_HAS_EXTENDED_LAYOUT</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> Block_layout &#123;</span><br><span class="line">    <span class="type">void</span> *isa;</span><br><span class="line">    <span class="keyword">volatile</span> int32_t flags; <span class="comment">// contains ref count</span></span><br><span class="line">    int32_t reserved;</span><br><span class="line">    BlockInvokeFunction invoke;</span><br><span class="line">    <span class="keyword">struct</span> Block_descriptor_1 *descriptor;</span><br><span class="line">    <span class="comment">// imported variables</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>isa 指向 Block 对象的类；<br>flags 决定 Block 包含的 Block_descriptor_1、Block_descriptor_2、Block_descriptor_3 信息；<br>reserved 预留字段</p>
+<p>Aspects 获取 Block signature 的方式：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这里自己定义了和系统 Block_layout 布局一致的 block 结构体</span></span><br><span class="line"><span class="comment">// Block internals.</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_OPTIONS</span>(<span class="type">int</span>, AspectBlockFlags) &#123;</span><br><span class="line">	AspectBlockFlagsHasCopyDisposeHelpers = (<span class="number">1</span> &lt;&lt; <span class="number">25</span>),</span><br><span class="line">	AspectBlockFlagsHasSignature          = (<span class="number">1</span> &lt;&lt; <span class="number">30</span>)</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _AspectBlock &#123;</span><br><span class="line">	__unused Class isa;</span><br><span class="line">	AspectBlockFlags flags;</span><br><span class="line">	__unused <span class="type">int</span> reserved;</span><br><span class="line">	<span class="type">void</span> (__unused *invoke)(<span class="keyword">struct</span> _AspectBlock *block, ...);</span><br><span class="line">	<span class="keyword">struct</span> &#123;</span><br><span class="line">		<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> reserved;</span><br><span class="line">		<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> size;</span><br><span class="line">		<span class="comment">// requires AspectBlockFlagsHasCopyDisposeHelpers</span></span><br><span class="line">		<span class="type">void</span> (*<span class="keyword">copy</span>)(<span class="type">void</span> *dst, <span class="keyword">const</span> <span class="type">void</span> *src);</span><br><span class="line">		<span class="type">void</span> (*dispose)(<span class="keyword">const</span> <span class="type">void</span> *);</span><br><span class="line">		<span class="comment">// requires AspectBlockFlagsHasSignature</span></span><br><span class="line">		<span class="keyword">const</span> <span class="type">char</span> *signature;</span><br><span class="line">		<span class="keyword">const</span> <span class="type">char</span> *layout;</span><br><span class="line">	&#125; *descriptor;</span><br><span class="line">	<span class="comment">// imported variables</span></span><br><span class="line">&#125; *AspectBlockRef;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用该方法获取 block 的 signature</span></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">NSMethodSignature</span> *aspect_blockMethodSignature(<span class="type">id</span> block, <span class="built_in">NSError</span> **error) &#123;</span><br><span class="line">    <span class="comment">// 将 block 强转为自己定义的结构体：AspectBlockRef，和系统 Block_layout 定义的一致</span></span><br><span class="line">    AspectBlockRef layout = (__bridge <span class="type">void</span> *)block;</span><br><span class="line">	<span class="keyword">if</span> (!(layout-&gt;flags &amp; AspectBlockFlagsHasSignature)) &#123;</span><br><span class="line">        <span class="built_in">NSString</span> *description = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;The block %@ doesn&#x27;t contain a type signature.&quot;</span>, block];</span><br><span class="line">        AspectError(AspectErrorMissingBlockSignature, description);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="type">void</span> *desc = layout-&gt;descriptor;</span><br><span class="line">    <span class="comment">// 1、偏移 reserved、size 两个 Int 类型的大小</span></span><br><span class="line">	desc += <span class="number">2</span> * <span class="keyword">sizeof</span>(<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span>);</span><br><span class="line">	<span class="keyword">if</span> (layout-&gt;flags &amp; AspectBlockFlagsHasCopyDisposeHelpers) &#123;</span><br><span class="line">        <span class="comment">// 2、偏移 copy、dispose 两个 指针 类型的大小</span></span><br><span class="line">		desc += <span class="number">2</span> * <span class="keyword">sizeof</span>(<span class="type">void</span> *);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">if</span> (!desc) &#123;</span><br><span class="line">        <span class="built_in">NSString</span> *description = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;The block %@ doesn&#x27;t has a type signature.&quot;</span>, block];</span><br><span class="line">        AspectError(AspectErrorMissingBlockSignature, description);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 3、即拿到了 signature</span></span><br><span class="line">	<span class="keyword">const</span> <span class="type">char</span> *signature = (*(<span class="keyword">const</span> <span class="type">char</span> **)desc);</span><br><span class="line">	<span class="keyword">return</span> [<span class="built_in">NSMethodSignature</span> signatureWithObjCTypes:signature];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将这些信息保存下来，在方法进入 <code>forwardInvocation:</code> 阶段，拿到方法的参数个数和入参值等信息分发到传入的 Block 上：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)invokeWithInfo:(<span class="type">id</span>&lt;AspectInfo&gt;)info &#123;</span><br><span class="line">    <span class="comment">// block Invocation</span></span><br><span class="line">    <span class="built_in">NSInvocation</span> *blockInvocation = [<span class="built_in">NSInvocation</span> invocationWithMethodSignature:<span class="keyword">self</span>.blockSignature];</span><br><span class="line">    <span class="comment">// 要 hook 方法的 Invocation</span></span><br><span class="line">    <span class="built_in">NSInvocation</span> *originalInvocation = info.originalInvocation;</span><br><span class="line">    <span class="comment">// 获取参数个数</span></span><br><span class="line">    <span class="built_in">NSUInteger</span> numberOfArguments = <span class="keyword">self</span>.blockSignature.numberOfArguments;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Be extra paranoid. We already check that on hook registration.</span></span><br><span class="line">    <span class="keyword">if</span> (numberOfArguments &gt; originalInvocation.methodSignature.numberOfArguments) &#123;</span><br><span class="line">        AspectLogError(<span class="string">@&quot;Block has too many arguments. Not calling %@&quot;</span>, info);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The `self` of the block will be the AspectInfo. Optional.</span></span><br><span class="line">    <span class="keyword">if</span> (numberOfArguments &gt; <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="comment">// block 与普通 OC 方法不同的是第 0 位是 block 自己，往后排列的是参数。</span></span><br><span class="line">        <span class="comment">// 这里第 1 位存放 info 信息，从第 2 位开始恰好和普通参数位置对其</span></span><br><span class="line">        [blockInvocation setArgument:&amp;info atIndex:<span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">	<span class="type">void</span> *argBuf = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">// 普通 OC 方法的第 0 位是 id 类型，即对象自己；第 1 位 是 SEL 类型，即方法本身；往后排列的才是参数</span></span><br><span class="line">    <span class="comment">// 所以这里从 index=2 开始遍历</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSUInteger</span> idx = <span class="number">2</span>; idx &lt; numberOfArguments; idx++) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *type = [originalInvocation.methodSignature getArgumentTypeAtIndex:idx];</span><br><span class="line">		<span class="built_in">NSUInteger</span> argSize;</span><br><span class="line">		<span class="built_in">NSGetSizeAndAlignment</span>(type, &amp;argSize, <span class="literal">NULL</span>);</span><br><span class="line">        </span><br><span class="line">		<span class="keyword">if</span> (!(argBuf = reallocf(argBuf, argSize))) &#123;</span><br><span class="line">            AspectLogError(<span class="string">@&quot;Failed to allocate memory for block invocation.&quot;</span>);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">		&#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 对方法对应位置上取出入参值赋予 block Invocation 对应位置上</span></span><br><span class="line">		[originalInvocation getArgument:argBuf atIndex:idx];</span><br><span class="line">		[blockInvocation setArgument:argBuf atIndex:idx];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    [blockInvocation invokeWithTarget:<span class="keyword">self</span>.block];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (argBuf != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        free(argBuf);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="移花接木：libffi"><a href="#移花接木：libffi" class="headerlink" title="移花接木：libffi"></a>移花接木：libffi</h1><p><a target="_blank" rel="noopener" href="https://github.com/libffi/libffi">libffi</a> 相当于 C 语言上的 runtime，拥有动态调用 C 方法及 OC 方法的能力。简单介绍下用法，例如，调用 C 函数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> c_func(<span class="type">int</span> a , <span class="type">int</span> b) &#123;</span><br><span class="line">    <span class="type">int</span> sum = a + b;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)libffi_call_c_func &#123;</span><br><span class="line">    ffi_cif cif;</span><br><span class="line">    ffi_type *argTypes[] = &#123;&amp;ffi_type_sint, &amp;ffi_type_sint&#125;;</span><br><span class="line">    ffi_prep_cif(&amp;cif, FFI_DEFAULT_ABI, <span class="number">2</span>, &amp;ffi_type_sint, argTypes);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> b = <span class="number">2</span>;</span><br><span class="line">    <span class="type">void</span> *args[] = &#123;&amp;a, &amp;b&#125;;</span><br><span class="line">    <span class="type">int</span> retValue;</span><br><span class="line">    ffi_call(&amp;cif, (<span class="type">void</span> *)c_func, &amp;retValue, args); <span class="comment">// retValue = 3</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;libffi_call_c_func, retValue:%d&quot;</span>, retValue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用 OC 函数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">int</span>)oc_func:(<span class="type">int</span>)a b:(<span class="type">int</span>)b &#123;</span><br><span class="line">    <span class="type">int</span> sum = a + b;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)libffi_call_oc_func &#123;</span><br><span class="line">    SEL selector = <span class="keyword">@selector</span>(oc_func:b:);</span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *signature = [<span class="keyword">self</span> methodSignatureForSelector:selector];</span><br><span class="line">    </span><br><span class="line">    ffi_cif cif;</span><br><span class="line">    ffi_type *argTypes[] = &#123;&amp;ffi_type_pointer, &amp;ffi_type_pointer, &amp;ffi_type_sint, &amp;ffi_type_sint&#125;;</span><br><span class="line">    ffi_prep_cif(&amp;cif, FFI_DEFAULT_ABI, (uint32_t)signature.numberOfArguments, &amp;ffi_type_sint, argTypes);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> arg1 = <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> arg2 = <span class="number">2</span>;</span><br><span class="line">    <span class="type">void</span> *args[] = &#123;(__bridge <span class="type">void</span> *)(<span class="keyword">self</span>), selector, &amp;arg1, &amp;arg2&#125;;</span><br><span class="line">    <span class="type">int</span> retValue;</span><br><span class="line">    IMP func = [<span class="keyword">self</span> methodForSelector:selector];</span><br><span class="line">    ffi_call(&amp;cif, (<span class="type">void</span> *)func, &amp;retValue, args); <span class="comment">// retValue = 3</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;libffi_call_oc_func, retValue:%d&quot;</span>, retValue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数调用 <code>ffi_call</code> 方法需要传入：1、函数模版（<code>ffi_cif</code>），2、函数指针，3、返回值，4、参数数组 这四个参数字段。<br>重点在于 函数模版（<code>ffi_cif</code>）。用 <code>ffi_cif</code> 生成一套函数模版，这个模版定义了调用一个函数时，这个函数的：1、参数个数（<code>int</code>），2、返回值类型（<code>ffi_type</code>），3、包含各个入参类型（<code>ffi_type</code>）的数组</p>
+<p>这样，<code>libffi</code> 的 <code>ffi_call</code> 方法就可以根据这个传入的 函数模版（<code>ffi_cif</code>）去调用函数了。</p>
+<p><code>ffi_type</code> 类型对应着系统的 <a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html">Type Encodings</a> 类型</p>
+<p>除了动态调用 C &amp; OC 方法外，<code>libffi</code> 提供的另外一个关键的能力是：<br>通过 <code>ffi_closure_alloc</code> 方法创建一个关联着函数指针（<code>IMP</code>）的闭包（<code>closure</code>）<br>通过 <code>ffi_prep_closure_loc</code> 函数给 <code>cif</code> 关联上这个闭包，并传入一个函数实体（<code>fun</code>）和刚才闭包里的 <code>IMP</code></p>
+<p>这样，当 <code>IMP</code> 被执行的时候，就会执行函数实体（<code>fun</code>），并且能在这个函数里拿到：1、<code>cif</code>，2、返回值，3、参数地址，4、自定义的关联数据（<code>userdata</code>），例如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> *newIMP = <span class="literal">NULL</span>;</span><br><span class="line">ffi_closure *closure = ffi_closure_alloc(<span class="keyword">sizeof</span>(ffi_closure), (<span class="type">void</span> **)&amp;newIMP);</span><br><span class="line">ffi_status prepClosureStatus = ffi_prep_closure_loc(closure, cif, holo_lifecycle_ffi_closure_func, (__bridge <span class="type">void</span> *)info, newIMP);</span><br><span class="line"><span class="keyword">if</span> (prepClosureStatus != FFI_OK) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holo_lifecycle_ffi_closure_func(ffi_cif *cif, <span class="type">void</span> *ret, <span class="type">void</span> **args, <span class="type">void</span> *userdata) &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有了这样的能力，我们就可以将上述的 <code>newIMP</code> 与我们要 hook 的方法 <code>IMP</code> 交换，这样调用 hook 方法的时候，就会执行到 <code>holo_lifecycle_ffi_closure_func</code> 方法，在这个方法里可以拿到原方法的参数个数、参数类型能信息，我们只要在这个方法里再调用一下原方法的 <code>IMP</code>，并在之前和之后分别调用要转发的目标对象的同名方法即可。</p>
+<p>实现了一份简单版的基于 libffi 的 hook 方法代码：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">NSObject</span> (<span class="title">LibffiHook</span>)</span></span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)hook_method:(SEL)sel withBlock:(<span class="type">id</span>)block &#123;</span><br><span class="line">    libffi_hook_func(<span class="keyword">self</span>, sel, block);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// =================== LibffiHookInfo</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">LibffiHookInfo</span> : <span class="title">NSObject</span> </span>&#123;</span><br><span class="line">    <span class="keyword">@public</span></span><br><span class="line">    </span><br><span class="line">    Class cls;</span><br><span class="line">    SEL sel;</span><br><span class="line">    <span class="type">void</span> *_originalIMP;</span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *_signature;</span><br><span class="line">    </span><br><span class="line">    <span class="type">id</span> _block;</span><br><span class="line">    ffi_cif *_block_cif;</span><br><span class="line">    <span class="type">void</span> *_block_IMP;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">LibffiHookInfo</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// =================== LibffiHook</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">void</span> *LibffiHookBlockIMP;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> LibffiHookBlock_layout LibffiHookBlock;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> LibffiHookBlock_layout &#123;</span><br><span class="line">    <span class="type">void</span> *isa;  <span class="comment">// initialized to &amp;_NSConcreteStackBlock or &amp;_NSConcreteGlobalBlock</span></span><br><span class="line">    <span class="keyword">volatile</span> <span class="type">int</span> flags; <span class="comment">// contains ref count</span></span><br><span class="line">    <span class="type">int</span> reserved;</span><br><span class="line">    <span class="type">void</span> (*invoke)(<span class="type">void</span> *, ...);</span><br><span class="line">    <span class="keyword">struct</span> Block_descriptor_1 *descriptor;</span><br><span class="line">    <span class="comment">// imported variables</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">LibffiHook</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> libffi_hook_func(<span class="type">id</span> obj, SEL sel, <span class="type">id</span> block) &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *selStr = [<span class="string">@&quot;libffi_hook_&quot;</span> stringByAppendingString:<span class="built_in">NSStringFromSelector</span>(sel)];</span><br><span class="line">    <span class="keyword">const</span> SEL key = <span class="built_in">NSSelectorFromString</span>(selStr);</span><br><span class="line">    <span class="keyword">if</span> (objc_getAssociatedObject(obj, key)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    LibffiHookInfo *info = [LibffiHookInfo new];</span><br><span class="line">    info-&gt;cls = [obj <span class="keyword">class</span>];</span><br><span class="line">    info-&gt;sel = sel;</span><br><span class="line">    info-&gt;_block = block;</span><br><span class="line">    </span><br><span class="line">    objc_setAssociatedObject(obj, key, info, OBJC_ASSOCIATION_RETAIN_NONATOMIC);</span><br><span class="line">    </span><br><span class="line">    Method method = class_getInstanceMethod([obj <span class="keyword">class</span>], sel);</span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *typeEncoding = method_getTypeEncoding(method);</span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *signature = [<span class="built_in">NSMethodSignature</span> signatureWithObjCTypes:typeEncoding];</span><br><span class="line">    </span><br><span class="line">    info-&gt;_signature = signature;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> <span class="type">unsigned</span> <span class="type">int</span> argsCount = method_getNumberOfArguments(method);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 1、构造参数类型列表</span></span><br><span class="line">    ffi_type **argTypes = calloc(argsCount, <span class="keyword">sizeof</span>(ffi_type *));</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; argsCount; ++i) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *argType = [signature getArgumentTypeAtIndex:i];</span><br><span class="line">        ffi_type *arg_ffi_type = libffi_hook_ffi_type(argType);</span><br><span class="line">        <span class="built_in">NSCAssert</span>(arg_ffi_type, <span class="string">@&quot;LibffiHook: can&#x27;t find a ffi_type: %s&quot;</span>, argType);</span><br><span class="line">        argTypes[i] = arg_ffi_type;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2、返回值类型</span></span><br><span class="line">    ffi_type *retType = libffi_hook_ffi_type(signature.methodReturnType);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3、准备 cif</span></span><br><span class="line">    <span class="comment">// 需要在堆上开辟内存，否则会出现内存问题 (LibffiHookInfo 释放时会 free 掉)</span></span><br><span class="line">    ffi_cif *cif = calloc(<span class="number">1</span>, <span class="keyword">sizeof</span>(ffi_cif));</span><br><span class="line">    <span class="comment">// 生成 ffi_cfi 模版对象，保存函数参数个数、类型等信息，相当于一个函数原型</span></span><br><span class="line">    ffi_status prepCifStatus = ffi_prep_cif(cif, FFI_DEFAULT_ABI, argsCount, retType, argTypes);</span><br><span class="line">    <span class="keyword">if</span> (prepCifStatus != FFI_OK) &#123;</span><br><span class="line">        <span class="built_in">NSCAssert</span>(<span class="literal">NO</span>, <span class="string">@&quot;LibffiHook: ffi_prep_cif failed: %d&quot;</span>, prepCifStatus);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4、生成新的 IMP</span></span><br><span class="line">    <span class="type">void</span> *newIMP = <span class="literal">NULL</span>;</span><br><span class="line">    ffi_closure *closure = ffi_closure_alloc(<span class="keyword">sizeof</span>(ffi_closure), (<span class="type">void</span> **)&amp;newIMP);</span><br><span class="line">    ffi_status prepClosureStatus = ffi_prep_closure_loc(closure, cif, libffi_hook_ffi_closure_func, (__bridge <span class="type">void</span> *)info, newIMP);</span><br><span class="line">    <span class="keyword">if</span> (prepClosureStatus != FFI_OK) &#123;</span><br><span class="line">        <span class="built_in">NSCAssert</span>(<span class="literal">NO</span>, <span class="string">@&quot;LibffiHook: ffi_prep_closure_loc failed: %d&quot;</span>, prepClosureStatus);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 5、替换 IMP 实现</span></span><br><span class="line">    Class hookClass = [obj <span class="keyword">class</span>];</span><br><span class="line">    SEL aSelector = method_getName(method);</span><br><span class="line">    <span class="keyword">if</span> (!class_addMethod(hookClass, aSelector, newIMP, typeEncoding)) &#123;</span><br><span class="line">        IMP originIMP = method_setImplementation(method, newIMP);</span><br><span class="line">        <span class="keyword">if</span> (info-&gt;_originalIMP != originIMP) &#123;</span><br><span class="line">            info-&gt;_originalIMP = originIMP;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 收集 block 信息（hook 的时候准备好，执行的时候会快点）</span></span><br><span class="line">    <span class="comment">// block 没有 SEL，所以比普通方法少一个参数</span></span><br><span class="line">    uint blockArgsCount = argsCount - <span class="number">1</span>;</span><br><span class="line">    ffi_type **blockArgTypes = calloc(blockArgsCount, <span class="keyword">sizeof</span>(ffi_type *));</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 1、构造参数类型列表</span></span><br><span class="line">    <span class="comment">// 第一个参数是 block 自己，肯定为指针类型</span></span><br><span class="line">    blockArgTypes[<span class="number">0</span>] = &amp;ffi_type_pointer;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">2</span>; i &lt; argsCount; ++i) &#123;</span><br><span class="line">        blockArgTypes[i - <span class="number">1</span>] = libffi_hook_ffi_type([info-&gt;_signature getArgumentTypeAtIndex:i]);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2、准备 cif</span></span><br><span class="line">    ffi_cif *callbackCif = calloc(<span class="number">1</span>, <span class="keyword">sizeof</span>(ffi_cif));</span><br><span class="line">    <span class="keyword">if</span> (ffi_prep_cif(callbackCif, FFI_DEFAULT_ABI, blockArgsCount, &amp;ffi_type_void, blockArgTypes) == FFI_OK) &#123;</span><br><span class="line">        info-&gt;_block_cif = callbackCif;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">NSCAssert</span>(<span class="literal">NO</span>, <span class="string">@&quot;ffi_prep_cif failed&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3、获取 block IMP</span></span><br><span class="line">    LibffiHookBlock *blockRef = (__bridge LibffiHookBlock *)block;</span><br><span class="line">    info-&gt;_block_IMP = blockRef-&gt;invoke;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> libffi_hook_ffi_closure_func(ffi_cif *cif, <span class="type">void</span> *ret, <span class="type">void</span> **args, <span class="type">void</span> *userdata) &#123;</span><br><span class="line">    LibffiHookInfo *info = (__bridge LibffiHookInfo *)userdata;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 1、before</span></span><br><span class="line">    </span><br><span class="line"><span class="comment">//    NSLog(@&quot;LibffiHook before, class: %@, sel: %@&quot;, NSStringFromClass(info-&gt;cls), NSStringFromSelector(info-&gt;sel));</span></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2、call original IMP</span></span><br><span class="line">    </span><br><span class="line">    ffi_call(cif, info-&gt;_originalIMP, ret, args);</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3、after 回调 block</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// block 没有 SEL，所以比普通方法少一个参数</span></span><br><span class="line">    <span class="type">void</span> **callbackArgs = calloc(info-&gt;_signature.numberOfArguments - <span class="number">1</span>, <span class="keyword">sizeof</span>(<span class="type">void</span> *));</span><br><span class="line">    <span class="comment">// 第一个参数是 block 自己</span></span><br><span class="line">    callbackArgs[<span class="number">0</span>] = (__bridge <span class="type">void</span> *)(info-&gt;_block);</span><br><span class="line">    <span class="comment">// 从 index = 2 位置开始把 args 中的数据拷贝到 callbackArgs中 (从 index = 1 开始，第 0 个位置留给 block 自己)</span></span><br><span class="line">    memcpy(callbackArgs + <span class="number">1</span>, args + <span class="number">2</span>, <span class="keyword">sizeof</span>(*args)*(info-&gt;_signature.numberOfArguments - <span class="number">2</span>));</span><br><span class="line"><span class="comment">//    for (NSInteger i = 2; i &lt; info-&gt;_signature.numberOfArguments; ++i) &#123;</span></span><br><span class="line"><span class="comment">//        callbackArgs[i - 1] = args[i];</span></span><br><span class="line"><span class="comment">//    &#125;</span></span><br><span class="line">    ffi_call(info-&gt;_block_cif, info-&gt;_block_IMP, <span class="literal">NULL</span>, callbackArgs);</span><br><span class="line">    free(callbackArgs);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">NS_INLINE</span> ffi_type *libffi_hook_ffi_type(<span class="keyword">const</span> <span class="type">char</span> *c) &#123;</span><br><span class="line">    <span class="keyword">switch</span> (c[<span class="number">0</span>]) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;v&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_void;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;c&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_schar;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;C&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uchar;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;s&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sshort;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;S&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_ushort;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;i&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sint;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;I&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;l&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_slong;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;L&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_ulong;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;q&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sint64;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;Q&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint64;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;f&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_float;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;d&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_double;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;F&#x27;</span>:</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> CGFLOAT_IS_DOUBLE</span></span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_double;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_float;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;B&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint8;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;^&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;@&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;#&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;:&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;&#123;&#x27;</span>: &#123;</span><br><span class="line">            <span class="comment">// http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Type-Example.html</span></span><br><span class="line">            ffi_type *type = malloc(<span class="keyword">sizeof</span>(ffi_type));</span><br><span class="line">            type-&gt;type = FFI_TYPE_STRUCT;</span><br><span class="line">            <span class="built_in">NSUInteger</span> size = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">NSUInteger</span> alignment = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">NSGetSizeAndAlignment</span>(c, &amp;size, &amp;alignment);</span><br><span class="line">            type-&gt;alignment = alignment;</span><br><span class="line">            type-&gt;size = size;</span><br><span class="line">            <span class="keyword">while</span> (c[<span class="number">0</span>] != <span class="string">&#x27;=&#x27;</span>) ++c; ++c;</span><br><span class="line">            </span><br><span class="line">            <span class="built_in">NSPointerArray</span> *pointArray = [<span class="built_in">NSPointerArray</span> pointerArrayWithOptions:<span class="built_in">NSPointerFunctionsOpaqueMemory</span>];</span><br><span class="line">            <span class="keyword">while</span> (c[<span class="number">0</span>] != <span class="string">&#x27;&#125;&#x27;</span>) &#123;</span><br><span class="line">                ffi_type *elementType = <span class="literal">NULL</span>;</span><br><span class="line">                elementType = libffi_hook_ffi_type(c);</span><br><span class="line">                <span class="keyword">if</span> (elementType) &#123;</span><br><span class="line">                    [pointArray addPointer:elementType];</span><br><span class="line">                    c = <span class="built_in">NSGetSizeAndAlignment</span>(c, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">NSInteger</span> count = pointArray.count;</span><br><span class="line">            ffi_type **types = malloc(<span class="keyword">sizeof</span>(ffi_type *) * (count + <span class="number">1</span>));</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                types[i] = [pointArray pointerAtIndex:i];</span><br><span class="line">            &#125;</span><br><span class="line">            types[count] = <span class="literal">NULL</span>; <span class="comment">// terminated element is NULL</span></span><br><span class="line">            </span><br><span class="line">            type-&gt;elements = types;</span><br><span class="line">            <span class="keyword">return</span> type;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>libffi_hook_ffi_type</code> 方法直接拷贝自：<a target="_blank" rel="noopener" href="https://github.com/eleme/Stinger">Stinger</a> 里的 <a target="_blank" rel="noopener" href="https://github.com/eleme/Stinger/blob/master/Stinger/Classes/STMethodSignature.m#L131-L209">ffi_type *_st_ffiTypeWithType(const char *c)</a> 方法</p>
+<h1 id="偷梁换柱：fishhook"><a href="#偷梁换柱：fishhook" class="headerlink" title="偷梁换柱：fishhook"></a>偷梁换柱：fishhook</h1><p>以 hook NSLog 为例，使用方式如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)fishhook_nslog &#123;</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;fishhook before&quot;</span>); <span class="comment">// fishhook before</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">struct</span> rebinding rebindingLog;</span><br><span class="line">    <span class="comment">// 需要 hook 的方法名</span></span><br><span class="line">    rebindingLog.name = <span class="string">&quot;NSLog&quot;</span>;</span><br><span class="line">    <span class="comment">// 用哪个方法来替换</span></span><br><span class="line">    rebindingLog.replacement = myLog;</span><br><span class="line">    <span class="comment">// 保存原本函数指针</span></span><br><span class="line">    rebindingLog.replaced = (<span class="type">void</span> **)&amp;sys_nslog;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">struct</span> rebinding rebindings[] = &#123;rebindingLog&#125;;</span><br><span class="line">    </span><br><span class="line">    rebind_symbols(rebindings, <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;fishhook after&quot;</span>); <span class="comment">// fishhook after----&gt;🍺🍺🍺</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 函数指针，用来保存原来的函数</span></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> (*sys_nslog)(<span class="built_in">NSString</span> *format, ...);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 新函数（注意：不定参数未处理）</span></span><br><span class="line"><span class="type">void</span> myLog(<span class="built_in">NSString</span> * _Nonnull format, ...) &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *message = [format stringByAppendingString:<span class="string">@&quot;----&gt;🍺🍺🍺&quot;</span>];</span><br><span class="line">    (*sys_nslog)(message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://github.com/facebook/fishhook">fishhook</a> 是 FaceBook 出品的能够 hook 动态库方法的框架（注意：仅能 hook 系统动态库方法），其源代码仅仅不足两百行，但是要搞明白这两百行代码的工作原理所需要的基础知识却是非常多的。</p>
+<p>以下是 App 启动的大致过程，大致分为：开辟进程、加载可执行文件、加载 Dyld、Dyld 加载各个动态库、Rebase（因为 ALSR 技术进行基址重定位）、Bind（动态库的符号绑定）、加载 OC 类，分类、init 方法、调用 Main 函数、调用 UIApplicationMain 函数、起一个主线程的 runloop。</p>
+<p><img src="http://image.gonghonglou.com/hook/launch.png" alt="launch"></p>
+<p><code>fishhook</code> 的工作原理就是 Bind 阶段：符号重绑定。</p>
+<p>普及一些涉及的基础概念：</p>
+<h4 id="为什么要动态链接？"><a href="#为什么要动态链接？" class="headerlink" title="为什么要动态链接？"></a>为什么要动态链接？</h4><p>远古时代，所有源代码都在一个文件上（想象下开发一个App，所有源代码都在main.m上，这个 main.m 有几百万行代码。多人协同开发、如何维护、复用、每次编译几分钟….）。<br>为了解决上面问题，于是有了静态链接。像我们平时开发，每个人开发自己的模块功能，最后编译链接在一起。解决了协同开发、可维护、可复用、编译速度也很快了（未改动的模块用编译好的缓存）。</p>
+<p>静态链接好像已经很完美了。我们平时开发 App，都会用到 UIKit、Foundation 等许多系统库。假如都是通过静态链接的，手机里每个App都包含了一份这些系统库，每个App包体积变大了，占用磁盘空间；每个 App 运行时都要在内存里分别加载这些库，占用内存。</p>
+<p>假设 UIKit 里某个函数有bug，需要更新，所有 App 都要重新静态链接最新的 UIKit 库，然后发版。</p>
+<p>为了这些问题，于是产生了动态链接。</p>
+<h4 id="position-independent-code-（PIC-地址无关代码）"><a href="#position-independent-code-（PIC-地址无关代码）" class="headerlink" title="position-independent code （PIC 地址无关代码）"></a>position-independent code （PIC 地址无关代码）</h4><p><strong>产生地址无关代码原因：</strong>dylib 在编译时候，是不知道自己在进程中的虚拟内存地址的。因为 dylib 可以被多个进程共享，比如进程 1 可以在空闲地址 0x1000-0x2000 放共享对象 a，但是进程 2 的 0x1000-0x2000 已经被主模块占用了，只有空闲地址 0x3000-0x4000 可以放这个共享对象 a。<br>所以共享对象 a 里面有一个函数，在进程 1 中的虚拟内存地址是 0x10f4，在进程 2 中的虚拟内存地址就成了 0x30f4。那机器指令就不能包含绝地地址了（动态库代码段所有进程共享；可修改的数据段，每个进程有一个副本，私有的）。</p>
+<p><strong>PIC原理：</strong>为了解决 dylib 的代码段能被共享，PIC（地址无关代码）技术就产生了。PIC 原理就是把指令中那些需要被修改的部分分离出来，跟数据部分放在一起，这样指令部分就可以保持不变，而数据部分是每个进程都有一个副本。</p>
+<h4 id="ALSR："><a href="#ALSR：" class="headerlink" title="ALSR："></a>ALSR：</h4><p>在计算机科学中，地址空间配置随机加载（英语：Address space layout randomization，缩写ASLR，又称地址空间配置随机化、地址空间布局随机化）是一种防范内存损坏漏洞被利用的计算机安全技术。ASLR通过随机放置进程关键数据区域的地址空间来防止攻击者能可靠地跳转到内存的特定位置来利用函数。现代操作系统一般都加设这一机制，以防范恶意程序对已知地址进行Return-to-libc攻击。</p>
+<h4 id="Mach-O-文件"><a href="#Mach-O-文件" class="headerlink" title="Mach-O 文件"></a>Mach-O 文件</h4><p>在了解 fishhook 的具体原理之前还要熟悉下 Mach-O 文件：MacOS 上的可执行文件格式，类似于 Linux 和大部分 UNIX 的原生格式 ELF（Extensible Firmware Interface）。</p>
+<p><img src="http://image.gonghonglou.com/hook/macho.png" alt="Mach-O"></p>
+<p>1、Header：magic 魔数，内核识别 MachO<br>2、Load Commands：存储 Mach-O 的布局信息<br>3、Data：包含实际的代码和数据，Data 被分割为多个 Segment。每个 Segment 被分割为多个 Section，分别存放不同的数据</p>
+<p>标准的三个 Segment：TEXT、DATA、LINKEDIT</p>
+<p>3.1、TEXT：代码段，只读可执行，存储函数的二进制代码(__text)，常量字符串(__cstring)，Objective C 的类&#x2F;方法名等信息<br>3.2、DATA：数据段，<strong>读写</strong>，存储 Objective C 的字符串(__cfstring)，以及运行时的元数据：class&#x2F;protocol&#x2F;method…<br>3.3、LINKEDIT：启动 App 需要的信息，如 bind &amp; rebase 的地址，代码签名，符号表…</p>
+<p>Mach-O 中 __DATA 段有两个 Section 与动态符号绑定有关系</p>
+<p>__nl_symbol_ptr ：存储了 non-lazily 绑定的符号，这些符号在 Mach-O 加载的时候绑定完成<br>__la_symbol_ptr ：存储了 lazy 绑定的方法，这些方法在第一次调用时，由 dyld_stub_binder 进行绑定</p>
+<p>为了实现系统动态库的共用，有了上文提到的动态链接。PIC 原理里提到了把那些需要共用的符号放在了 DATA 段，DATA 段的权限是可读写的，fishhook 就是在运行期修改 DATA 段里的数据，把系统符号绑定的地址重新绑定位我们自己定义的 hook 函数地址。</p>
+<p>比如 NSLog 就是懒加载的，在第一次访问 NSLog 符号的时候先去 stub，stub 告诉从 __la_symbol_ptr 查找，__la_symbol_ptr 表示还没有 NSLog 符号真实函数地址，需要动态绑定，于是去 __nl_symbol_ptr 查找 dyld_stub_binder 函数的地址，进行查找真实的 NSLog 地址。<br>找到后调用 NSLog 函数，并把这个地址保存进 __la_symbol_ptr。</p>
+<p>下次调用 NSLog　函数的时候在 __la_symbol_ptr 就能得到真实地址进行跳转。</p>
+<h4 id="fashhook-工作流程："><a href="#fashhook-工作流程：" class="headerlink" title="fashhook 工作流程："></a>fashhook 工作流程：</h4><p>下图是 fashhook 在 GitHub 上 README.md 里的图，非常清晰的介绍了 fashhook 的工作流程：</p>
+<p><img src="http://image.gonghonglou.com/hook/fishhook.png" alt="fashhook"></p>
+<p>以 hook NSLog 方法为例：</p>
+<p>1、在 Lazy Symbol Pointer Table 找到 NSLog 顺序<br>2、按上面的顺序在 Indirect Symbol Table 找到 NSLog<br>3、把 Indirect Symbol Table 中 NSLog 的 data 值转为 10 进制，作为角标在 Symbols Table -&gt; Symbols 中查找<br>4、把 Symbols 表中 NSLog 的 data 值加上 String Table 中的第一条数据（base value）的值，确认找到了目标符号</p>
+<p>把 Lazy Symbol Pointer Table 里的角标位置上的值修改为我们自己函数的地址，即完成了符号重绑定过程。</p>
+<p>核心代码如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// dyld 在 image 发生改变时，主动调用回调函数</span></span><br><span class="line">_dyld_register_func_for_add_image(_rebind_symbols_for_image);</span><br><span class="line"></span><br><span class="line"><span class="comment">// slide 即 ALSR 产生的随机偏移量</span></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> _rebind_symbols_for_image(<span class="keyword">const</span> <span class="keyword">struct</span> mach_header *header,</span><br><span class="line">                                      intptr_t slide) &#123;</span><br><span class="line">    rebind_symbols_for_image(_rebindings_head, header, slide);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> perform_rebinding_with_section(<span class="keyword">struct</span> rebindings_entry *rebindings,</span><br><span class="line">                                           section_t *section,</span><br><span class="line">                                           intptr_t slide,</span><br><span class="line">                                           nlist_t *symtab,</span><br><span class="line">                                           <span class="type">char</span> *strtab,</span><br><span class="line">                                           uint32_t *indirect_symtab) &#123;</span><br><span class="line">  uint32_t *indirect_symbol_indices = indirect_symtab + section-&gt;reserved1;</span><br><span class="line">  <span class="type">void</span> **indirect_symbol_bindings = (<span class="type">void</span> **)((uintptr_t)slide + section-&gt;addr);</span><br><span class="line">  <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; section-&gt;size / <span class="keyword">sizeof</span>(<span class="type">void</span> *); i++) &#123;</span><br><span class="line">    uint32_t symtab_index = indirect_symbol_indices[i];</span><br><span class="line">    <span class="keyword">if</span> (symtab_index == INDIRECT_SYMBOL_ABS || symtab_index == INDIRECT_SYMBOL_LOCAL ||</span><br><span class="line">        symtab_index == (INDIRECT_SYMBOL_LOCAL   | INDIRECT_SYMBOL_ABS)) &#123;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    uint32_t strtab_offset = symtab[symtab_index].n_un.n_strx;</span><br><span class="line">    <span class="type">char</span> *symbol_name = strtab + strtab_offset;</span><br><span class="line">    <span class="keyword">struct</span> rebindings_entry *cur = rebindings;</span><br><span class="line">    <span class="keyword">while</span> (cur) &#123;</span><br><span class="line">      <span class="keyword">for</span> (uint j = <span class="number">0</span>; j &lt; cur-&gt;rebindings_nel; j++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (strlen(symbol_name) &gt; <span class="number">1</span> &amp;&amp;</span><br><span class="line">            strcmp(&amp;symbol_name[<span class="number">1</span>], cur-&gt;rebindings[j].name) == <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">if</span> (cur-&gt;rebindings[j].replaced != <span class="literal">NULL</span> &amp;&amp;</span><br><span class="line">              indirect_symbol_bindings[i] != cur-&gt;rebindings[j].replacement) &#123;</span><br><span class="line">            *(cur-&gt;rebindings[j].replaced) = indirect_symbol_bindings[i];</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="comment">// 找到目标位置，将该角标下的函数地址修改为我们自己的 hook 函数地址</span></span><br><span class="line">          indirect_symbol_bindings[i] = cur-&gt;rebindings[j].replacement;</span><br><span class="line">          <span class="keyword">goto</span> symbol_loop;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      cur = cur-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">  symbol_loop:;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="李代桃僵：静态库插桩"><a href="#李代桃僵：静态库插桩" class="headerlink" title="李代桃僵：静态库插桩"></a>李代桃僵：静态库插桩</h1><p>主要是 <a target="_blank" rel="noopener" href="https://juejin.im/post/6844904098580398087">静态插桩的方式来实现Hook Method</a> 这个文化里提到的技术，</p>
+<p>文章里主要是操作的 <code>_objc_msgSend</code> 方法。基本原理大概是：</p>
+<p>把自己的组件打成静态库，编译阶段因为不知道引用的外部符号的具体地址，只在符号表里做了标记，需要在链接阶段再查找外部符号的引用进行绑定。</p>
+<p>通过脚本手动替换掉 .a 文件里的符号（<code>_objc_msgSend</code>）为我们自定义的符号（<code>_hook_msgSend</code>），注意两个符号必须等长。</p>
+<p>再自己在 text 段定义一个 <code>_hook_msgSend</code> 函数，这样，链接阶段查找外部符号就绑定成了自己定义的函数。</p>
+<p>脚本代码如下，需要对 Mach-O 格式非常熟悉：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br></pre></td><td class="code"><pre><span class="line"># -*- coding: utf<span class="number">-8</span> -*</span><br><span class="line">import os</span><br><span class="line">import re</span><br><span class="line">import <span class="keyword">struct</span></span><br><span class="line">from pathlib import Path</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;</span><span class="string">&#x27;</span></span><br><span class="line"><span class="string">静态库结构</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">1、魔数 8个字节</span></span><br><span class="line"><span class="string">magic(8) = &#x27;</span>!&lt;arch&gt;\n<span class="string">&#x27;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">2、符号表头结构 80个字节</span></span><br><span class="line"><span class="string">struct symtab_header &#123;</span></span><br><span class="line"><span class="string">    char        name[16];       /* 名称 */</span></span><br><span class="line"><span class="string">    char        timestamp[12];  /* 库创建的时间戳 */</span></span><br><span class="line"><span class="string">    char        userid[6];        /* 用户id */</span></span><br><span class="line"><span class="string">    char        groupid[6];  /* 组id */</span></span><br><span class="line"><span class="string">    uint64_t    mode;            /* 文件访问模式 */</span></span><br><span class="line"><span class="string">    uint64_t    size;            /* 符号表占总字节大小 */</span></span><br><span class="line"><span class="string">    uint32_t    endheader;        /* 头结束标志 */</span></span><br><span class="line"><span class="string">    char        longname[20];   /* 符号表长名 */</span></span><br><span class="line"><span class="string">&#125;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">3、符号表 4+size个字节</span></span><br><span class="line"><span class="string">struct symbol_table &#123;</span></span><br><span class="line"><span class="string">    uint32_t       size;           /* 符号表占用的总字节数 */</span></span><br><span class="line"><span class="string">    symbol_info syminfo[0];      /* 符号信息，它的个数是 size / sizeof(symbol_info) */</span></span><br><span class="line"><span class="string">&#125;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">3、字符串表 4+size个字节</span></span><br><span class="line"><span class="string">struct stringtab</span></span><br><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="string">    int size;     //字符串表的尺寸</span></span><br><span class="line"><span class="string">    char strings[0];   //字符串表的内容，每个字符串以\0分隔。</span></span><br><span class="line"><span class="string">&#125;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">4、目标文件头结构（跟符号表头结构一样） 80个字节</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">struct object_header &#123;</span></span><br><span class="line"><span class="string">    char        name[16];       /* 名称 */</span></span><br><span class="line"><span class="string">    char        timestamp[12];  /* 目标文件创建的时间戳 */</span></span><br><span class="line"><span class="string">    char        userid[6];        /* 用户id */</span></span><br><span class="line"><span class="string">    char        groupid[6];  /* 组id */</span></span><br><span class="line"><span class="string">    uint64_t    mode;            /* 文件访问模式 */</span></span><br><span class="line"><span class="string">    uint64_t    size;            /* 符号表占总字节大小 */</span></span><br><span class="line"><span class="string">    uint32_t    endheader;        /* 头结束标志 */</span></span><br><span class="line"><span class="string">    char        longname[20];   /* 符号表长名 */</span></span><br><span class="line"><span class="string">&#125;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">5、目标文件</span></span><br><span class="line"><span class="string">这个可以参考我的博客：https://juejin.im/post/5d5275b251882505417927b5</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">.....4、5循环（如果有多个目标文件）</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">&#x27;</span><span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">def deal_fat_file():</span><br><span class="line">    global staticLibPath, fatFilePath</span><br><span class="line">    fatFilePath = staticLibPath</span><br><span class="line">    (fatFileDir, fatFileName) = os.path.split(fatFilePath)</span><br><span class="line">    fatFileName = <span class="string">&#x27;tmp-arm64-&#x27;</span>+fatFileName</span><br><span class="line">    staticLibPath = os.path.join(fatFileDir, fatFileName)</span><br><span class="line">    os.system(<span class="string">&#x27;lipo &#x27;</span> + fatFilePath + <span class="string">&#x27; -thin &#x27;</span> + <span class="string">&#x27;arm64 -output &#x27;</span>+ staticLibPath)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def replace_fat_file():</span><br><span class="line">    os.system(<span class="string">&#x27;lipo &#x27;</span>+fatFilePath+<span class="string">&#x27; -replace arm64 &#x27;</span>+staticLibPath+<span class="string">&#x27; -output &#x27;</span>+fatFilePath)</span><br><span class="line">    os.remove(staticLibPath)</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">def get_valid_staticLib_path():</span><br><span class="line">    <span class="keyword">if</span> not Path(staticLibPath).is_file():</span><br><span class="line">        <span class="keyword">return</span> False, <span class="string">&#x27;invalid path, please input valid staticLib path!!!&#x27;</span></span><br><span class="line">    output = os.popen(<span class="string">&#x27;lipo -info &#x27;</span>+staticLibPath).read().strip()</span><br><span class="line">    <span class="keyword">if</span> not output.endswith(<span class="string">&#x27;architecture: arm64&#x27;</span>):  <span class="meta"># re.match(r&#x27;.*architecture: arm64$&#x27;, output):</span></span><br><span class="line">        <span class="keyword">if</span> output.startswith(<span class="string">&#x27;Architectures in the fat file:&#x27;</span>) and output.find(<span class="string">&#x27;arm64&#x27;</span>):</span><br><span class="line">            deal_fat_file()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> False, <span class="string">&#x27;invalid staticLib or fat file not contain arm64 lib&#x27;</span></span><br><span class="line">    with open(staticLibPath, <span class="string">&#x27;rb&#x27;</span>) as fileobj:</span><br><span class="line">        magic = fileobj.read(<span class="number">8</span>)</span><br><span class="line">        (magic,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;8s&#x27;</span>, magic)</span><br><span class="line">        magic = magic.decode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> not magic == <span class="string">&#x27;!&lt;arch&gt;\n&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> False, <span class="string">&#x27;error magic, invalid staticLib.&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> True, <span class="string">&#x27;valid path!&#x27;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 返回(name, location, size)</span><br><span class="line">def resolver_object_header(offset):</span><br><span class="line">    with open(staticLibPath, <span class="string">&#x27;rb&#x27;</span>) as fileobj:</span><br><span class="line">        fileobj.seek(offset)</span><br><span class="line">        name = fileobj.read(<span class="number">16</span>)</span><br><span class="line">        (name,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;16s&#x27;</span>, name)</span><br><span class="line">        name = name.decode()</span><br><span class="line">        <span class="meta"># offset(48+offset) = offset + name(16) + timestamp(12) + userid(6) + groupid(6) + mode(8)</span></span><br><span class="line">        fileobj.seek(<span class="number">48</span>+offset)</span><br><span class="line">        size = fileobj.read(<span class="number">8</span>)</span><br><span class="line">        (size,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;8s&#x27;</span>, size)</span><br><span class="line">        size = <span class="type">int</span>(size.decode())</span><br><span class="line">        location = <span class="number">60</span> + offset</span><br><span class="line">        <span class="keyword">if</span> name.startswith(<span class="string">&#x27;#1/&#x27;</span>):</span><br><span class="line">            nameLen = <span class="type">int</span>(name[<span class="number">3</span>:])</span><br><span class="line">            size = size - nameLen</span><br><span class="line">            location = location + nameLen</span><br><span class="line">            fileobj.seek(<span class="number">60</span>+offset)</span><br><span class="line">            name = fileobj.read(nameLen)</span><br><span class="line">            (name,) = <span class="keyword">struct</span>.unpack(str(nameLen)+<span class="string">&#x27;s&#x27;</span>, name)</span><br><span class="line">            name = name.decode().strip()</span><br><span class="line">    <span class="keyword">return</span> (name, location, size)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def find_symtab(location, size):</span><br><span class="line">    with open(staticLibPath, <span class="string">&#x27;rb&#x27;</span>) as fileobj:</span><br><span class="line">        fileobj.seek(location)</span><br><span class="line">        magic = fileobj.read(<span class="number">4</span>)</span><br><span class="line">        (magic,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, magic)</span><br><span class="line">        # arm64 mach-o magic</span><br><span class="line">        <span class="keyword">if</span> not magic == <span class="number">0xFEEDFACF</span>:</span><br><span class="line">            exit(<span class="string">&#x27;静态库里的machO文件不是arm64平台的！&#x27;</span>)</span><br><span class="line">        fileobj.seek(location+<span class="number">16</span>)</span><br><span class="line">        num_command = fileobj.read(<span class="number">4</span>)</span><br><span class="line">        (num_command,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, num_command)</span><br><span class="line">        offset = location+<span class="number">32</span></span><br><span class="line">        <span class="keyword">while</span> num_command &gt; <span class="number">0</span>:</span><br><span class="line">            fileobj.seek(offset)</span><br><span class="line">            cmd = fileobj.read(<span class="number">4</span>)</span><br><span class="line">            (cmd,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, cmd)</span><br><span class="line">            <span class="keyword">if</span> cmd == <span class="number">0x2</span>: # LC_SYMTAB = <span class="number">0x2</span></span><br><span class="line">                offset = offset + <span class="number">16</span></span><br><span class="line">                fileobj.seek(offset)</span><br><span class="line">                stroff = fileobj.read(<span class="number">4</span>)</span><br><span class="line">                (stroff,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, stroff)</span><br><span class="line">                strsize = fileobj.read(<span class="number">4</span>)</span><br><span class="line">                (strsize,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, strsize)</span><br><span class="line">                symtabList_loc_size.append((stroff+location, strsize))</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            cmd_size = fileobj.read(<span class="number">4</span>)</span><br><span class="line">            (cmd_size,) = <span class="keyword">struct</span>.unpack(<span class="string">&#x27;I&#x27;</span>, cmd_size)</span><br><span class="line">            offset = offset + cmd_size</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def replace_Objc_MsgSend(fileLen):</span><br><span class="line">    print(<span class="string">&#x27;开始替换objc_msgSend...(静态库很大的话，可能需要等十几秒)!!!&#x27;</span>)</span><br><span class="line">    pos = <span class="number">0</span></span><br><span class="line">    bytes = b<span class="string">&#x27;&#x27;</span></span><br><span class="line">    (loc, size) = symtabList_loc_size[<span class="number">0</span>]</span><br><span class="line">    listIndex = <span class="number">1</span></span><br><span class="line">    with open(staticLibPath, <span class="string">&#x27;rb&#x27;</span>) as fileobj:</span><br><span class="line">        <span class="keyword">while</span> pos &lt; fileLen:</span><br><span class="line">            <span class="keyword">if</span> pos == loc:</span><br><span class="line">                content = fileobj.read(size)</span><br><span class="line">                content = content.replace(b<span class="string">&#x27;\x00_objc_msgSend\x00&#x27;</span>, b<span class="string">&#x27;\x00_hook_msgSend\x00&#x27;</span>)</span><br><span class="line">                pos = pos + size</span><br><span class="line">                <span class="keyword">if</span> listIndex &lt; len(symtabList_loc_size):</span><br><span class="line">                    (loc, size) = symtabList_loc_size[listIndex]</span><br><span class="line">                    listIndex = <span class="number">1</span> + listIndex</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                step = <span class="number">4</span></span><br><span class="line">                <span class="keyword">if</span> loc &gt; pos:</span><br><span class="line">                    step = loc - pos</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    step = fileLen - pos</span><br><span class="line">                content = fileobj.read(step)</span><br><span class="line">                pos = pos + step</span><br><span class="line">            bytes = bytes + content</span><br><span class="line">    with open(staticLibPath, <span class="string">&#x27;wb+&#x27;</span>) as fileobj:</span><br><span class="line">        print(<span class="string">&#x27;开始写入文件...&#x27;</span>)</span><br><span class="line">        fileobj.write(bytes)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">if</span> len(fatFilePath) &gt; <span class="number">0</span>:</span><br><span class="line">        replace_fat_file()</span><br><span class="line"></span><br><span class="line">    print(<span class="string">&#x27;处理完了！！！&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">need_process_objFile = set() <span class="meta"># set(&#x27;xx1&#x27;, &#x27;xx2&#x27;) 表示静态库中，仅xx1跟xx2需要处理</span></span><br><span class="line">needless_process_objFile = set() <span class="meta"># set(&#x27;xx1&#x27;, &#x27;xx2&#x27;) 表示静态库中，xx1跟xx2不需要处理，剩下的都需要处理</span></span><br><span class="line"></span><br><span class="line">def process_object_file(name, location, size):</span><br><span class="line">    # 根据需要，下面三行中，只需打开一行，另外两行需要注释掉</span><br><span class="line">    process_mode = <span class="string">&#x27;default&#x27;</span> # 默认处理该静态库中的所有目标文件(类)</span><br><span class="line">    #process_mode = <span class="string">&#x27;need_process_objFile&#x27;</span> # 只处理need_process_objFile集合(上面的集合，需要赋值)中的类</span><br><span class="line">    #process_mode = <span class="string">&#x27;needless_process_objFile&#x27;</span> # 除了needless_process_objFile集合(上面的集合，需要赋值)中的类不处理，剩下的都需要处理</span><br><span class="line"></span><br><span class="line">    # 这里可以过滤不需要处理的目标文件，或者只选择需要处理的目标文件</span><br><span class="line">    # 默认处理该静态库中的所有目标文件</span><br><span class="line">    <span class="keyword">if</span> process_mode == <span class="string">&#x27;need_process_objFile&#x27;</span>:</span><br><span class="line">        <span class="keyword">if</span> name <span class="keyword">in</span> need_process_objFile:</span><br><span class="line">            find_symtab(location, size)</span><br><span class="line">    elif process_mode == <span class="string">&#x27;needless_process_objFile&#x27;</span>:</span><br><span class="line">        <span class="keyword">if</span> not name <span class="keyword">in</span> need_process_objFile:</span><br><span class="line">            find_symtab(location, size)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        find_symtab(location, size)</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 静态库的路径</span><br><span class="line">staticLibPath = <span class="string">&#x27;完整的静态库路径&#x27;</span></span><br><span class="line">fatFilePath = str()</span><br><span class="line"># objc_msgSend被替换的名字（两者长度需一致）</span><br><span class="line"># hookObjcMsgSend-arm64.s里定义了函数名为hook_msgSend，如果修改脚本里的函数名，hookObjcMsgSend-arm64.s里的函数名，也需跟脚本保持一致</span><br><span class="line"># 建议不修改hook_msgSend</span><br><span class="line">hook_msgSend_method_name = <span class="string">&#x27;hook_msgSend&#x27;</span></span><br><span class="line">symtabList_loc_size = list()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    # staticLibPath = <span class="string">&#x27;/Users/xx/xx/xx&#x27;</span>.strip()</span><br><span class="line">    staticLibPath = input(<span class="string">&#x27;请输入静态库的路径：&#x27;</span>).strip()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> not len(hook_msgSend_method_name) == len(<span class="string">&#x27;objc_msgSend&#x27;</span>):</span><br><span class="line">        exit(<span class="string">&#x27;need len(\&#x27;hook_msgSend\&#x27;) == len(\&#x27;objc_msgSend\&#x27;)!&#x27;</span>)</span><br><span class="line">    isValid, desc = get_valid_staticLib_path()</span><br><span class="line">    <span class="keyword">if</span> not isValid:</span><br><span class="line">        exit(desc)</span><br><span class="line">    # 找到每个目标文件里的字符串表location 跟 size</span><br><span class="line">    fileLen = Path(staticLibPath).stat().st_size</span><br><span class="line">    offset = <span class="number">8</span></span><br><span class="line">    <span class="keyword">while</span> offset &lt; fileLen:</span><br><span class="line">        (name, location, size) = resolver_object_header(offset)</span><br><span class="line">        offset = location+size</span><br><span class="line">        endIndex = name.find(<span class="string">&#x27;.o&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> endIndex == <span class="number">-1</span>:</span><br><span class="line">            #静态库的符号表，不需要处理</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        process_object_file(name[:endIndex], location, size)</span><br><span class="line">    <span class="keyword">if</span> len(symtabList_loc_size) &gt; <span class="number">0</span>:</span><br><span class="line">        replace_Objc_MsgSend(fileLen)</span><br></pre></td></tr></table></figure>
+
+
+<p>在 text 段定义一个 <code>_hook_msgSend</code> 函数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __arm64__</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arm/arch.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">.macro ENTRY <span class="comment">/* name */</span></span><br><span class="line">    .text</span><br><span class="line">    .align <span class="number">5</span></span><br><span class="line">    .private_extern    $<span class="number">0</span></span><br><span class="line">$<span class="number">0</span>:</span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line">.macro END_ENTRY <span class="comment">/* name */</span></span><br><span class="line">LExit$<span class="number">0</span>:</span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">.macro BACKUP_REGISTERS</span><br><span class="line">    stp q6, q7, [sp, #<span class="number">-0x20</span>]!</span><br><span class="line">    stp q4, q5, [sp, #<span class="number">-0x20</span>]!</span><br><span class="line">    stp q2, q3, [sp, #<span class="number">-0x20</span>]!</span><br><span class="line">    stp q0, q1, [sp, #<span class="number">-0x20</span>]!</span><br><span class="line">    stp x6, x7, [sp, #<span class="number">-0x10</span>]!</span><br><span class="line">    stp x4, x5, [sp, #<span class="number">-0x10</span>]!</span><br><span class="line">    stp x2, x3, [sp, #<span class="number">-0x10</span>]!</span><br><span class="line">    stp x0, x1, [sp, #<span class="number">-0x10</span>]!</span><br><span class="line">    str x8,  [sp, #<span class="number">-0x10</span>]!</span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line">.macro RESTORE_REGISTERS</span><br><span class="line">    ldr x8,  [sp], #<span class="number">0x10</span></span><br><span class="line">    ldp x0, x1, [sp], #<span class="number">0x10</span></span><br><span class="line">    ldp x2, x3, [sp], #<span class="number">0x10</span></span><br><span class="line">    ldp x4, x5, [sp], #<span class="number">0x10</span></span><br><span class="line">    ldp x6, x7, [sp], #<span class="number">0x10</span></span><br><span class="line">    ldp q0, q1, [sp], #<span class="number">0x20</span></span><br><span class="line">    ldp q2, q3, [sp], #<span class="number">0x20</span></span><br><span class="line">    ldp q4, q5, [sp], #<span class="number">0x20</span></span><br><span class="line">    ldp q6, q7, [sp], #<span class="number">0x20</span></span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line">.macro <span class="built_in">CALL_HOOK_BEFORE</span></span><br><span class="line">    BACKUP_REGISTERS</span><br><span class="line">    mov x2, lr</span><br><span class="line">    bl _hook_objc_msgSend_before</span><br><span class="line">    RESTORE_REGISTERS</span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line">.macro <span class="built_in">CALL_HOOK_AFTER</span></span><br><span class="line">    BACKUP_REGISTERS</span><br><span class="line">    bl _hook_objc_msgSend_after</span><br><span class="line">    mov lr, x0</span><br><span class="line">    RESTORE_REGISTERS</span><br><span class="line">.endmacro</span><br><span class="line"></span><br><span class="line"># hookObjcMsgSend.py里定义了函数名为hook_msgSend，如果修改脚本里的函数名，这里的函数名，也需跟脚本保持一致</span><br><span class="line">ENTRY _hook_msgSend</span><br><span class="line"></span><br><span class="line"><span class="built_in">CALL_HOOK_BEFORE</span></span><br><span class="line">bl _objc_msgSend</span><br><span class="line"><span class="built_in">CALL_HOOK_AFTER</span></span><br><span class="line">ret</span><br><span class="line"></span><br><span class="line">END_ENTRY _hook_msgSend</span><br><span class="line"></span><br><span class="line"><span class="comment">// void hook_msgSend(...);</span></span><br><span class="line"><span class="comment">//ENTRY _hook_msgSend_stret</span></span><br><span class="line"><span class="comment">//b _hook_msgSend</span></span><br><span class="line"><span class="comment">//END_ENTRY _hook_msgSend_stret</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>简单解释下以上 <code>_hook_msgSend</code> 的汇编代码：</p>
+<p>ARM64 有 31 个通用寄存器，每个寄存器可以存取一个 <strong>64</strong> 位的数据。我们可以通过 <code>X0 - X30</code> 来对这些寄存器进行寻址。对应 <code>X0 - X30</code>，<code>W0 - W30</code> 对应的就是相同单元数的低 <code>32</code> 位。<code>W0 - W30</code> 当进行写入操作时，会将高 <code>32</code> 位清零。</p>
+<p>每一个寄存器具体的作用：</p>
+<p><code>X0 - X7</code>：这 8 个寄存器主要 用来存储传递参数 。如果参数超过 8 个，则会通过栈来传递 ；<code>X0</code> 也用来存放上文方法的返回值</p>
+<p><code>X29</code> ：即我们通常所说的帧指针 <code>FP</code>（Frame Pointer），指向当前方法栈的底部</p>
+<p><code>X30</code> ：即链接寄存器 <code>LR</code>（Link Register）。为什么叫做链接，是因为这个寄存器会记录着当前方法的调用方地址 ，即当前方法调用完成时应该返回的位置。例如我们遇到 Crash 要获取方法堆栈，其本质就是不断的向上递归每一个 <code>X30</code> 寄存器的记录状态（也就是栈上 <code>X30</code> 寄存器的内容）来找到上层调用方。</p>
+<p>除了这些通用寄存器，还有一个最重要的 <code>SP</code> 寄存器：</p>
+<p><code>SP</code> 寄存器：即我们通常说的栈帧 <code>SP</code>（Stack Pointer）。指向当前方法栈的顶部。</p>
+<p>这里 <code>_hook_msgSend</code> 方法里因为要用到 <code>X0 - X7</code> 等参数寄存器，所以每次保存下这些寄存器，调用原 <code>_objc_msgSend</code> 方法前再回复这些寄存器的内容，以保证上下文环境不被污染。</p>
+<h1 id="镜花水月：基于桥的全量方法-Hook-方案-TrampolineHook"><a href="#镜花水月：基于桥的全量方法-Hook-方案-TrampolineHook" class="headerlink" title="镜花水月：基于桥的全量方法 Hook 方案 TrampolineHook"></a>镜花水月：基于桥的全量方法 Hook 方案 TrampolineHook</h1><p>这是 <a target="_blank" rel="noopener" href="http://satanwoo.github.io/">五子棋</a> 开源的中心重定向框架：<a target="_blank" rel="noopener" href="https://github.com/SatanWoo/TrampolineHook/">TrampolineHook</a>，用法示例：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> myInterceptor() &#123;</span><br><span class="line">    printf(<span class="string">&quot;调用了 myInterceptor\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)trampolineHook &#123;</span><br><span class="line">    THInterceptor *interceptor = [[THInterceptor alloc] initWithRedirectionFunction:(IMP)myInterceptor];</span><br><span class="line">    Method m = class_getInstanceMethod([HookDemoObj <span class="keyword">class</span>], <span class="keyword">@selector</span>(logString:));</span><br><span class="line">    IMP imp = method_getImplementation(m);</span><br><span class="line">    THInterceptorResult *interceptorResult = [interceptor interceptFunction:imp];</span><br><span class="line">    <span class="keyword">if</span> (interceptorResult.state == THInterceptStateSuccess) &#123;</span><br><span class="line">        method_setImplementation(m, interceptorResult.replacedAddress); <span class="comment">// 设置替换的地址</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 执行到这一行时，会调用 myInterceptor 方法</span></span><br><span class="line">    HookDemoObj *obj = [HookDemoObj new];</span><br><span class="line">    [obj logString:<span class="string">@&quot;abc&quot;</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为对 TrampolineHook 里的汇编代码还没完全看懂，之前 靛青 曾经写过一篇：<a target="_blank" rel="noopener" href="https://blog.indigo.codes/2020/05/11/trampolinehook-study-notes/?from=groupmessage&isappinstalled=0">TrampolineHook 学习笔记</a> 这里就不错过多原理解析了。</p>
+<p>除了以上提到的 Hook 方案，剩下还有 <a target="_blank" rel="noopener" href="https://github.com/jmpews/Dobby">Dobby</a> &#x2F; <a target="_blank" rel="noopener" href="https://frida.re/docs/ios/">Frida</a> 逆向领域的 Hook 手段等，因为才疏学浅就不再继续解析了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/09/06/pod-lifecycle-aop-libffi/" rel="next" title="组件化分发生命周期 - AOP 方案（libffi 实现）">
+                <i class="fa fa-chevron-left"></i> 组件化分发生命周期 - AOP 方案（libffi 实现）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/12/31/saybye2020/" rel="prev" title="Say Bye 2020">
+                Say Bye 2020 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Preview"><span class="nav-number">1.</span> <span class="nav-text">Preview</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%8F%E8%AF%95%E7%89%9B%E5%88%80%EF%BC%9AMethod-Swizzling"><span class="nav-number">2.</span> <span class="nav-text">小试牛刀：Method Swizzling</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A9%BF%E9%92%88%E5%BC%95%E7%BA%BF%EF%BC%9AMessage-Forwarding"><span class="nav-number">3.</span> <span class="nav-text">穿针引线：Message Forwarding</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A7%BB%E8%8A%B1%E6%8E%A5%E6%9C%A8%EF%BC%9Alibffi"><span class="nav-number">4.</span> <span class="nav-text">移花接木：libffi</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%81%B7%E6%A2%81%E6%8D%A2%E6%9F%B1%EF%BC%9Afishhook"><span class="nav-number">5.</span> <span class="nav-text">偷梁换柱：fishhook</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%EF%BC%9F"><span class="nav-number">5.0.0.1.</span> <span class="nav-text">为什么要动态链接？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#position-independent-code-%EF%BC%88PIC-%E5%9C%B0%E5%9D%80%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81%EF%BC%89"><span class="nav-number">5.0.0.2.</span> <span class="nav-text">position-independent code （PIC 地址无关代码）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ALSR%EF%BC%9A"><span class="nav-number">5.0.0.3.</span> <span class="nav-text">ALSR：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mach-O-%E6%96%87%E4%BB%B6"><span class="nav-number">5.0.0.4.</span> <span class="nav-text">Mach-O 文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#fashhook-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%EF%BC%9A"><span class="nav-number">5.0.0.5.</span> <span class="nav-text">fashhook 工作流程：</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%8E%E4%BB%A3%E6%A1%83%E5%83%B5%EF%BC%9A%E9%9D%99%E6%80%81%E5%BA%93%E6%8F%92%E6%A1%A9"><span class="nav-number">6.</span> <span class="nav-text">李代桃僵：静态库插桩</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%95%9C%E8%8A%B1%E6%B0%B4%E6%9C%88%EF%BC%9A%E5%9F%BA%E4%BA%8E%E6%A1%A5%E7%9A%84%E5%85%A8%E9%87%8F%E6%96%B9%E6%B3%95-Hook-%E6%96%B9%E6%A1%88-TrampolineHook"><span class="nav-number">7.</span> <span class="nav-text">镜花水月：基于桥的全量方法 Hook 方案 TrampolineHook</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/11/08/hook/';
+          this.page.identifier = '2020/11/08/hook/';
+          this.page.title = '细数 iOS 里的 Hook 方案';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

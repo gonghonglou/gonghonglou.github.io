@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。 进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组件化资源文件管理方案">
+<meta property="og:url" content="http://gonghonglou.com/2020/05/14/pod-resource/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="前言最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。 进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png">
+<meta property="og:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podfile.png">
+<meta property="article:published_time" content="2020-05-14T13:25:52.000Z">
+<meta property="article:modified_time" content="2020-06-14T07:25:09.250Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/05/14/pod-resource/"/>
+
+
+
+
+
+  <title>组件化资源文件管理方案 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/05/14/pod-resource/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">组件化资源文件管理方案</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-14T21:25:52+08:00">
+                2020-05-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最初，所有代码都在主工程的时候，资源文件也在主工程，尤其是大量的图片资源，不可避免的就是命名冲突问题。一般而言，我们需要一份严谨的命名规范，比如根据业务模块或者文件夹划分添加前缀，来避免命名冲入导致的翻车事故。</p>
+<p>进行组件化之后，应用 CocoaPods，终于对命名冲突问题有了解决方案。在我们将主工程拆空，代码分拆至相应 Pod 之后，资源文件也应当拆分至对应 Pod，交由组件自己管理。这样将资源文件从主工程拆分到各个 Pod 不仅令职责划分更合理，额外获得的收益还有：<br>1、拆空主工程：方便版本号等设置项工程化管理；避免不同分支进行 Merge 操作覆盖更改<br>2、当前组件自己管理资源文件：减少外部依赖，方便独立运行</p>
+<p>但因为 CocoaPods 提供的 <code>use_frameworks!</code>、<code>static_framework</code>、<code>resource</code>、<code>resource_bundles</code> 这些功能的选择，以及将其中一些功能组合使用之后资源文件的最终存储路径的不同，导致使用者对图片文件、字体文件、本地化文件、其他各种文件的种种处理方式不明所以。本文旨在讲清楚这些，并期望总结出对资源文件管理的最佳实践方案。</p>
+<p>其实所谓的资源文件处理以及前文提到的 CocoaPods 提供的各种字段对资源文件的影响主要就是路径的差别，我们只需要搞清 将这些字段组合使用后的 资源文件的存储路径差别，处理起来就很简单了。</p>
+<h1 id="概念篇"><a href="#概念篇" class="headerlink" title="概念篇"></a>概念篇</h1><h2 id="use-frameworks"><a href="#use-frameworks" class="headerlink" title="use_frameworks!"></a>use_frameworks!</h2><blockquote>
+<p>use_frameworks tells CocoaPods that you want to use Frameworks instead of Static Libraries. Since Swift does not support Static Libraries you have to use frameworks.</p>
+</blockquote>
+<p>来自 stackoverflow 的问答： <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/41210249/why-do-we-use-use-frameworks-in-cocoapods">Why do we use use_frameworks in CocoaPods?</a></p>
+<p>该字段在 Podfile 文件中使用。主要是早期 Swift 不支持静态库，所以大家在 OC 工程里引入 Swift 的时候都需要引入该字段。</p>
+<h2 id="static-framework"><a href="#static-framework" class="headerlink" title="static_framework"></a>static_framework</h2><blockquote>
+<p>Up until Xcode 9, support for building Swift into static libraries was non-existent and use of dynamic frameworks was required. This was a deal-breaker for some developers, particularly those worried about the launch performance implications of linked many dynamic binaries.<br>With CocoaPods 1.5.0, developers are no longer restricted into specifying use_frameworks! in their Podfile in order to install pods that use Swift. Interop with Objective-C should just work. However, if your Swift pod depends on an Objective-C, pod you will need to enable “modular headers” (see below) for that Objective-C pod.</p>
+</blockquote>
+<p>来自 CocoaPods 的官网说明：<a target="_blank" rel="noopener" href="http://blog.cocoapods.org/CocoaPods-1.5.0/">CocoaPods 1.5.0 — Swift Static Libraries</a></p>
+<p>该字段在 podspec 中声明。Xcode 9 开始，Swift 支持静态库了，CocoaPods 也添加了支持。</p>
+<h2 id="resource-resource-bundles"><a href="#resource-resource-bundles" class="headerlink" title="resource &amp; resource_bundles"></a>resource &amp; resource_bundles</h2><p>resource 字段在 podspec 中使用</p>
+<blockquote>
+<p>For building the Pod as a static library, we strongly <strong>recommend</strong> library developers to adopt <a target="_blank" rel="noopener" href="https://guides.cocoapods.org/syntax/podspec.html#resource_bundles">resource bundles</a> as there can be name collisions using the resources attribute. Moreover, resources specified with this attribute are copied directly to the client target and therefore they are not optimised by Xcode.</p>
+</blockquote>
+<p>来自 CocoaPods 的官网说明：<a target="_blank" rel="noopener" href="https://guides.cocoapods.org/syntax/podspec.html#resources">resources</a></p>
+<p>resource_bundles 字段在 podspec 中使用</p>
+<blockquote>
+<p>For building the Pod as a static library, we strongly <strong>recommend</strong> library developers to adopt resource bundles as there can be name collisions using the resources attribute.</p>
+</blockquote>
+<p>来自 CocoaPods 的官网说明：<a target="_blank" rel="noopener" href="https://guides.cocoapods.org/syntax/podspec.html#resource_bundles">resource_bundles</a></p>
+<p>这俩字段最主要的区别就在于 <code>resource_bundles</code> 会创建独立的 bundle，能够有效解决资源文件重名问题，也是 CocoaPods 强烈建议使用的字段。 <code>resource</code> 字段则不会创建属于 Pod 自己的 bundle。资源文件很可能会存储到 main bundle 里。对资源文件存储路径的影响在下一章节会有详细的总结。</p>
+<h1 id="组合场景下的资源文件存储路径"><a href="#组合场景下的资源文件存储路径" class="headerlink" title="组合场景下的资源文件存储路径"></a>组合场景下的资源文件存储路径</h1><p><code>use_frameworks!</code>、<code>static_framework</code>、<code>resource_bundles</code>、<code>resources</code> 的不同组合使用，会导致资源文件的最终存放路径不同，以下是各种场景下的路径总结：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">use_frameworks!</span><br><span class="line">	static_framework = <span class="keyword">true</span>：</span><br><span class="line">		resource_bundles: .app<span class="regexp">/Frameworks/</span>pod_name.framework<span class="regexp">/pod_name.bundle/</span>.</span><br><span class="line">		resources: .app<span class="regexp">/Frameworks/</span>pod_name.framework/.</span><br><span class="line">	static_framework = <span class="keyword">false</span>：</span><br><span class="line">		resource_bundles: .app<span class="regexp">/pod_name.bundle/</span>.</span><br><span class="line">		resources: .app/.</span><br><span class="line"></span><br><span class="line"># use_frameworks!</span><br><span class="line">	static_framework = <span class="keyword">true</span>：</span><br><span class="line">		resource_bundles: .app<span class="regexp">/pod_name.bundle/</span>.</span><br><span class="line">		resources: .app/.</span><br><span class="line">	static_framework = <span class="keyword">false</span>：</span><br><span class="line">		resource_bundles: .app<span class="regexp">/pod_name.bundle/</span>.</span><br><span class="line">		resources: .app/.</span><br></pre></td></tr></table></figure>
+<p>（.app&#x2F;. 代表的是 main bundle）</p>
+<p>不同路径下的图片取值方式及差别可以参考这篇文章：<a target="_blank" rel="noopener" href="https://dreampiggy.com/2018/11/26/CocoaPods%E7%9A%84%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E5%92%8CAsset%20Catalog%E4%BC%98%E5%8C%96/">CocoaPods的资源管理和Asset Catalog优化</a></p>
+<p>需要注意的是，当 Pod 中的 <code>.xcassets</code> 类型资源文件最终存储在 main bundle 的话会和主工程的 <code>.xcassets</code> 文件冲突，编译会报错：</p>
+<blockquote>
+<p>error: Multiple commands produce ‘&#x2F;Users&#x2F;gonghonglou&#x2F;Library&#x2F;Developer&#x2F;Xcode&#x2F;DerivedData&#x2F;HoloResource-giqfnwiluvssbzbyvuhpkrjoewvd&#x2F;Build&#x2F;Products&#x2F;Debug-iphonesimulator&#x2F;HoloResource_Example.app&#x2F;Assets.car’:</p>
+</blockquote>
+<ol>
+<li>Target ‘HoloResource_Example’ (project ‘HoloResource’) has compile command with input ‘&#x2F;Users&#x2F;gonghonglou&#x2F;holo&#x2F;HoloResource&#x2F;Example&#x2F;HoloResource&#x2F;Images.xcassets’</li>
+<li>That command depends on command in Target ‘HoloResource_Example’ (project ‘HoloResource’): script phase “[CP] Copy Pods Resources”</li>
+</ol>
+<p>解决方法，在 Podfile 里添加：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">install! <span class="string">&#x27;cocoapods&#x27;</span>, <span class="symbol">:disable_input_output_paths</span> =&gt; <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>题外话：Xcode 10 之后引入了新的编译系统，导致 Pod 里有代码改动的话无法及时编译进工程，解决方案也是上述方法。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/xcode_release_notes/xcode_10_release_notes/build_system_release_notes_for_xcode_10?language=objc">Build System Release Notes for Xcode 10</a></p>
+<h1 id="各类资源文件的处理：预编译宏"><a href="#各类资源文件的处理：预编译宏" class="headerlink" title="各类资源文件的处理：预编译宏"></a>各类资源文件的处理：预编译宏</h1><p>将资源文件放进各个组件里，最大的麻烦就是访问方式的更改，尤其是图片资源，如果组件内的资源文件不在 main bundle 路径下的话，原本使用 <code>[UIImage imageNamed:@&quot;&quot;];</code> 获取图片的方式就需要更改了。比如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSString</span> *bundlePath = [<span class="built_in">NSBundle</span> bundleForClass:HoloResourceDemoA.class].resourcePath;</span><br><span class="line">bundlePath = [bundlePath stringByAppendingPathComponent:<span class="string">@&quot;HoloResourceDemoA.bundle&quot;</span>];</span><br><span class="line"><span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> bundleWithPath:bundlePath];</span><br><span class="line">[<span class="built_in">UIImage</span> imageNamed:<span class="string">@&quot;&quot;</span> inBundle:bundle compatibleWithTraitCollection:<span class="literal">nil</span>];</span><br></pre></td></tr></table></figure>
+
+<p>而且需要根据不同的组件名称获取当前组件的 bundle，这就导致不同组件内需要提供不同的取值方法。</p>
+<p>最简单的解决方案是将这些取值方法统一成单一方法，封装进一个基础类，每个组件调用时传入当前组件名称。根据上一节可以发现，最终不同的路径也就只有 4 种而已，如果我们能获取到当前组件的名称，也就可以分别到这 4 个路径下查找文件了。</p>
+<p>但是每个组件调用这个基础类方法时仍然需要传入自己的组件名称，而且是字符串形式，还是会很麻烦。如果在代码执行当前行能够获取到当前 Pod 名称就好，那么我们就可以把这个 “获取代码执行当前行所在 Pod 名称” 的逻辑封装进统一方法里，少传一个参数。</p>
+<p>好在 CocoaPods 给我们提供了给各个组件配置预编译宏的能力。虽然不是提供方法，但是可以提供 宏，在代码执行当前行拿到当前 Pod 名称。</p>
+<h2 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h2><p>在 podspec 里加上：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配置 Xcode Build Setting</span></span><br><span class="line">s.xcconfig = &#123;</span><br><span class="line"><span class="comment">#&#x27;GCC_PREPROCESSOR_DEFINITIONS&#x27; =&gt; &#x27;HOLO_POD_NAME=@(\&quot;HoloResource\&quot;)&#x27;</span></span><br><span class="line">  <span class="string">&#x27;GCC_PREPROCESSOR_DEFINITIONS&#x27;</span> =&gt; <span class="string">&quot;&#x27;HOLO_POD_NAME=@(\&quot;<span class="subst">#&#123;s.name&#125;</span>\&quot;)&#x27;&quot;</span> <span class="comment"># 配置预编译宏</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>即可在 HoloResource.debug.xcconfig &#x2F; HoloResource.release.xcconfig 文件里的 GCC预编译头参数所在行：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">GCC_PREPROCESSOR_DEFINITIONS</span> = $(inherited) COCOAPODS=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>添加预编译宏为：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">GCC_PREPROCESSOR_DEFINITIONS</span> = $(inherited) COCOAPODS=<span class="number">1</span> <span class="string">&#x27;HOLO_POD_NAME=@(&quot;HoloResource&quot;)&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>相应的，在各 Pod 的 TARGET 里能看到的 Preprocessor Macros 为：</p>
+<p><img src="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podspec.png" alt="Preprocessor Macros from pospec"></p>
+<p>这样一来，在组件内使用 <code>HOLO_POD_NAME</code> 这个宏，就能得到 <code>@&quot;HoloResource&quot;</code> 这个字符串了。那我们就可以用这个宏来拼接不同的路径以加载资源文件。比如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="built_in">UIImage</span> holo_imageNamed:name inBundle:HOLO_POD_NAME];</span><br></pre></td></tr></table></figure>
+
+<p>每个组件统一调用以上方法就可以访问自己的图片资源了，再把这个方法调用定义一个 宏，就满足我们的需求了，后续章节会给出具体实现。</p>
+<h2 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h2><p>但是这种在 podspec 里配置预编译宏的方式也会配置在主工程的 Pods-HoloResource_Example.debug.xcconfig &#x2F; Pods-HoloResource_Example.release.xcconfig 文件里，这就导致了，如果多个组件配置了同名的预编译宏会有多个同名的配置出现在主工程，编译也会报警告。</p>
+<p>替代这种方案的另一种实现是，在 Podfile 里 hook install，在 install 之后给每个工程配置一份预编译宏，通过 <code>post_install</code> 的能力：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">post_install <span class="keyword">do</span> |<span class="params">installer</span>|</span><br><span class="line">  installer.pods_project.targets.each <span class="keyword">do</span> |<span class="params">target</span>|</span><br><span class="line">    target.build_configurations.each <span class="keyword">do</span> |<span class="params">config</span>|</span><br><span class="line">      config.build_settings[<span class="string">&#x27;GCC_PREPROCESSOR_DEFINITIONS&#x27;</span>] = <span class="string">&quot;&#x27;HOLO_POD_NAME=@(\&quot;<span class="subst">#&#123;target&#125;</span>\&quot;)&#x27;&quot;</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>相应的，在各 Pod 的 TARGET 里能看到的 Preprocessor Macros 为：</p>
+<p><img src="http://image.gonghonglou.com/pod-resource/preprocessor_macros_podfile.png" alt="Preprocessor Macros from pospec"></p>
+<h2 id="方案三（推荐）"><a href="#方案三（推荐）" class="headerlink" title="方案三（推荐）"></a>方案三（推荐）</h2><p>虽然主工程 config 文件不会出现 HOLO_POD_NAME，也就不会报警告了。但是从以上图片可以看出，各个 Pod 工程的 Preprocessor Macros 直接被替换了。当然可以在 post_install 的 hook 里把缺失的哪些配置加上，先获取原来有哪些预编译宏，再加上 HOLO_POD_NAME。</p>
+<p>或者可以通过脚本，在 install 之后把各个组件对应的 在 <code>.debug.xcconfig / .release.xcconfig</code> 文件里 GCC_PREPROCESSOR_DEFINITIONS 所在行拼上<code>HOLO_POD_NAME=@(\&quot;HoloResource\&quot;)</code>即可。而且组件化之后大家应该都有封装的自己的 CocoaPods 命令工具，hook pod install 做些额外的工作，那只要再把这个配置预编译宏的逻辑加上就好了。</p>
+<p>参考脚本 <code>holo_pod_name_config.sh</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># perform after install</span></span><br><span class="line">support_path=<span class="string">&#x27;Pods/Target Support Files&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">config_with_name_file</span></span>() &#123;</span><br><span class="line">    pod_name=<span class="variable">$1</span></span><br><span class="line">    xcconfig=<span class="variable">$2</span></span><br><span class="line">    <span class="keyword">if</span> [ -f <span class="string">&quot;<span class="variable">$xcconfig</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        target_line=$(sed -n <span class="string">&#x27;/GCC_PREPROCESSOR_DEFINITIONS/p&#x27;</span> <span class="string">&quot;<span class="variable">$xcconfig</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> [[ <span class="variable">$target_line</span> != *<span class="variable">$pod_name</span>* ]]; <span class="keyword">then</span></span><br><span class="line">            holo_pod_name=<span class="string">&quot; HOLO_POD_NAME=@(\\\\\&quot;<span class="variable">$pod_name</span>\\\\\&quot;)&quot;</span></span><br><span class="line">            sed -i <span class="string">&quot;&quot;</span> <span class="string">&quot;s/<span class="variable">$target_line</span>/$target_line<span class="variable">$holo_pod_name</span>/&quot;</span> <span class="string">&quot;<span class="variable">$xcconfig</span>&quot;</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">config_with_name</span></span>() &#123;</span><br><span class="line">    pod_name=<span class="variable">$1</span></span><br><span class="line">    debug_xcconfig=<span class="string">&quot;<span class="variable">$support_path</span>/<span class="variable">$pod_name</span>/<span class="variable">$pod_name</span>.debug.xcconfig&quot;</span></span><br><span class="line">    release_xcconfig=<span class="string">&quot;<span class="variable">$support_path</span>/<span class="variable">$pod_name</span>/<span class="variable">$pod_name</span>.release.xcconfig&quot;</span></span><br><span class="line">    config_with_name_file <span class="variable">$pod_name</span> <span class="string">&quot;<span class="variable">$debug_xcconfig</span>&quot;</span></span><br><span class="line">    config_with_name_file <span class="variable">$pod_name</span> <span class="string">&quot;<span class="variable">$release_xcconfig</span>&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="variable">$#</span> -ge 1 ];<span class="keyword">then</span></span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> $*; <span class="keyword">do</span></span><br><span class="line">        pod_name=<span class="variable">$arg</span></span><br><span class="line">       config_with_name <span class="variable">$pod_name</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">    config_with_name HoloResource</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    xcconfigs=$(<span class="built_in">cd</span> <span class="string">&quot;<span class="variable">$support_path</span>&quot;</span>; <span class="built_in">ls</span> */*.*.xcconfig)</span><br><span class="line">    <span class="keyword">for</span> file <span class="keyword">in</span> <span class="variable">$xcconfigs</span>; <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">if</span> [[ <span class="variable">$file</span> != Pods-* ]]; <span class="keyword">then</span></span><br><span class="line">            pod_name=<span class="variable">$&#123;file%/*&#125;</span></span><br><span class="line">            config_with_name <span class="variable">$pod_name</span></span><br><span class="line"><span class="comment">#            xcconfig=$support_path/$file</span></span><br><span class="line"><span class="comment">#            config_with_name_file $pod_name &quot;$xcconfig&quot;</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+
+<p>执行以上脚本（<code>holo_pod_name_config.sh</code>）默认给所有 Pod 添加配置，如果想指定某几个 Pod 添加配置的话给脚本传入参数，例如：</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">sh </span>holo_pod_name_config.<span class="keyword">sh </span>PodA PodB PodC</span><br></pre></td></tr></table></figure>
+
+<h2 id="方案四（更新于-2020-6-14，推荐plus）"><a href="#方案四（更新于-2020-6-14，推荐plus）" class="headerlink" title="方案四（更新于 2020.6.14，推荐plus）"></a>方案四（更新于 2020.6.14，推荐plus）</h2><p>为了更方便的给组件配置预编译宏，我写了一个 CocoaPods 插件：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/cocoapods-resource">cocoapods-resource</a>，支持给任意 Pod 添加任意 预编译 宏。</p>
+<p>用法如下：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装</span></span><br><span class="line">sudo gem install cocoapods-resource</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调用</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1、默认给所有 Pod 添加预编译宏：HOLO_POD_NAME</span></span><br><span class="line">pod<span class="built_in"> resource </span>HOLO_POD_NAME</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2、给指定的某些 Pod 添加预编译宏：HOLO_POD_NAME</span></span><br><span class="line">pod<span class="built_in"> resource </span>HOLO_POD_NAME <span class="attribute">--pods</span>=<span class="string">&#x27;PodA, PodB, PodC&#x27;</span></span><br></pre></td></tr></table></figure>
+
+
+<h1 id="各类资源处理实践"><a href="#各类资源处理实践" class="headerlink" title="各类资源处理实践"></a>各类资源处理实践</h1><h2 id="图片-UIImage"><a href="#图片-UIImage" class="headerlink" title="图片 UIImage"></a>图片 UIImage</h2><p>有了上一节的准备，剩下的工作就简单了许多，封装通用的图片获取方法，供所有组件使用：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(HOLO_POD_NAME)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> HoloImageNamed(name) [UIImage holo_imageNamed:name inBundle:HOLO_POD_NAME]</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">UIImage</span> (<span class="title">HoloResource</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)holo_imageNamed:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>实现为：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">UIImage</span> (<span class="title">HoloResource</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)holo_imageNamed:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">UIImage</span> *image = [<span class="keyword">self</span> _holo_imageNamed1:name inBundle:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!image) image = [<span class="keyword">self</span> _holo_imageNamed2:name inBundle:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!image) image = [<span class="keyword">self</span> _holo_imageNamed3:name inBundle:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!image) image = [<span class="keyword">self</span> _holo_imageNamed4:name inBundle:bundleName];</span><br><span class="line">    <span class="keyword">return</span> image;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)_holo_imageNamed1:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;%@.bundle&quot;</span>, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_imageNamed:name pathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)_holo_imageNamed2:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;Frameworks/%@.framework/%@.bundle&quot;</span>, bundleName, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_imageNamed:name pathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)_holo_imageNamed3:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="built_in">UIImage</span> imageNamed:name];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)_holo_imageNamed4:(<span class="built_in">NSString</span> *)name inBundle:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;Frameworks/%@.framework&quot;</span>, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_imageNamed:name pathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">UIImage</span> *)_holo_imageNamed:(<span class="built_in">NSString</span> *)name pathComponent:(<span class="built_in">NSString</span> *)pathComponent &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *bundlePath = [<span class="built_in">NSBundle</span>.mainBundle.resourcePath stringByAppendingPathComponent:pathComponent];</span><br><span class="line">    <span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> bundleWithPath:bundlePath];</span><br><span class="line">    <span class="keyword">return</span> [<span class="built_in">UIImage</span> imageNamed:name inBundle:bundle compatibleWithTraitCollection:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>为了简化调用，提供了宏定义：每个组件调用 <code>HoloImageNamed(@&quot;&quot;)</code> 就可以访问自己 bundle 里的图片了。</p>
+<p>这里将前文提到的四个路径做了优先级处理：</p>
+<p>1、首先访问的是静态库 + <code>resource_bundles</code> 的路径<br>2、其次访问的是使用 <code>use_frameworks!</code> + <code>resource_bundles</code> 的动态库路径<br>3、再次访问的是使用 <code>use_frameworks!</code> +  <code>resources</code> 的动态库路径<br>4、最后是 main bundle 路径</p>
+<p><strong>最推荐也是最合理的配置方式当然是第一种，提供静态库，使用 <code>resource_bundles</code> 存储资源文件。</strong></p>
+<h2 id="路径-NSBundle"><a href="#路径-NSBundle" class="headerlink" title="路径 NSBundle"></a>路径 NSBundle</h2><p>既然图片可以通过这种方式封装，那么参照这种思路将 bundle 封装一个基础方法，有了统一的 bundle 调用方法，其他资源文件的访问就简单的多了。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(HOLO_POD_NAME)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> HoloCurrentBundle [NSBundle holo_bundleNamed:HOLO_POD_NAME]</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">NSBundle</span> (<span class="title">HoloResource</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)holo_bundleNamed:(<span class="built_in">NSString</span> *)bundleName;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>具体实现为：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="built_in">NSBundle</span> *)holo_bundleNamed:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSBundle</span> *bundle = [<span class="keyword">self</span> _holo_bundleNamed1:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!bundle) bundle = [<span class="keyword">self</span> _holo_bundleNamed2:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!bundle) bundle = [<span class="keyword">self</span> _holo_bundleNamed3:bundleName];</span><br><span class="line">    <span class="keyword">if</span> (!bundle) bundle = [<span class="keyword">self</span> _holo_bundleNamed4:bundleName];</span><br><span class="line">    <span class="keyword">return</span> bundle;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)_holo_bundleNamed1:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;%@.bundle&quot;</span>, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_bundleWithPathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)_holo_bundleNamed2:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;Frameworks/%@.framework/%@.bundle&quot;</span>, bundleName, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_bundleWithPathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)_holo_bundleNamed3:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *pathComponent = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;Frameworks/%@.framework&quot;</span>, bundleName];</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> _holo_bundleWithPathComponent:pathComponent];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)_holo_bundleNamed4:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">NSBundle</span>.mainBundle;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSBundle</span> *)_holo_bundleWithPathComponent:(<span class="built_in">NSString</span> *)pathComponent &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *bundlePath = [<span class="built_in">NSBundle</span>.mainBundle.resourcePath stringByAppendingPathComponent:pathComponent];</span><br><span class="line">    <span class="keyword">return</span> [<span class="built_in">NSBundle</span> bundleWithPath:bundlePath];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了简化调用，提供了宏定义：每个组件调用 <code>HoloCurrentBundle</code> 就可以拿到自己的 bundle 了。</p>
+<p>优先级处理和图片的处理逻辑一致。</p>
+<p>需要注意的是，如果一个组件拥有多个bundle 的情况，这里只会返回优先级较高的 bundle。</p>
+<h2 id="字体-UIFont"><a href="#字体-UIFont" class="headerlink" title="字体 UIFont"></a>字体 UIFont</h2><p>APP 中使用自定义字体的场景也比较常见，提供了注册字体的便捷方法。关于注册字体，字体资源文件在主工程的时候是存储在 main bundle 里的，在主工程的 info.plist 文件里注册 key：UIAppFonts，会自动去 main bundle 里注册对应的字体文件。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">key</span>&gt;</span>UIAppFonts<span class="tag">&lt;/<span class="name">key</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">array</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">string</span>&gt;</span>GOTHIC.TTF<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">string</span>&gt;</span>GOTHICB.TTF<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">string</span>&gt;</span>DIN-BOLD.OTF<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">string</span>&gt;</span>DIN-REGULAR.OTF<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">array</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>将字体资源文件拿到组件之后，如果最终资源文件存储在 main bnundle 里的话，以上的 info.plist 里的注册依然可以生效，但如果不在 main bundle 的话就需要通过代码访问资源路径去注册了</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(HOLO_POD_NAME)</span></span><br><span class="line"><span class="comment">/// If the pod currently has multiple bundles, please check the target resource or use &#x27;holo_registerFont:withExtension:inBundle:&#x27;</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> HoloRegisterFont(name, extension) [UIFont holo_registerFont:name withExtension:extension bundleName:HOLO_POD_NAME]</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">UIFont</span> (<span class="title">HoloResource</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// If the pod currently has multiple bundles, please check the target resource or use &#x27;holo_registerFont:withExtension:inBundle:&#x27;</span></span><br><span class="line">+ (<span class="type">void</span>)holo_registerFont:(<span class="built_in">NSString</span> *)fontName withExtension:(<span class="built_in">NSString</span> *)extension bundleName:(<span class="built_in">NSString</span> *)bundleName;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)holo_registerFont:(<span class="built_in">NSString</span> *)fontName withExtension:(<span class="built_in">NSString</span> *)extension inBundle:(<span class="built_in">NSBundle</span> *)bundle;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>具体实现为：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">UIFont</span> (<span class="title">HoloResource</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// If the pod currently has multiple bundles, please check the target resource or use &#x27;holo_registerFont:withExtension:inBundle:&#x27;</span></span><br><span class="line">+ (<span class="type">void</span>)holo_registerFont:(<span class="built_in">NSString</span> *)fontName withExtension:(<span class="built_in">NSString</span> *)extension bundleName:(<span class="built_in">NSString</span> *)bundleName &#123;</span><br><span class="line">    <span class="built_in">NSBundle</span> *bunlde = [<span class="built_in">NSBundle</span> holo_bundleNamed:bundleName];</span><br><span class="line">    [<span class="keyword">self</span> holo_registerFont:fontName withExtension:extension inBundle:bunlde];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)holo_registerFont:(<span class="built_in">NSString</span> *)fontName withExtension:(<span class="built_in">NSString</span> *)extension inBundle:(<span class="built_in">NSBundle</span> *)bundle &#123;</span><br><span class="line">    <span class="built_in">NSURL</span> *fontURL = [bundle URLForResource:fontName withExtension:extension];</span><br><span class="line">    <span class="built_in">NSData</span> *inData = [<span class="built_in">NSData</span> dataWithContentsOfURL:fontURL];</span><br><span class="line">    <span class="built_in">CFErrorRef</span> error;</span><br><span class="line">    <span class="built_in">CGDataProviderRef</span> provider = <span class="built_in">CGDataProviderCreateWithCFData</span>((<span class="built_in">CFDataRef</span>)inData);</span><br><span class="line">    <span class="built_in">CGFontRef</span> font = <span class="built_in">CGFontCreateWithDataProvider</span>(provider);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">CTFontManagerRegisterGraphicsFont</span>(font, &amp;error)) &#123;</span><br><span class="line">        <span class="built_in">CFStringRef</span> errorDescription = <span class="built_in">CFErrorCopyDescription</span>(error);</span><br><span class="line">        <span class="comment">// Failed to load font</span></span><br><span class="line">        <span class="built_in">CFRelease</span>(errorDescription);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (font != <span class="literal">NULL</span>) <span class="built_in">CFRelease</span>(font);</span><br><span class="line">    <span class="keyword">if</span> (provider != <span class="literal">NULL</span>) <span class="built_in">CFRelease</span>(provider);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>为了简化调用，提供了宏定义：调用 <code>HoloRegisterFont(name, extension)</code> 就可以访问自己 bundle 里的字体资源文件注册了。要注意的是，如果字体资源文件所在的组件有多个 bundle 的话，且 字体文件在优先级较低的 bundle 里，使用这个宏就会出问题了。这时可以通过调用 <code>holo_registerFont:withExtension:inBundle:</code> 方法，传入指定 bundle 即可。</p>
+<h2 id="本地化语言-Localized"><a href="#本地化语言-Localized" class="headerlink" title="本地化语言 Localized"></a>本地化语言 Localized</h2><p>对于本地化语言的资源文件，以下是系统提供的宏定义：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> NSLocalizedString(key, comment) \</span></span><br><span class="line"><span class="meta">	    [NSBundle.mainBundle localizedStringForKey:(key) value:@<span class="string">&quot;&quot;</span> table:nil]</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NSLocalizedStringFromTable(key, tbl, comment) \</span></span><br><span class="line"><span class="meta">	    [NSBundle.mainBundle localizedStringForKey:(key) value:@<span class="string">&quot;&quot;</span> table:(tbl)]</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NSLocalizedStringFromTableInBundle(key, tbl, bundle, comment) \</span></span><br><span class="line"><span class="meta">	    [bundle localizedStringForKey:(key) value:@<span class="string">&quot;&quot;</span> table:(tbl)]</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NSLocalizedStringWithDefaultValue(key, tbl, bundle, val, comment) \</span></span><br><span class="line"><span class="meta">	    [bundle localizedStringForKey:(key) value:(val) table:(tbl)]</span></span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>NSLocalizedStringFromTable(key, tbl, comment)</code> 方法，虽然它也是去 main bundle 里取值，但可以根据 table 划分不同的模块，已经可以解决同名覆盖的问题，但是将这些资源文件拿到 pod 里之后，因为 pod 拥有自己的 bundle，那么这个宏就失效了，所以需要使用下边两个宏定义。前边章节里我们已经等装好了 bundle 统一获取方法，那么这里可以提供一个自定义的宏来简化调用，少传一个 bundle 参数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> HoloLocalizedStringFromTable(key, tbl, comment) \</span></span><br><span class="line"><span class="meta">        NSLocalizedStringFromTableInBundle(key, tbl, [NSBundle holo_bundleNamed:HOLO_POD_NAME], comment)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> HoloLocalizedStringWithDefaultValue(key, tbl, val, comment) \</span></span><br><span class="line"><span class="meta">        NSLocalizedStringWithDefaultValue(key, tbl, [NSBundle holo_bundleNamed:HOLO_POD_NAME], val, comment)</span></span><br></pre></td></tr></table></figure>
+
+
+<p>其中， <code>localizedStringForKey:value:table:</code> 方法能够实现本地化的原理只不过是根据不同语言访问不同路径下的本地化文件而已，比如 英语 语言，上述方法访问的就是 <code>./en.lproj/HoloResourceDemoA.strings：</code>路径下的 <code>.strings</code> 文件</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── Assets<span class="selector-class">.car</span></span><br><span class="line">├── Info<span class="selector-class">.plist</span></span><br><span class="line">├── _CodeSignature</span><br><span class="line">│   ├── CodeDirectory</span><br><span class="line">│   ├── CodeRequirements</span><br><span class="line">│   ├── CodeRequirements-<span class="number">1</span></span><br><span class="line">│   ├── CodeResources</span><br><span class="line">│   └── CodeSignature</span><br><span class="line">├── en<span class="selector-class">.lproj</span></span><br><span class="line">│   └── HoloResourceDemoA<span class="selector-class">.strings</span></span><br><span class="line">├── ja<span class="selector-class">.lproj</span></span><br><span class="line">│   └── HoloResourceDemoA<span class="selector-class">.strings</span></span><br><span class="line">└── <span class="selector-tag">th</span><span class="selector-class">.lproj</span></span><br><span class="line">    └── HoloResourceDemoA.strings</span><br></pre></td></tr></table></figure>
+
+<p>通常工程中有自定义语言的功能，那么可以 hook bundle 的 <code>localizedStringForKey:value:table:</code> 方法，根据自定义的语言标识访问目标文件。</p>
+<p>提供 <code>[NSBundle holo_configureLanguage:@&quot;ja&quot;]</code>方法设置当前语言，从而决定访问的目标本地化文件。实现如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="built_in">NSString</span> *holoLanguage = <span class="literal">nil</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">NSBundle</span> (<span class="title">HoloLocalized</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleMethod:<span class="keyword">@selector</span>(localizedStringForKey:value:table:)</span><br><span class="line">                withMethod:<span class="keyword">@selector</span>(_holo_localizedStringForKey:value:table:)</span><br><span class="line">                     error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">NSString</span> *)_holo_localizedStringForKey:(<span class="built_in">NSString</span> *)key value:(<span class="built_in">NSString</span> *)value table:(<span class="built_in">NSString</span> *)tableName &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *path = [<span class="keyword">self</span> pathForResource:holoLanguage ofType:<span class="string">@&quot;lproj&quot;</span>];</span><br><span class="line">    <span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> bundleWithPath:path];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (holoLanguage &amp;&amp; bundle) &#123;</span><br><span class="line">        <span class="keyword">return</span> [bundle localizedStringForKey:key value:value table:tableName];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="keyword">self</span> _holo_localizedStringForKey:key value:value table:tableName];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)holo_configureLanguage:(<span class="built_in">NSString</span> *)language &#123;</span><br><span class="line">    holoLanguage = language;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="xib-等资源，传递-bundle"><a href="#xib-等资源，传递-bundle" class="headerlink" title="xib 等资源，传递 bundle"></a>xib 等资源，传递 bundle</h2><p>其他的资源问题处理方式也都相同，都是根据 bundle 获取到目标文件访问，系统也都提供了根据 bundle 取值的方法，如 <code>UINib</code>：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// If the bundle parameter is nil, the main bundle is used.</span></span><br><span class="line"><span class="comment">// Releases resources in response to memory pressure (e.g. memory warning), reloading from the bundle when necessary.</span></span><br><span class="line">+ (<span class="built_in">UINib</span> *)nibWithNibName:(<span class="built_in">NSString</span> *)name bundle:(<span class="keyword">nullable</span> <span class="built_in">NSBundle</span> *)bundleOrNil;</span><br><span class="line"></span><br><span class="line"><span class="comment">// If the bundle parameter is nil, the main bundle is used.</span></span><br><span class="line">+ (<span class="built_in">UINib</span> *)nibWithData:(<span class="built_in">NSData</span> *)data bundle:(<span class="keyword">nullable</span> <span class="built_in">NSBundle</span> *)bundleOrNil;</span><br></pre></td></tr></table></figure>
+
+<p>注册 xib 文件：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> holo_bundleNamed:HOLO_POD_NAME];</span><br><span class="line"><span class="built_in">UINib</span> *nib = [<span class="built_in">UINib</span> nibWithNibName:<span class="built_in">NSStringFromClass</span>([ExampleTableViewCell <span class="keyword">class</span>]) bundle:bundle];</span><br><span class="line">[<span class="keyword">self</span>.tableView registerNib:nib forCellReuseIdentifier:<span class="built_in">NSStringFromClass</span>([ExampleTableViewCell <span class="keyword">class</span>])];</span><br></pre></td></tr></table></figure>
+
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>1、代码已开源，具体实现及思路请参照源码：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/HoloResource">HoloResource</a></p>
+<p>2、大家的资源文件都是怎么管理的呢？欢迎留言讨论指教。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/08/pod-lifecycle-aop/" rel="next" title="组件化分发生命周期 - AOP 方案">
+                <i class="fa fa-chevron-left"></i> 组件化分发生命周期 - AOP 方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/07/07/pod-target/" rel="prev" title="组件化页面跳转及路由方案">
+                组件化页面跳转及路由方案 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5%E7%AF%87"><span class="nav-number">2.</span> <span class="nav-text">概念篇</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#use-frameworks"><span class="nav-number">2.1.</span> <span class="nav-text">use_frameworks!</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#static-framework"><span class="nav-number">2.2.</span> <span class="nav-text">static_framework</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#resource-resource-bundles"><span class="nav-number">2.3.</span> <span class="nav-text">resource &amp; resource_bundles</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%84%E5%90%88%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6%E5%AD%98%E5%82%A8%E8%B7%AF%E5%BE%84"><span class="nav-number">3.</span> <span class="nav-text">组合场景下的资源文件存储路径</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6%E7%9A%84%E5%A4%84%E7%90%86%EF%BC%9A%E9%A2%84%E7%BC%96%E8%AF%91%E5%AE%8F"><span class="nav-number">4.</span> <span class="nav-text">各类资源文件的处理：预编译宏</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80"><span class="nav-number">4.1.</span> <span class="nav-text">方案一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C"><span class="nav-number">4.2.</span> <span class="nav-text">方案二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="nav-number">4.3.</span> <span class="nav-text">方案三（推荐）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E5%9B%9B%EF%BC%88%E6%9B%B4%E6%96%B0%E4%BA%8E-2020-6-14%EF%BC%8C%E6%8E%A8%E8%8D%90plus%EF%BC%89"><span class="nav-number">4.4.</span> <span class="nav-text">方案四（更新于 2020.6.14，推荐plus）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E5%A4%84%E7%90%86%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.</span> <span class="nav-text">各类资源处理实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%BE%E7%89%87-UIImage"><span class="nav-number">5.1.</span> <span class="nav-text">图片 UIImage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%AF%E5%BE%84-NSBundle"><span class="nav-number">5.2.</span> <span class="nav-text">路径 NSBundle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%97%E4%BD%93-UIFont"><span class="nav-number">5.3.</span> <span class="nav-text">字体 UIFont</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E5%8C%96%E8%AF%AD%E8%A8%80-Localized"><span class="nav-number">5.4.</span> <span class="nav-text">本地化语言 Localized</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#xib-%E7%AD%89%E8%B5%84%E6%BA%90%EF%BC%8C%E4%BC%A0%E9%80%92-bundle"><span class="nav-number">5.5.</span> <span class="nav-text">xib 等资源，传递 bundle</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">6.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/05/14/pod-resource/';
+          this.page.identifier = '2020/05/14/pod-resource/';
+          this.page.title = '组件化资源文件管理方案';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

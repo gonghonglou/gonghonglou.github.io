@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言组件化页面路由算是个老生常谈的话题了，从蘑菇街的注册 url 到 Casa 的 target-action 方案，市面上也有了很多的优化方案。之所以出这篇文章主要是因为已有方案中的硬编码操作一直不被团队接受，所以一直在寻找更合理的方案，直到不久前从前前同事那得到的思路：注册 protocol 与 viewcontroller 的对应关系，根据 protocol 获取 VC 并调用协议方法。再加">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组件化页面跳转及路由方案">
+<meta property="og:url" content="http://gonghonglou.com/2020/07/07/pod-target/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="前言组件化页面路由算是个老生常谈的话题了，从蘑菇街的注册 url 到 Casa 的 target-action 方案，市面上也有了很多的优化方案。之所以出这篇文章主要是因为已有方案中的硬编码操作一直不被团队接受，所以一直在寻找更合理的方案，直到不久前从前前同事那得到的思路：注册 protocol 与 viewcontroller 的对应关系，根据 protocol 获取 VC 并调用协议方法。再加">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/pod-target/build_phases.png">
+<meta property="article:published_time" content="2020-07-07T13:11:13.000Z">
+<meta property="article:modified_time" content="2020-07-18T09:50:33.690Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/pod-target/build_phases.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/07/07/pod-target/"/>
+
+
+
+
+
+  <title>组件化页面跳转及路由方案 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/07/07/pod-target/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">组件化页面跳转及路由方案</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-07T21:11:13+08:00">
+                2020-07-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>组件化页面路由算是个老生常谈的话题了，从蘑菇街的注册 url 到 Casa 的 target-action 方案，市面上也有了很多的优化方案。之所以出这篇文章主要是因为已有方案中的硬编码操作一直不被团队接受，所以一直在寻找更合理的方案，直到不久前从前前同事那得到的思路：注册 protocol 与 viewcontroller 的对应关系，根据 protocol 获取 VC 并调用协议方法。再加上在前公司做过的注册 url 方案，所以打算出篇文章，结合这两种思路总结一套适合当前工程的可行性路由方案。</p>
+<h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>之所以文章标题叫做：页面跳转 及 路由 方案，主要是对应组件化工程中常见的两大需求：</p>
+<p>1、组件间页面跳转解耦：PodA 中的 VC1 想要跳转到 PodB 中的 VC2，但两个组件又不能相互依赖。<br>2、后台可配的页面路由：页面存在跳转入口，根据后台配置不同的 url 跳往不同的落地页。</p>
+<p>应对第一种需求，只要实现简单的解耦即可，正如前言里提到的，通过注册 protocol 与 viewcontroller 的键值对，根据 protocol 获取 VC 并调用协议方法然后 push 即可实现，剩下的就是怎么更合理的注册与取值的问题了。</p>
+<p>应对第二种需求，其实可以通过第一种需求的解决方案来实现，只不过那需要大量的 if-else 来判断，并且需要一个中心化的转发类，不管从写法上还是可维护性上都不是最佳方案。<br>参照上一种解决方案，同样可以提前注册 url 与 viewcontroller 的键值对，根据 url 获取 VC 然后 push，至于传参，将 url 中的参数取出作为 NSDicitionary 传递给 VC 即可，具体实现下面会讲。相比于 if-else 的判断，这种注册 url 的方式好处是：某一 url 的路由支持交给各个组件自己支持，参数的接收也有目标 VC 来控制。</p>
+<p>以上，总结出本方案的中心规律：<em><strong>谁提供、谁维护</strong></em>。意思是说，VC 所属于哪个 Pod，那这个 Pod 就有义务为这个 VC 支持 protocol 跳转和 url 跳转，也就是负责注册操作。如果这个 Pod 没有为 VC 进行注册操作，也就没打算将此 VC 对外提供。</p>
+<h1 id="预览"><a href="#预览" class="headerlink" title="预览"></a>预览</h1><p>期望实现的用法如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1、protocol 方式支持页面跳转</span></span><br><span class="line"><span class="comment">// 提供方提前注册 protocol</span></span><br><span class="line">[[HoloTarget sharedInstance] registTarget:ViewController.class withProtocol:<span class="class"><span class="keyword">@protocol</span>(<span class="title">ViewControllerProtocol</span>)];</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用方根据 protocol 获取 vc 跳转</span></span><br><span class="line"><span class="built_in">UIViewController</span> *vc = [HoloNavigator matchViewControllerWithProtocol:<span class="class"><span class="keyword">@protocol</span>(<span class="title">ViewControllerProtocol</span>)];</span></span><br><span class="line">[(<span class="built_in">UIViewController</span>&lt;ViewControllerProtocol&gt; *)vc viewController:<span class="string">@&quot;title&quot;</span>];</span><br><span class="line">[<span class="keyword">self</span>.navigationController pushViewController:vc animated:<span class="literal">YES</span>];</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line"><span class="comment">// 2、url 方式支持页面路由</span></span><br><span class="line"><span class="comment">// 提供方提前注册 url</span></span><br><span class="line">[[HoloTarget sharedInstance] registTarget:ViewController.class withUrl:<span class="string">@&quot;holo://demo/vc?a=1&amp;b=2&quot;</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用方根据 url 获取 vc 跳转</span></span><br><span class="line"><span class="built_in">UIViewController</span> *vc = [HoloNavigator matchViewControllerWithUrl:<span class="string">@&quot;holo://demo/vc?a=1&amp;b=2&quot;</span>];</span><br><span class="line">[<span class="keyword">self</span>.navigationController pushViewController:vc animated:<span class="literal">YES</span>];</span><br><span class="line"><span class="comment">// vc 内部获取入参</span></span><br><span class="line"><span class="built_in">NSDictionary</span> *params = [HoloNavigator matchUrlParamsWithViewController:vc];</span><br><span class="line"><span class="built_in">NSLog</span>(<span class="string">@&quot;vc params:%@&quot;</span>, params);</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><h2 id="HoloTarget"><a href="#HoloTarget" class="headerlink" title="HoloTarget"></a>HoloTarget</h2><p>主要在 <code>HoloTarget</code> 这个核心类来实现，分别为 protocol 和 url 提供了注册和匹配接口：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// 根据 protocol 注册 target 类</span></span><br><span class="line">- (<span class="type">BOOL</span>)registTarget:(Class)target withProtocol:(Protocol *)protocol;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 url 注册 target 类</span></span><br><span class="line">- (<span class="type">BOOL</span>)registTarget:(Class)target withUrl:(<span class="built_in">NSString</span> *)url;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 protocol 匹配 target 类</span></span><br><span class="line">- (<span class="keyword">nullable</span> Class)matchTargetWithProtocol:(Protocol *)protocol;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 url 匹配 target 类</span></span><br><span class="line">- (<span class="keyword">nullable</span> Class)matchTargetWithUrl:(<span class="built_in">NSString</span> *)url;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 protocol 匹配 target 实例</span></span><br><span class="line">- (<span class="keyword">nullable</span> <span class="type">id</span>)matchTargetInstanceWithProtocol:(Protocol *)protocol;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 url 匹配 target 实例</span></span><br><span class="line">- (<span class="keyword">nullable</span> <span class="type">id</span>)matchTargetInstanceWithUrl:(<span class="built_in">NSString</span> *)url;</span><br></pre></td></tr></table></figure>
+
+
+<p><code>.m</code> 的实现很简单， <code>HoloTarget</code> 单例维护了一个 <code>&lt;NSString *, Class&gt;</code> 类型的字典而已，核心代码很简单，大部分代码都是做安全判断的，就不贴代码了，细节在 Demo（<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTarget/blob/master/HoloTarget/Classes/HoloTarget.m">HoloTarget.m</a>） 里看吧。</p>
+<p>特殊注意的一点是，注册和匹配 url 的时候，是通过 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTarget/blob/master/HoloTarget/Classes/NSString%2BHoloTargetUrlParser.m">NSString+HoloTargetUrlParser</a> 这个分类获取 <code>path</code> 进行注册的。</p>
+<h2 id="HoloNavigator"><a href="#HoloNavigator" class="headerlink" title="HoloNavigator"></a>HoloNavigator</h2><p><code>HoloNavigator</code> 这个类是对  <code>HoloTarget</code> 的封装，提供了 macth viewcontroller 的功能:</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// 根据 protocol 匹配 viewController 实例</span></span><br><span class="line">+ (<span class="keyword">nullable</span> <span class="built_in">UIViewController</span> *)matchViewControllerWithProtocol:(Protocol *)protocol;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 url 匹配 viewController 实例</span></span><br><span class="line">+ (<span class="keyword">nullable</span> <span class="built_in">UIViewController</span> *)matchViewControllerWithUrl:(<span class="built_in">NSString</span> *)url;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 根据 viewController 匹配 url 入参</span></span><br><span class="line">+ (<span class="keyword">nullable</span> <span class="built_in">NSDictionary</span> *)matchUrlParamsWithViewController:(<span class="built_in">UIViewController</span> *)viewController;</span><br></pre></td></tr></table></figure>
+
+
+<p>其中在 <code>matchViewControllerWithUrl:</code> 方法里做了 <code>scheme</code> 判断，如果是 <code>http</code> 或者 <code>https</code> 的话，判断代理是否返回 <code>web viewcontroller</code>。</p>
+<p>并且 <code>HoloTarget</code> 设置过 <code>businessScheme</code> 的话，对 <code>url scheme</code> 加了强校验，只有符合 <code>business scheme</code> 时才继续匹配：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="keyword">nullable</span> <span class="built_in">UIViewController</span> *)matchViewControllerWithUrl:(<span class="built_in">NSString</span> *)url &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *scheme = [url holo_targetUrlScheme];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// web viewcontroller</span></span><br><span class="line">    <span class="keyword">if</span> ([scheme.lowercaseString isEqualToString:<span class="string">@&quot;http&quot;</span>] || [scheme.lowercaseString isEqualToString:<span class="string">@&quot;https&quot;</span>]) &#123;</span><br><span class="line">        <span class="keyword">if</span> ([HoloTarget sharedInstance].delegate &amp;&amp; [[HoloTarget sharedInstance] respondsToSelector:<span class="keyword">@selector</span>(holo_matchWebViewControllerWithUrl:)]) &#123;</span><br><span class="line">            <span class="built_in">UIViewController</span> *webVC = [[HoloTarget sharedInstance].delegate holo_matchWebViewControllerWithUrl:url];</span><br><span class="line">            <span class="keyword">return</span> webVC;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 约定必须遵守 business scheme 才可进行路由</span></span><br><span class="line">    <span class="keyword">if</span> ([HoloTarget sharedInstance].businessScheme.length &gt; <span class="number">0</span> &amp;&amp; ![scheme isEqualToString:[HoloTarget sharedInstance].businessScheme]) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="使用姿势"><a href="#使用姿势" class="headerlink" title="使用姿势"></a>使用姿势</h1><h2 id="1、-protocol-pool"><a href="#1、-protocol-pool" class="headerlink" title="1、 protocol pool"></a>1、 protocol pool</h2><p>创建 protocol pool 组件，被所有提供方和调用方依赖，或者将 HoloTarget 集成进当前组件化工程，创建 protocol pool 文件夹管理所有的 protocol。</p>
+<h2 id="2、url-入参取值"><a href="#2、url-入参取值" class="headerlink" title="2、url 入参取值"></a>2、url 入参取值</h2><p>通过 url 匹配到 vc 的原理是获取 url 里的 path 进行匹配，获取到 vc 后，会将 url 里的 params 与 vc 绑定存储起来：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="keyword">nullable</span> <span class="built_in">UIViewController</span> *)matchViewControllerWithUrl:(<span class="built_in">NSString</span> *)url &#123;</span><br><span class="line">    <span class="type">id</span> target = [[HoloTarget sharedInstance] matchTargetInstanceWithUrl:url];</span><br><span class="line">    <span class="keyword">if</span> ([target isKindOfClass:<span class="built_in">UIViewController</span>.class]) &#123;</span><br><span class="line">        <span class="built_in">NSDictionary</span> *params = [url holo_targetUrlParams];</span><br><span class="line">        <span class="keyword">if</span> (params) &#123;</span><br><span class="line">            objc_setAssociatedObject(target, &amp;KHoloNavigatorParamsKey, params, OBJC_ASSOCIATION_COPY_NONATOMIC);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> target;</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">  	......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">NSDictionary</span> *)matchUrlParamsWithViewController:(<span class="built_in">UIViewController</span> *)viewController &#123;</span><br><span class="line">    <span class="keyword">return</span> objc_getAssociatedObject(viewController, &amp;KHoloNavigatorParamsKey);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>所以可以在 vc 的 viewDidLoad 方法内获取 params 做入参处理：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="variable language_">super</span> viewDidLoad];</span><br><span class="line">    <span class="comment">// Do any additional setup after loading the view.</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSDictionary</span> *params = [HoloNavigator matchUrlParamsWithViewController:<span class="keyword">self</span>];</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;params:%@&quot;</span>, params);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="3、Target-for-Pod"><a href="#3、Target-for-Pod" class="headerlink" title="3、Target for Pod"></a>3、Target for Pod</h2><p>如果一个 protocol 对应一个 viewcontroller，而当前 Pod 对外提供的 viewcontroller 又比较多的话，可以为 Pod 创建一个 MainTarget 类，进行 MainTarget - MainTargetProtocol 一次注册，在 MainTarget 类里转发对组件内各个 vc 的调用，如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1、提供 MainTarget 类</span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">MainTarget</span> : <span class="title">NSObject</span> &lt;<span class="title">MainTargetProtocol</span>&gt;</span></span><br><span class="line"></span><br><span class="line">- (<span class="built_in">UIViewController</span> *)viewController1WithTitle:(<span class="built_in">NSString</span> *)title;</span><br><span class="line">- (<span class="built_in">UIViewController</span> *)viewController2WithTitle:(<span class="built_in">NSString</span> *)title;</span><br><span class="line">- (<span class="built_in">UIViewController</span> *)viewController3WithTitle:(<span class="built_in">NSString</span> *)title;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 2、使用举例</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 提供方提前注册（protocol）</span></span><br><span class="line">[[HoloTarget sharedInstance] registTarget:MainTarget.class withProtocol:<span class="class"><span class="keyword">@protocol</span>(<span class="title">MainTargetProtocol</span>)];</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用方获取 vc 跳转（protocol）</span></span><br><span class="line"><span class="type">id</span> mainTarget = [[HoloTarget sharedInstance] matchTargetInstanceWithProtocol:<span class="class"><span class="keyword">@protocol</span>(<span class="title">MainTargetProtocol</span>)];</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">UIViewController</span> *vc1 = [mainTarget&lt;MainTargetProtocol&gt; viewController1WithTitle:<span class="string">@&quot;title1&quot;</span>];</span><br><span class="line"><span class="built_in">UIViewController</span> *vc2 = [mainTarget&lt;MainTargetProtocol&gt; viewController1WithTitle:<span class="string">@&quot;title2&quot;</span>];</span><br><span class="line"><span class="built_in">UIViewController</span> *vc3 = [mainTarget&lt;MainTargetProtocol&gt; viewController2WithTitle:<span class="string">@&quot;title3&quot;</span>];</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="4、HoloLifecycle-提供注册时机"><a href="#4、HoloLifecycle-提供注册时机" class="headerlink" title="4、HoloLifecycle 提供注册时机"></a>4、HoloLifecycle 提供注册时机</h2><p>对 protocol 和 url 注册操作应该在哪里？这么做？根据 <em><strong>谁提供、谁维护</strong></em> 的原则，应当由各个 Pod 自己负责自己 vc 的注册操作。之前发过的一篇文章 <a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期</a> 介绍了 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloLifecycle">HoloLifecycle</a> 这个工具，正好满足了当下的需求。</p>
+<p>为每个 Pod 创建 Lifecycle 类，将主工程 AppDelegate 的生命周期分发给各个 Pod，在 Lifecycle 类里完成 target 的注册操作（protocol &amp; url）。</p>
+<h2 id="5、YAML-提供注册时机"><a href="#5、YAML-提供注册时机" class="headerlink" title="5、YAML 提供注册时机"></a>5、YAML 提供注册时机</h2><p>除了通过 HoloLifecycle 手动注册，HoloTarget 还提供了通过 YAML 配置文件自动注册的操作，在 Build Phases 添加  <code>holo_target_generator.rb</code> 脚本的执行（注意脚本路径改成脚本最终所在的位置）：</p>
+<p><img src="http://image.gonghonglou.com/pod-target/build_phases.png"></p>
+<p>该脚本的目的是收集各个 Pod 内的 holo_target.yaml 配置文件。脚本内容：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/env ruby</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">require</span> <span class="string">&#x27;yaml&#x27;</span></span><br><span class="line"></span><br><span class="line">product_path = <span class="string">&quot;<span class="subst">#&#123;<span class="variable constant_">ENV</span>[<span class="string">&quot;BUILT_PRODUCTS_DIR&quot;</span>]&#125;</span>/<span class="subst">#&#123;<span class="variable constant_">ENV</span>[<span class="string">&quot;PRODUCT_NAME&quot;</span>]&#125;</span>.app&quot;</span></span><br><span class="line"></span><br><span class="line">target_files = <span class="title class_">Dir</span>.glob(<span class="string">&quot;<span class="subst">#&#123;product_path&#125;</span>/**/holo_target.&#123;yaml,yml&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line">all_targets = target_files.map <span class="keyword">do</span> |<span class="params">path</span>|</span><br><span class="line">    <span class="variable constant_">YAML</span>.load(<span class="title class_">File</span>.open(path))</span><br><span class="line"><span class="keyword">end</span>.reduce(<span class="symbol">:merge</span>)</span><br><span class="line"></span><br><span class="line"><span class="title class_">File</span>.open <span class="string">&quot;<span class="subst">#&#123;product_path&#125;</span>/.HOLO_ALL_TARGETS.yaml&quot;</span>, <span class="string">&quot;w&quot;</span> <span class="keyword">do</span> |<span class="params">file</span>|</span><br><span class="line">    file.write(all_targets.to_yaml)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+
+<p>调用 <code>HoloTarget.h</code> 类的 <code>registAllTargetsFromYAML</code> 方法进行收集注册，具体实现参考 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTarget/blob/a930a47a1294e6955c4199a0b57d2913439d2fbf/HoloTarget/Classes/HoloTarget.m#L28-L80">HoloTarget.m#L28-L80</a></p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)registAllTargetsFromYAML &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *path = [[<span class="built_in">NSBundle</span> mainBundle] pathForResource:<span class="string">@&quot;.HOLO_ALL_TARGETS&quot;</span> ofType:<span class="string">@&quot;yaml&quot;</span>];</span><br><span class="line">    <span class="built_in">NSInputStream</span> *stream = [[<span class="built_in">NSInputStream</span> alloc] initWithFileAtPath:path];</span><br><span class="line">    <span class="built_in">NSDictionary</span> *yaml = [YAMLSerialization objectWithYAMLStream:stream</span><br><span class="line">                                                         options:kYAMLReadOptionStringScalars</span><br><span class="line">                                                           error:<span class="literal">nil</span>];</span><br><span class="line">	  ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>然后在各个 Pod 内部创建 <code>holo_target.yaml</code> 配置文件。</p>
+<p>注意1：配置文件名称必须是 <code>holo_target.yaml</code>。</p>
+<p>注意2：组件内的 <code>holo_target.yaml</code> 配置文件不要放在 Main Bundle 内，会被互相覆盖。</p>
+<p><code>holo_target.yaml</code> 配置文件示例：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Requirement: name your file holo_target.yaml</span></span><br><span class="line"><span class="comment"># example</span></span><br><span class="line"></span><br><span class="line"><span class="attr">HoloViewController:</span></span><br><span class="line">    <span class="attr">urls:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">holo/vc</span></span><br><span class="line">    <span class="attr">protocols:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">HoloViewControllerProtocol</span></span><br><span class="line"></span><br><span class="line"><span class="attr">HoloViewController2:</span></span><br><span class="line">    <span class="attr">urls:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">holo/vc1</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">holo/vc2</span></span><br><span class="line">    <span class="attr">protocols:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">HoloViewControllerProtocol1</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">HoloViewControllerProtocol2</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># etc ...</span></span><br></pre></td></tr></table></figure>
+
+
+<p>选择 YAML 格式的主要原因是因为该格式支持添加注释，而且写法也比 JSON 简洁很多，是很多配置文件的首选格式，注意 YAML 使用缩进表示层级关系，参考：<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2016/07/yaml.html">YAML 语言教程</a></p>
+<h1 id="安全防护"><a href="#安全防护" class="headerlink" title="安全防护"></a>安全防护</h1><p>通过 protocol 获取 vc 并调用方法时，如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UIViewController</span> *vc = [HoloNavigator matchViewControllerWithProtocol:<span class="class"><span class="keyword">@protocol</span>(<span class="title">ViewControllerProtocol</span>)];</span></span><br><span class="line">[(<span class="built_in">UIViewController</span>&lt;ViewControllerProtocol&gt; *)vc viewController:<span class="string">@&quot;title&quot;</span>];</span><br><span class="line">[<span class="keyword">self</span>.navigationController pushViewController:vc animated:<span class="literal">YES</span>];</span><br></pre></td></tr></table></figure>
+
+
+<p>如果该 vc 未实现 <code>viewController:</code> 方法的话程序就会崩溃，虽然 HoloTarget 在注册时做了 taeget 是否遵守 protocol 的判断，如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)registTarget:(Class)target withProtocol:(Protocol *)protocol &#123;</span><br><span class="line">		......</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (![target conformsToProtocol:protocol]) &#123;</span><br><span class="line">        HoloLog(<span class="string">@&quot;[HoloTarget] Regist failed because the target (%@) is not conform to the protocol (%@).&quot;</span>, target, protocolString);</span><br><span class="line">        isSuccess = <span class="literal">NO</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但正常经常下，vc 如果遵守了协议但未实现方法的话也只有个警告而已。当然，你可以通过加 <code>respondsToSelector:</code> 判断这种最简单的方式解决这个 crash 隐患：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ([vc respondsToSelector:<span class="keyword">@selector</span>(viewController:)]) &#123;</span><br><span class="line">    [(<span class="built_in">UIViewController</span>&lt;ViewControllerProtocol&gt; *)vc viewController:<span class="string">@&quot;title&quot;</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>HoloTarget 为了省掉这个 if 判断，最开始创建了 <code>NSObject+HoloTargetUnrecognizedSelector</code> 分类，想要防护所有类的 <code>unrecognized selector</code> 崩溃：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">HoloTargetStubProxy</span></span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)resolveInstanceMethod:(SEL)sel &#123;</span><br><span class="line">    class_addMethod([<span class="keyword">self</span> <span class="keyword">class</span>], sel, imp_implementationWithBlock(^&#123;</span><br><span class="line">        HoloLog(<span class="string">@&quot;[HoloTarget] Unrecognized selector (%@)&quot;</span>, <span class="built_in">NSStringFromSelector</span>(sel));</span><br><span class="line">    &#125;), <span class="string">&quot;v@:&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">NSObject</span> (<span class="title">HoloTargetUnrecognizedSelector</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleClassMethod:<span class="keyword">@selector</span>(forwardingTargetForSelector:) withClassMethod:<span class="keyword">@selector</span>(_holo_forwardingTargetForSelector:) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)_holo_forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line">    <span class="comment">// Aspects hook 会有问题：动态交换了 forwardInvocation: 方法 (aspect_swizzleForwardInvocation)</span></span><br><span class="line">    <span class="comment">// 问题：怎么判断某个方法被 hook 过了 ?</span></span><br><span class="line">    <span class="comment">// 判断 &#x27;forwardingTargetForSelector:&#x27;、&#x27;resolveInstanceMethod:&#x27;、&#x27;forwardInvocation:&#x27; 被处理过了的话，直接 return nil.</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 自己要处理的话, 直接返回</span></span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">self</span> _holo_methodHasOverwrited:<span class="keyword">@selector</span>(resolveInstanceMethod:) cls:<span class="keyword">self</span>.class]) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">self</span> _holo_methodHasOverwrited:<span class="keyword">@selector</span>(forwardInvocation:) cls:<span class="keyword">self</span>.class]) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> [HoloTargetStubProxy new];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断 cls 是否重写了 sel 方法, 递归调用判断父类但不包括 NSObject</span></span><br><span class="line">- (<span class="type">BOOL</span>)_holo_methodHasOverwrited:(SEL)sel cls:(Class)cls &#123;</span><br><span class="line">   ......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>正如注释所写的，暂时没办法获取到 <code>forwardInvocation:</code> 方法是否被交换过，如果直接在 <code>forwardingTargetForSelector:</code> 方法里转发的话肯定会有问题。比如被 Aspects hook 过的方法，其实是将被 hook 的对象 isa 指向了动态创建的类，被 hook 的方法执行时进入消息转发流程，并且 Aspects 交换了  <code>forwardInvocation:</code> 方法在新的  <code>forwardInvocation:</code> 方法里执行了被 hook 方法。</p>
+<p>所以如果在以上 <code>_holo_forwardingTargetForSelector:</code> 方法里无脑转发给 <code>[HoloTargetStubProxy new]</code> 对象的话那被 Aspects hook 的方法就是失效了。如果有方法能够判断某个方法是否被交换过就好了，这样就可以做判断：如果当前类及父类重写或交换了 <code>resolveInstanceMethod:</code> 方法、<code>forwardInvocation:</code> 方法，直接  <code>return nil</code>。</p>
+<p>如果你有方法能够判断某个方法是否被交换过，请告知我，谢谢！</p>
+<p>以上方案走不通的话，那可以在工程中添加 OCLint 规则，判断当前类遵守了协议但未实现协议方法的话直接报错，编译失败。</p>
+<p>当前 HoloTarget 也提供了备选方案，创建了 <code>HoloBaseTarget</code>、<code>HoloBaseTargetViewController</code> 分别继承了 <code>NSObject</code>、<code>UIViewController</code> 的两个类，在这两个类的里重写了 <code>resolveInstanceMethod:</code> 方法，做了安全防护：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="type">BOOL</span>)resolveInstanceMethod:(SEL)sel &#123;</span><br><span class="line">    class_addMethod([<span class="keyword">self</span> <span class="keyword">class</span>], sel, imp_implementationWithBlock(^&#123;</span><br><span class="line">        HoloLog(<span class="string">@&quot;[HoloTarget] -[%@ %@]: unrecognized selector.&quot;</span>, <span class="keyword">self</span>.class, <span class="built_in">NSStringFromSelector</span>(sel));        </span><br><span class="line">    &#125;), <span class="string">&quot;v@:&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>让将要注册的 target 继承这两个类就可以了。</p>
+<p>以上，就是 HoloTarget 的所有内容了</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTarget">https://github.com/HoloFoundation/HoloTarget</a></p>
+<h1 id="isa-swizzling-（更新于-2020-7-18）"><a href="#isa-swizzling-（更新于-2020-7-18）" class="headerlink" title="isa-swizzling （更新于 2020.7.18）"></a>isa-swizzling （更新于 2020.7.18）</h1><p>之前也考虑过这种方案，参考 <code>KVO</code> 的实现原理，通过 <code>isa-swizzling</code> 技术，动态创建一个新的类，将目标对象的 <code>isa</code> 指针指向这个新的类，对新的类做安全保护。但因为之前的思路一直局限于通过 <code>isa-swizzling</code> 保护对象，因为 <code>HoloTarget</code> 还提供了获取 <code>Class</code> 接口，所以一开始并没有选用这种方案。（<code>HoloTarget</code> 提供了 <code>match Target Class</code> 的接口，通过获取 <code>Class</code> 可以调用 <code>init</code> 的方法）</p>
+<p>现在看来的确是之前的思路狭隘了，包括前文提到的：判断 <code>resolveInstanceMethod:</code> 方法、<code>forwardInvocation:</code> 方法等是否被处理过，其实并不需要，我们只需要关心 <code>forwardInvocation:</code> 方法即可，因为如果消息转发的前几步就被特殊处理过了，就不会走到 <code>forwardInvocation:</code> 方法了，而被特殊处理过的对象及类，<code>HoloTarget</code> 就不再关心了。</p>
+<p>所以，最终的解决方案是：</p>
+<p>1、保护对象：</p>
+<p>1.1、根据目标对象的类动态创建一个新的子类<br>1.2、将目标对象的 <code>isa</code> 指针指向这个新的类<br>1.3、交换这个新的类的 <code>forwardInvocation:</code> 方法为自己的 <code>holo_forwardInvocation</code> 方法，只要这个自己的方法不再继续向下走消息转发流程，就不会崩溃了。<br>（注意要保证方法只被交互一次）</p>
+<p>2、保护类：</p>
+<p>将类的 <code>forwardInvocation:</code> 方法交换为自己的 <code>holo_forwardInvocation</code> 方法<br>（注意要保证方法只被交互一次）</p>
+<p>方便的是，以上步骤就是 Aspects 里的一部分逻辑，直接将这部分逻辑单独拷贝出来应用即可：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="built_in">NSString</span> *<span class="keyword">const</span> HoloTargetSubclassSuffix = <span class="string">@&quot;_holoTarget_&quot;</span>;</span><br><span class="line"><span class="keyword">static</span> <span class="built_in">NSString</span> *<span class="keyword">const</span> HoloTargetForwardInvocationSelectorName = <span class="string">@&quot;__holoTarget_forwardInvocation:&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">NSObject</span> (<span class="title">HoloTargetUnrecognizedSelector</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断 cls 是否重写了 sel 方法, 递归调用判断父类但不包括 NSObject</span></span><br><span class="line"><span class="keyword">static</span> <span class="type">BOOL</span> holo_methodHasOverwrited(Class cls, SEL sel) &#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> methodCount = <span class="number">0</span>;</span><br><span class="line">    Method *methods = class_copyMethodList(cls, &amp;methodCount);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; methodCount; i++) &#123;</span><br><span class="line">        Method method = methods[i];</span><br><span class="line">        <span class="keyword">if</span> (method_getName(method) == sel) &#123;</span><br><span class="line">            free(methods);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    free(methods);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> ([cls superclass] != [<span class="built_in">NSObject</span> <span class="keyword">class</span>]) &#123;</span><br><span class="line">        <span class="keyword">return</span> holo_methodHasOverwrited([cls superclass], sel);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> Class holoTarget_hookClass(<span class="built_in">NSObject</span> *<span class="keyword">self</span>) &#123;</span><br><span class="line">    <span class="built_in">NSCParameterAssert</span>(<span class="keyword">self</span>);</span><br><span class="line">    Class statedClass = <span class="keyword">self</span>.class;</span><br><span class="line">    Class baseClass = object_getClass(<span class="keyword">self</span>);</span><br><span class="line">    <span class="built_in">NSString</span> *className = <span class="built_in">NSStringFromClass</span>(baseClass);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Already subclassed</span></span><br><span class="line">    <span class="keyword">if</span> ([className hasSuffix:HoloTargetSubclassSuffix]) &#123;</span><br><span class="line">        <span class="keyword">return</span> baseClass;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// We swizzle a class object, not a single object.</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (class_isMetaClass(baseClass)) &#123;</span><br><span class="line">        <span class="keyword">return</span> holoTarget_swizzleClassInPlace((Class)<span class="keyword">self</span>);</span><br><span class="line">        <span class="comment">// Probably a KVO&#x27;ed class. Swizzle in place. Also swizzle meta classes in place.</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statedClass != baseClass) &#123;</span><br><span class="line">        <span class="keyword">return</span> holoTarget_swizzleClassInPlace(baseClass);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Default case. Create dynamic subclass.</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *subclassName = [className stringByAppendingString:HoloTargetSubclassSuffix].UTF8String;</span><br><span class="line">    Class subclass = objc_getClass(subclassName);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (subclass == <span class="literal">nil</span>) &#123;</span><br><span class="line">        subclass = objc_allocateClassPair(baseClass, subclassName, <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (subclass == <span class="literal">nil</span>) &#123;</span><br><span class="line">            HoloLog(<span class="string">@&quot;[HoloTarget] objc_allocateClassPair failed to allocate class %s.&quot;</span>, subclassName);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        holoTarget_swizzleForwardInvocation(subclass);</span><br><span class="line">        holoTarget_hookedGetClass(subclass, statedClass);</span><br><span class="line">        holoTarget_hookedGetClass(object_getClass(subclass), statedClass);</span><br><span class="line">        objc_registerClassPair(subclass);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    object_setClass(<span class="keyword">self</span>, subclass);</span><br><span class="line">    <span class="keyword">return</span> subclass;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> Class holoTarget_swizzleClassInPlace(Class klass) &#123;</span><br><span class="line">    <span class="built_in">NSCParameterAssert</span>(klass);</span><br><span class="line">    <span class="built_in">NSString</span> *className = <span class="built_in">NSStringFromClass</span>(klass);</span><br><span class="line">    </span><br><span class="line">    holoTarget_modifySwizzledClasses(^(<span class="built_in">NSMutableSet</span> *swizzledClasses) &#123;</span><br><span class="line">        <span class="keyword">if</span> (![swizzledClasses containsObject:className]) &#123;</span><br><span class="line">            holoTarget_swizzleForwardInvocation(klass);</span><br><span class="line">            [swizzledClasses addObject:className];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> klass;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holoTarget_modifySwizzledClasses(<span class="type">void</span> (^block)(<span class="built_in">NSMutableSet</span> *swizzledClasses)) &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">NSMutableSet</span> *swizzledClasses;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">dispatch_once_t</span> pred;</span><br><span class="line">    <span class="built_in">dispatch_once</span>(&amp;pred, ^&#123;</span><br><span class="line">        swizzledClasses = [<span class="built_in">NSMutableSet</span> new];</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">@synchronized</span>(swizzledClasses) &#123;</span><br><span class="line">        block(swizzledClasses);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holoTarget_swizzleForwardInvocation(Class klass) &#123;</span><br><span class="line">    <span class="built_in">NSCParameterAssert</span>(klass);</span><br><span class="line">    <span class="comment">// If there is no method, replace will act like class_addMethod.</span></span><br><span class="line">    IMP originalImplementation = class_replaceMethod(klass, <span class="keyword">@selector</span>(forwardInvocation:), (IMP)__holoTarget_forwardInvocation__, <span class="string">&quot;v@:@&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (originalImplementation) &#123;</span><br><span class="line">        class_addMethod(klass, <span class="built_in">NSSelectorFromString</span>(HoloTargetForwardInvocationSelectorName), originalImplementation, <span class="string">&quot;v@:@&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holoTarget_hookedGetClass(Class <span class="keyword">class</span>, Class statedClass) &#123;</span><br><span class="line">    <span class="built_in">NSCParameterAssert</span>(<span class="keyword">class</span>);</span><br><span class="line">    <span class="built_in">NSCParameterAssert</span>(statedClass);</span><br><span class="line">    Method method = class_getInstanceMethod(<span class="keyword">class</span>, <span class="keyword">@selector</span>(<span class="keyword">class</span>));</span><br><span class="line">    IMP newIMP = imp_implementationWithBlock(^(<span class="type">id</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> statedClass;</span><br><span class="line">    &#125;);</span><br><span class="line">    class_replaceMethod(<span class="keyword">class</span>, <span class="keyword">@selector</span>(<span class="keyword">class</span>), newIMP, method_getTypeEncoding(method));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> __holoTarget_forwardInvocation__(__<span class="keyword">unsafe_unretained</span> <span class="built_in">NSObject</span> *<span class="keyword">self</span>, SEL selector, <span class="built_in">NSInvocation</span> *invocation) &#123;</span><br><span class="line">    HoloLog(<span class="string">@&quot;[HoloTarget] *** Caught exception &#x27;NSInvalidArgumentException&#x27;, reason: &#x27;-[%@ %@]: unrecognized selector sent to instance %p&#x27;&quot;</span>, [<span class="keyword">self</span> <span class="keyword">class</span>], <span class="built_in">NSStringFromSelector</span>(selector), <span class="keyword">self</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> ([HoloTarget sharedInstance].delegate &amp;&amp;</span><br><span class="line">        [[HoloTarget sharedInstance].delegate respondsToSelector:<span class="keyword">@selector</span>(holo_unrecognizedSelectorSentToTarget:selector:)]) &#123;</span><br><span class="line">        [[HoloTarget sharedInstance].delegate holo_unrecognizedSelectorSentToTarget:<span class="keyword">self</span> selector:selector];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)holo_protectUnrecognizedSelector &#123;</span><br><span class="line">    <span class="keyword">if</span> (holo_methodHasOverwrited(<span class="keyword">self</span>, <span class="keyword">@selector</span>(forwardInvocation:))) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    holoTarget_hookClass((<span class="type">id</span>)<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)holo_protectUnrecognizedSelector &#123;</span><br><span class="line">    <span class="keyword">if</span> (holo_methodHasOverwrited(<span class="keyword">self</span>.class, <span class="keyword">@selector</span>(forwardInvocation:))) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    holoTarget_hookClass(<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>其实 <code>HoloTarget</code> 里只保护了类，因为 <code>matchTargetInstance</code> 方法也是直接拿到的类执行了 <code>new</code> 方法。<br>因为加了 <code>holo_methodHasOverwrited</code> 方法判断，类的 <code>forwardInvocation:</code> 方法是否被交换过也提前判断了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/14/pod-resource/" rel="next" title="组件化资源文件管理方案">
+                <i class="fa fa-chevron-left"></i> 组件化资源文件管理方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/08/10/HoloTableView-HoloCollectionView/" rel="prev" title="HoloTableView & HoloCollectionView 让你的列表更好维护">
+                HoloTableView & HoloCollectionView 让你的列表更好维护 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9C%80%E6%B1%82"><span class="nav-number">2.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A2%84%E8%A7%88"><span class="nav-number">3.</span> <span class="nav-text">预览</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#HoloTarget"><span class="nav-number">4.1.</span> <span class="nav-text">HoloTarget</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HoloNavigator"><span class="nav-number">4.2.</span> <span class="nav-text">HoloNavigator</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF"><span class="nav-number">5.</span> <span class="nav-text">使用姿势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81-protocol-pool"><span class="nav-number">5.1.</span> <span class="nav-text">1、 protocol pool</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81url-%E5%85%A5%E5%8F%82%E5%8F%96%E5%80%BC"><span class="nav-number">5.2.</span> <span class="nav-text">2、url 入参取值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81Target-for-Pod"><span class="nav-number">5.3.</span> <span class="nav-text">3、Target for Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81HoloLifecycle-%E6%8F%90%E4%BE%9B%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA"><span class="nav-number">5.4.</span> <span class="nav-text">4、HoloLifecycle 提供注册时机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81YAML-%E6%8F%90%E4%BE%9B%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA"><span class="nav-number">5.5.</span> <span class="nav-text">5、YAML 提供注册时机</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4"><span class="nav-number">6.</span> <span class="nav-text">安全防护</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#isa-swizzling-%EF%BC%88%E6%9B%B4%E6%96%B0%E4%BA%8E-2020-7-18%EF%BC%89"><span class="nav-number">7.</span> <span class="nav-text">isa-swizzling （更新于 2020.7.18）</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/07/07/pod-target/';
+          this.page.identifier = '2020/07/07/pod-target/';
+          this.page.title = '组件化页面跳转及路由方案';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

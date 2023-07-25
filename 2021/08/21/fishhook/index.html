@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="网上关于 fishhook 的源码解读、原理分析的文章已经很多了。这篇文章仅是自己对 fishhook 的学习总结笔记。其实是之前看的 fishhook，但总感觉不写下来的话，一段时间不看，有些知识点就忘了，所以还是出一篇博客记录下吧。 为了开发一个完整的程序，将程序的各功能分成各模块，模块单独开发，开发完成后单独编译，获得最终的静态产物（如 iOS 里的静态库 .a）。当所有模块开发完成之后，将">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fishhook 源码笔记">
+<meta property="og:url" content="http://gonghonglou.com/2021/08/21/fishhook/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="网上关于 fishhook 的源码解读、原理分析的文章已经很多了。这篇文章仅是自己对 fishhook 的学习总结笔记。其实是之前看的 fishhook，但总感觉不写下来的话，一段时间不看，有些知识点就忘了，所以还是出一篇博客记录下吧。 为了开发一个完整的程序，将程序的各功能分成各模块，模块单独开发，开发完成后单独编译，获得最终的静态产物（如 iOS 里的静态库 .a）。当所有模块开发完成之后，将">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/__got.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/__la_symbol_ptr.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_1.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_2.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_3.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_4.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_5.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_6.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_7.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dyld_stub_binder_8.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/hook_log_dis.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/hook_log_mylog.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_nslog.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/image_list.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dis_nslog_before.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/dis_nslog_after.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/macho.JPG">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_macho.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_segment_command_64.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_section_64.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_nlist_64.png">
+<meta property="og:image" content="https://camo.githubusercontent.com/c29a64a3786c3ce426e142ef4ae697ba79c0ab2f2161923e08a458b99928b145/687474703a2f2f692e696d6775722e636f6d2f4856587148437a2e706e67">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_fishhook1.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_fishhook2.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_fishhook3.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_fishhook4.png">
+<meta property="og:image" content="http://image.gonghonglou.com/fishhook/machoview_fishhook5.png">
+<meta property="article:published_time" content="2021-08-21T03:22:00.000Z">
+<meta property="article:modified_time" content="2021-08-21T10:07:05.564Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/fishhook/__got.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/08/21/fishhook/"/>
+
+
+
+
+
+  <title>fishhook 源码笔记 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/08/21/fishhook/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">fishhook 源码笔记</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-08-21T11:22:00+08:00">
+                2021-08-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>网上关于 <a target="_blank" rel="noopener" href="https://github.com/facebook/fishhook">fishhook</a> 的源码解读、原理分析的文章已经很多了。这篇文章仅是自己对 fishhook 的学习总结笔记。其实是之前看的 fishhook，但总感觉不写下来的话，一段时间不看，有些知识点就忘了，所以还是出一篇博客记录下吧。</p>
+<p>为了开发一个完整的程序，将程序的各功能分成各模块，模块单独开发，开发完成后单独编译，获得最终的静态产物（如 iOS 里的静态库 .a）。当所有模块开发完成之后，将所有的静态产物文件放在一起进行链接，所有的文件打包到最终的可执行文件中，即可运行起最终的程序。这就是<strong>静态链接</strong>。</p>
+<p>静态链接解决了代码复用、协同工作等问题。但因为所有的静态产物会在链接过程中打包进最终的可执行文件中，这就导致最终的可执行文件会比较大。而且如果某个模块出现 bug 或改动，就需要该模块重新编译，整个程序重新链接、重新下载安装才能生效。为了解决这样的问题，出现了<strong>动态链接</strong>。像 UIKit、Foundation 等系统库，为了所有 App 可以复用同一份代码、节省存储空间、即时更新，可在程序运行期间进行加载动态库，需要用到的动态库符号，在运行期进行寻址、绑定。</p>
+<p>fishhook 的工作原理正是程序运行期更改符号的地址，以实现方法 hook。比如动态库方法 NSLog，系统在程序运行期加载动态库，寻找 NSLog 的符号地址进行绑定为 0x00000001，该地址函数功能为输出打印内容到控制台。fishhook 的工作则是找到 NSLog 的符号地址将其绑定为自己提供的函数地址 0x00000002，该地址函数功能为拼接自定义数据输出打印内容到控制台。具体实现后续详解。</p>
+<h1 id="动态库符号地址查找与绑定"><a href="#动态库符号地址查找与绑定" class="headerlink" title="动态库符号地址查找与绑定"></a>动态库符号地址查找与绑定</h1><p>Mach-O 中 <code>__DATA</code> 段有两个 Section 与动态符号绑定有关系</p>
+<p><strong>非懒加载符号指针表（Non-Lazy Symbol Pointers，<code>__got</code>）</strong>：存储了 non-lazily 绑定的符号，这些符号在 Mach-O 加载的时候绑定完成。</p>
+<p><strong>懒加载符号指针表（Lazy Symbol Pointers，<code>__la_symbol_ptr</code>）</strong>：存储了 lazy 绑定的方法，这些方法在第一次调用时，由 <code>dyld_stub_binder</code> 进行绑定。</p>
+<p>第一次访问 NSLog 符号的时候先去 stub，stub 告诉从 <code>__la_symbol_ptr</code> 查找，<code>__la_symbol_ptr</code> 表示还没有 NSLog 符号真实函数地址，需要动态绑定，于是去 <code>__got</code> 查找 <code>dyld_stub_binder</code> 函数的地址，进行查找真实的 NSLog 地址。找到后调用 NSLog 函数，并把这个地址保存进 <code>__la_symbol_ptr</code>。下次调用 NSLog　函数的时候在 <code>__la_symbol_ptr</code> 就能得到真实地址进行跳转。</p>
+<p>通过 MachOView 可以查看这两个表：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/__got.png"><br><img src="http://image.gonghonglou.com/fishhook/__la_symbol_ptr.png"></p>
+<p>为了更直观的了解动态库符号地址的查找与绑定过程，接下来通过断点系统函数一步步跟踪 NSLog 符号执行过程，主要是为了验证懒加载符号的查找过程。</p>
+<p>新建一个空工程，在 VC 的 viewDidLoad 方法里写上两行 NSLog 的调用代码，并分别打上断点。注意保证这里第一行的 NSLog 函数是在当前工程运行后第一次被调用。</p>
+<p>运行后程序会断点到第一行 NSLog 代码，此时通过 lldb 的 <code>dis</code> 命令进行反汇编当前函数，得到的结果如下：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_1.png"></p>
+<p><code>bl</code> 是汇编的跳转指令，意味着下一步程序将跳转到 <code>0x10452e0dc</code> 这个地址。如上图，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_2.png"></p>
+<p><code>ldr</code> 汇编指令，x16 寄存器 + 0x5f98（即 <code>0x000000010452e52c</code>），通过 <code>br</code> 命令跳转到 x16 寄存器指定的地址处。<strong>注意，现在这里只有一个函数地址，在符号懒加载并绑定地址之后，再执行的时候这里就能直接执行目标函数了。</strong>如上图，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_3.png"></p>
+<p><code>b</code> 汇编指令，立即跳转到目标地址 <code>0x10452e508</code>。如上图，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_4.png"></p>
+<p><code>ldr</code> 汇编指令，x16 寄存器 + 0x5b30（即 <code>0x0000000184ac9474</code>，注意图中标注，这个地址的函数是 <code>dyld_stub_binder</code>，用来寻址动态库符号并进行绑定的。）通过 <code>br</code> 命令跳转到 x16 寄存器指定的地址处。如上图，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_5.png"></p>
+<p>这就进入了 <code>dyld_stub_binder</code> 函数，可以看到这个函数里又将跳转到 <code>0x184acb034</code> 地址，注释为 <code>_dyld_fast_stub_entry(void*, long)</code> 函数。总之就是执行了一系列桩函数用来符号寻址并进行符号绑定。</p>
+<p>点击进行下一步断点的时候，又回到了我们自己的程序，到了第二行 NSLog 代码，再次通过 lldb 的 <code>dis</code> 命令进行反汇编当前函数，得到的结果如下：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_6.png"></p>
+<p>如上图，函数将通过 <code>bl</code> 命令跳转到 <code>0x10452e0dc</code> 处。同样的，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_7.png"></p>
+<p><code>ldr</code> 汇编指令，x16 寄存器 + 0x5f98（即 <code>0x00000001861eaba8</code>），<br>通过 <code>br</code> 命令跳转到 x16 寄存器指定的地址处。<strong>注意，从图中就能看出这里已经知道了 NSLog 的地址了，下一步将直接执行 NSLog 函数。</strong>如上图，给这个地址打个断点，跳到下一步执行：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dyld_stub_binder_8.png"></p>
+<p>这里就直接进入了 NSLog 函数，没有那些 <code>dyld_stub_binder</code> 函数的寻址过程了。</p>
+<p>通过以上断点过程，能够验证动态库符号的懒加载过程。</p>
+<h1 id="fishhook-使用及验证"><a href="#fishhook-使用及验证" class="headerlink" title="fishhook 使用及验证"></a>fishhook 使用及验证</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)fishhook_nslog &#123;</span><br><span class="line">    NSLog(@<span class="string">&quot;fishhook before&quot;</span>); <span class="comment">// fishhook before</span></span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebinding</span> <span class="title">rebindingLog</span>;</span></span><br><span class="line">    <span class="comment">// 需要 hook 的方法名</span></span><br><span class="line">    rebindingLog.name = <span class="string">&quot;NSLog&quot;</span>;</span><br><span class="line">    <span class="comment">// 替换函数</span></span><br><span class="line">    rebindingLog.replacement = myLog;</span><br><span class="line">    <span class="comment">// 保存原本函数指针</span></span><br><span class="line">    rebindingLog.replaced = (<span class="type">void</span> **)&amp;sys_nslog;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebinding</span> <span class="title">rebindings</span>[] =</span> &#123;rebindingLog&#125;;</span><br><span class="line">    </span><br><span class="line">    rebind_symbols(rebindings, <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    NSLog(@<span class="string">&quot;fishhook after&quot;</span>); <span class="comment">// fishhook after----&gt;🍺🍺🍺</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 函数指针，用来保存原来的函数</span></span><br><span class="line"><span class="type">static</span> <span class="title function_">void</span> <span class="params">(*sys_nslog)</span><span class="params">(NSString *format, ...)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 替换函数（注意：不定参数未处理）</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">myLog</span><span class="params">(NSString * _Nonnull format, ...)</span> &#123;</span><br><span class="line">    NSString *message = [format stringByAppendingString:@<span class="string">&quot;----&gt;🍺🍺🍺&quot;</span>];</span><br><span class="line">    (*sys_nslog)(message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用上一章节断点的方式验证 hook 之后的结果。在上一章节的断点过程中已经知道了 NSLog 在第一次被调用通过 <code>dyld_stub_binder</code> 函数寻找符号地址并绑定之后，再次被调用的时候已经能够知道 NSLog 的符号地址了。这里我们在 hook 代码之后后的 NSLog 调用时打断点看看结果如何：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/hook_log_dis.png"><br><img src="http://image.gonghonglou.com/fishhook/hook_log_mylog.png"></p>
+<p>能够看到，执行 NSLog 时将会跳转到 <code>(void *)0x0000000100a07ca8: myLog at /Users/gonghonglou/Desktop/HookDemo/Example/HookDemo/HKViewController.m:156</code>。给 <code>0x0000000100a07ca8</code> 地址打上断点，点击执行下一步程序将会跳转到我们自己定义的 <code>myLog</code> 函数内，即 <code>HKViewController.m:156</code> 处。</p>
+<h2 id="配合-MachoView-验证"><a href="#配合-MachoView-验证" class="headerlink" title="配合 MachoView 验证"></a>配合 MachoView 验证</h2><p>如果用 MachoView 查看当前项目的 Mach-O 文件，能够看到 NSLog 符号的地址偏移量，加上程序的起始地址就能得到 NSLog 符号地址，通过 dis 命令反汇编目标符号地址同样能够验证符号更改绑定过程。</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_nslog.png"></p>
+<p>通过上图能够看到 NSLog 的 offset 是 <code>0x3c078</code>。<br>我们已经验证了 NSLog 符号第一次被调用时会去 stub 函数查找绑定，这里我们就跳过这一过程，将断点打在第二次调用 NSLog 符号的位置：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/image_list.png"><br><img src="http://image.gonghonglou.com/fishhook/dis_nslog_before.png"></p>
+<p>通过 <code>image list</code> 打印所有 image 的地址，主工程的起始地址为：<code>0x0000000100a18000</code>，通过 <code>x</code> 命令获取该地址加上 offset 的地址内容，iOS 里为小端模式，从后往前读该地址存储的内容为：<code>0x01861eaba8</code>，通过 dis 命令反汇编这个地址即可看到函数内容为 NSLog。</p>
+<p>跳过这一断点，fishhook 重新绑定符号之后，断点落在了下图位置：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/dis_nslog_after.png"></p>
+<p>通过 <code>x</code> 命令重新获取主工程起始地址加上 offset 的地址内容为：<code>0x0100a2bcb4</code>，再次通过 dis 命令反汇编这个地址即可看到函数内容改为了 myLog。</p>
+<h1 id="Mach-O-格式文件"><a href="#Mach-O-格式文件" class="headerlink" title="Mach-O 格式文件"></a>Mach-O 格式文件</h1><p>接下来为了清楚 fishhook 工作的具体原理，首先要准备的基础知识就是 Mach-O 格式文件。</p>
+<p>Mach-O（Mach Object File Format）描述了 macOS 系统上可执行文件的格式。一个典型的 Mach-O 文件格式如下图：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/macho.JPG"></p>
+<p>或通过 MachOView 工具更直观的查看，如下图：</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_macho.png"></p>
+<p>可在 <code>mach-o/loader.h</code> 文件内找到 Mach-O 相关的结构体，接下来大概了解一些结构体。（该文件内的结构体包含 <code>x86</code> 和 <code>arm64</code> 两种，为节约篇幅，这里就只示例 <code>arm64</code> 结构了）</p>
+<p>从 Mach-O 文件格式图里能够看出，Mach-O 文件主要包含以下三个部分：</p>
+<p>1、Header：记录了 cpu 架构、文件类型能信息。<br>2、Load commands：包含了很多个 Segment command 加载命令，存储了 Mach-O 的布局信息。<br>3、Data：包含了很多个 Segment，每个 Segmengt 又包含了很多的 section，记录了具体的代码数据。</p>
+<h2 id="mach-header-64"><a href="#mach-header-64" class="headerlink" title="mach_header_64"></a>mach_header_64</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The 64-bit mach header appears at the very beginning of object files for</span></span><br><span class="line"><span class="comment"> * 64-bit architectures.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mach_header_64</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span>	magic;		<span class="comment">/* mach magic number identifier */</span></span><br><span class="line">	<span class="type">cpu_type_t</span>	cputype;	<span class="comment">/* cpu specifier */</span></span><br><span class="line">	<span class="type">cpu_subtype_t</span>	cpusubtype;	<span class="comment">/* machine specifier */</span></span><br><span class="line">	<span class="type">uint32_t</span>	filetype;	<span class="comment">/* type of file */</span></span><br><span class="line">	<span class="type">uint32_t</span>	ncmds;		<span class="comment">/* number of load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	sizeofcmds;	<span class="comment">/* the size of all the load commands */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved;	<span class="comment">/* reserved */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>上边图片里恰好能看到 Mach64 Header 结构内容。<br><strong>magic</strong>：魔数，内容有：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Constant for the magic field of the mach_header_64 (64-bit architectures) */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MH_MAGIC_64 0xfeedfacf <span class="comment">/* the 64-bit mach magic number */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MH_CIGAM_64 0xcffaedfe <span class="comment">/* NXSwapInt(MH_MAGIC_64) */</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>cputype</strong>：cpu 类型，内容有 CPU_TYPE_ARM、CPU_TYPE_ARM64 等。<br><strong>filetype</strong>：文件类型，内容有：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_OBJECT	0x1		<span class="comment">/* relocatable object file */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_EXECUTE	0x2		<span class="comment">/* demand paged executable file */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_DYLIB	0x6		<span class="comment">/* dynamically bound shared library */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_DYLINKER	0x7		<span class="comment">/* dynamic link editor */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_DSYM		0xa		<span class="comment">/* companion file with only debug</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   sections */</span></span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p><strong>ncmds</strong>：load command 数量。<br><strong>sizeofcmds</strong>：所有 load command 大小。<br><strong>flags</strong>：文件标记，内容有：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Constants for the flags field of the mach_header */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_NOUNDEFS	0x1		<span class="comment">/* the object file has no undefined</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   references */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	MH_INCRLINK	0x2		<span class="comment">/* the object file is the output of an</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   incremental link against a base file</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   and can&#x27;t be link edited again */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MH_DYLDLINK	0x4		<span class="comment">/* the object file is input for the</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   dynamic linker and can&#x27;t be staticly</span></span></span><br><span class="line"><span class="comment"><span class="meta">					   link edited again */</span></span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<h2 id="load-command"><a href="#load-command" class="headerlink" title="load_command"></a>load_command</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">load_command</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span> cmd;		<span class="comment">/* type of load command */</span></span><br><span class="line">	<span class="type">uint32_t</span> cmdsize;	<span class="comment">/* total size of command in bytes */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>cmd</strong>：load command 的类型，内容有：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Constants for the cmd field of all load commands, the type */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SEGMENT	0x1	<span class="comment">/* segment of this file to be mapped */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SYMTAB	0x2	<span class="comment">/* link-edit stab symbol table info */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_SYMSEG	0x3	<span class="comment">/* link-edit gdb symbol table info (obsolete) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_THREAD	0x4	<span class="comment">/* thread */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_UNIXTHREAD	0x5	<span class="comment">/* unix thread (includes a stack) */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span>	LC_LOADFVMLIB	0x6	<span class="comment">/* load a specified fixed VM shared library */</span></span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p><strong>cmdsize</strong>：load command 总计大小。</p>
+<h2 id="segment-command-64"><a href="#segment-command-64" class="headerlink" title="segment_command_64"></a>segment_command_64</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The 64-bit segment load command indicates that a part of this file is to be</span></span><br><span class="line"><span class="comment"> * mapped into a 64-bit task&#x27;s address space.  If the 64-bit segment has</span></span><br><span class="line"><span class="comment"> * sections then section_64 structures directly follow the 64-bit segment</span></span><br><span class="line"><span class="comment"> * command and their size is reflected in cmdsize.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">segment_command_64</span> &#123;</span> <span class="comment">/* for 64-bit architectures */</span></span><br><span class="line">	<span class="type">uint32_t</span>	cmd;		<span class="comment">/* LC_SEGMENT_64 */</span></span><br><span class="line">	<span class="type">uint32_t</span>	cmdsize;	<span class="comment">/* includes sizeof section_64 structs */</span></span><br><span class="line">	<span class="type">char</span>		segname[<span class="number">16</span>];	<span class="comment">/* segment name */</span></span><br><span class="line">	<span class="type">uint64_t</span>	vmaddr;		<span class="comment">/* memory address of this segment */</span></span><br><span class="line">	<span class="type">uint64_t</span>	vmsize;		<span class="comment">/* memory size of this segment */</span></span><br><span class="line">	<span class="type">uint64_t</span>	fileoff;	<span class="comment">/* file offset of this segment */</span></span><br><span class="line">	<span class="type">uint64_t</span>	filesize;	<span class="comment">/* amount to map from the file */</span></span><br><span class="line">	<span class="type">vm_prot_t</span>	maxprot;	<span class="comment">/* maximum VM protection */</span></span><br><span class="line">	<span class="type">vm_prot_t</span>	initprot;	<span class="comment">/* initial VM protection */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nsects;		<span class="comment">/* number of sections in segment */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_segment_command_64.png"></p>
+<h2 id="section-64"><a href="#section-64" class="headerlink" title="section_64"></a>section_64</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * A segment is made up of zero or more sections.  Non-MH_OBJECT files have</span></span><br><span class="line"><span class="comment"> * all of their segments with the proper sections in each, and padded to the</span></span><br><span class="line"><span class="comment"> * specified segment alignment when produced by the link editor.  The first</span></span><br><span class="line"><span class="comment"> * segment of a MH_EXECUTE and MH_FVMLIB format file contains the mach_header</span></span><br><span class="line"><span class="comment"> * and load commands of the object file before its first section.  The zero</span></span><br><span class="line"><span class="comment"> * fill sections are always last in their segment (in all formats).  This</span></span><br><span class="line"><span class="comment"> * allows the zeroed segment padding to be mapped into memory where zero fill</span></span><br><span class="line"><span class="comment"> * sections might be. The gigabyte zero fill sections, those with the section</span></span><br><span class="line"><span class="comment"> * type S_GB_ZEROFILL, can only be in a segment with sections of this type.</span></span><br><span class="line"><span class="comment"> * These segments are then placed after all other segments.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * The MH_OBJECT format has all of its sections in one segment for</span></span><br><span class="line"><span class="comment"> * compactness.  There is no padding to a specified segment boundary and the</span></span><br><span class="line"><span class="comment"> * mach_header and load commands are not part of the segment.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Sections with the same section name, sectname, going into the same segment,</span></span><br><span class="line"><span class="comment"> * segname, are combined by the link editor.  The resulting section is aligned</span></span><br><span class="line"><span class="comment"> * to the maximum alignment of the combined sections and is the new section&#x27;s</span></span><br><span class="line"><span class="comment"> * alignment.  The combined sections are aligned to their original alignment in</span></span><br><span class="line"><span class="comment"> * the combined section.  Any padded bytes to get the specified alignment are</span></span><br><span class="line"><span class="comment"> * zeroed.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * The format of the relocation entries referenced by the reloff and nreloc</span></span><br><span class="line"><span class="comment"> * fields of the section structure for mach object files is described in the</span></span><br><span class="line"><span class="comment"> * header file &lt;reloc.h&gt;.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">section_64</span> &#123;</span> <span class="comment">/* for 64-bit architectures */</span></span><br><span class="line">	<span class="type">char</span>		sectname[<span class="number">16</span>];	<span class="comment">/* name of this section */</span></span><br><span class="line">	<span class="type">char</span>		segname[<span class="number">16</span>];	<span class="comment">/* segment this section goes in */</span></span><br><span class="line">	<span class="type">uint64_t</span>	addr;		<span class="comment">/* memory address of this section */</span></span><br><span class="line">	<span class="type">uint64_t</span>	size;		<span class="comment">/* size in bytes of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	offset;		<span class="comment">/* file offset of this section */</span></span><br><span class="line">	<span class="type">uint32_t</span>	align;		<span class="comment">/* section alignment (power of 2) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reloff;		<span class="comment">/* file offset of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nreloc;		<span class="comment">/* number of relocation entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	flags;		<span class="comment">/* flags (section type and attributes)*/</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved1;	<span class="comment">/* reserved (for offset or index) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved2;	<span class="comment">/* reserved (for count or sizeof) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	reserved3;	<span class="comment">/* reserved */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_section_64.png"></p>
+<h2 id="symtab-command"><a href="#symtab-command" class="headerlink" title="symtab_command"></a>symtab_command</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The symtab_command contains the offsets and sizes of the link-edit 4.3BSD</span></span><br><span class="line"><span class="comment"> * &quot;stab&quot; style symbol table information as described in the header files</span></span><br><span class="line"><span class="comment"> * &lt;nlist.h&gt; and &lt;stab.h&gt;.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">symtab_command</span> &#123;</span></span><br><span class="line">	<span class="type">uint32_t</span>	cmd;		<span class="comment">/* LC_SYMTAB */</span></span><br><span class="line">	<span class="type">uint32_t</span>	cmdsize;	<span class="comment">/* sizeof(struct symtab_command) */</span></span><br><span class="line">	<span class="type">uint32_t</span>	symoff;		<span class="comment">/* symbol table offset */</span></span><br><span class="line">	<span class="type">uint32_t</span>	nsyms;		<span class="comment">/* number of symbol table entries */</span></span><br><span class="line">	<span class="type">uint32_t</span>	stroff;		<span class="comment">/* string table offset */</span></span><br><span class="line">	<span class="type">uint32_t</span>	strsize;	<span class="comment">/* string table size in bytes */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>提供符号表、字符串表相对于 Mach-O 文件在磁盘中的文件偏移</p>
+<h2 id="dysymtab-command"><a href="#dysymtab-command" class="headerlink" title="dysymtab_command"></a>dysymtab_command</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">dysymtab_command</span> &#123;</span></span><br><span class="line">    <span class="type">uint32_t</span> cmd;	<span class="comment">/* LC_DYSYMTAB */</span></span><br><span class="line">    <span class="type">uint32_t</span> cmdsize;	<span class="comment">/* sizeof(struct dysymtab_command) */</span></span><br><span class="line">    </span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * The sections that contain &quot;symbol pointers&quot; and &quot;routine stubs&quot; have</span></span><br><span class="line"><span class="comment">     * indexes and (implied counts based on the size of the section and fixed</span></span><br><span class="line"><span class="comment">     * size of the entry) into the &quot;indirect symbol&quot; table for each pointer</span></span><br><span class="line"><span class="comment">     * and stub.  For every section of these two types the index into the</span></span><br><span class="line"><span class="comment">     * indirect symbol table is stored in the section header in the field</span></span><br><span class="line"><span class="comment">     * reserved1.  An indirect symbol table entry is simply a 32bit index into</span></span><br><span class="line"><span class="comment">     * the symbol table to the symbol that the pointer or stub is referring to.</span></span><br><span class="line"><span class="comment">     * The indirect symbol table is ordered to match the entries in the section.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="type">uint32_t</span> indirectsymoff; <span class="comment">/* file offset to the indirect symbol table */</span></span><br><span class="line">    <span class="type">uint32_t</span> nindirectsyms;  <span class="comment">/* number of indirect symbol table entries */</span></span><br><span class="line">    </span><br><span class="line">    ......    </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>提供间接符号表相对于 Mach-O 文件在磁盘中的文件偏移</p>
+<h2 id="nlist-64"><a href="#nlist-64" class="headerlink" title="nlist_64"></a>nlist_64</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * This is the symbol table entry structure for 64-bit architectures.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">nlist_64</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="type">uint32_t</span>  n_strx; <span class="comment">/* index into the string table */</span></span><br><span class="line">    &#125; n_un;</span><br><span class="line">    <span class="type">uint8_t</span> n_type;        <span class="comment">/* type flag, see below */</span></span><br><span class="line">    <span class="type">uint8_t</span> n_sect;        <span class="comment">/* section number or NO_SECT */</span></span><br><span class="line">    <span class="type">uint16_t</span> n_desc;       <span class="comment">/* see &lt;mach-o/stab.h&gt; */</span></span><br><span class="line">    <span class="type">uint64_t</span> n_value;      <span class="comment">/* value of this symbol (or stab offset) */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_nlist_64.png"></p>
+<p>该结构体存在于 <code>mach-o/nlist.h</code> 文件中。表示符号表 <code>Symbol Table</code> 中的结构体。</p>
+<h1 id="fishhook-官图流程"><a href="#fishhook-官图流程" class="headerlink" title="fishhook 官图流程"></a>fishhook 官图流程</h1><blockquote>
+<p><strong>How it works</strong><br>dyld binds lazy and non-lazy symbols by updating pointers in particular sections of the __DATA segment of a Mach-O binary. fishhook re-binds these symbols by determining the locations to update for each of the symbol names passed to rebind_symbols and then writing out the corresponding replacements.<br>For a given image, the __DATA segment may contain two sections that are relevant for dynamic symbol bindings: __nl_symbol_ptr and __la_symbol_ptr. __nl_symbol_ptr is an array of pointers to non-lazily bound data (these are bound at the time a library is loaded) and __la_symbol_ptr is an array of pointers to imported functions that is generally filled by a routine called dyld_stub_binder during the first call to that symbol (it’s also possible to tell dyld to bind these at launch). In order to find the name of the symbol that corresponds to a particular location in one of these sections, we have to jump through several layers of indirection. For the two relevant sections, the section headers (struct sections from &lt;mach-o&#x2F;loader.h&gt;) provide an offset (in the reserved1 field) into what is known as the indirect symbol table. The indirect symbol table, which is located in the __LINKEDIT segment of the binary, is just an array of indexes into the symbol table (also in __LINKEDIT) whose order is identical to that of the pointers in the non-lazy and lazy symbol sections. So, given struct section nl_symbol_ptr, the corresponding index in the symbol table of the first address in that section is indirect_symbol_table[nl_symbol_ptr-&gt;reserved1]. The symbol table itself is an array of struct nlists (see &lt;mach-o&#x2F;nlist.h&gt;), and each nlist contains an index into the string table in __LINKEDIT which where the actual symbol names are stored. So, for each pointer __nl_symbol_ptr and __la_symbol_ptr, we are able to find the corresponding symbol and then the corresponding string to compare against the requested symbol names, and if there is a match, we replace the pointer in the section with the replacement.<br>The process of looking up the name of a given entry in the lazy or non-lazy pointer tables looks like this:</p>
+</blockquote>
+<p><img src="https://camo.githubusercontent.com/c29a64a3786c3ce426e142ef4ae697ba79c0ab2f2161923e08a458b99928b145/687474703a2f2f692e696d6775722e636f6d2f4856587148437a2e706e67"></p>
+<p>我们结合 MachOView 走一遍 fishhook 的流程图，验证一遍过程。</p>
+<p>1、在 Lazy Symbol Pointers Table 里找到 NSLog，其所在角标为 <code>5</code>。</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_fishhook1.png"></p>
+<p>2、在 Indirect Symbols Table 里角标 <code>5</code> 位置处找到 NSLog，Data 为 <code>0xA11</code>。</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_fishhook2.png"></p>
+<p>3、将 Indirect Symbols Table 里找到的 NSlog 的 Data 值转为十进制（<code>0xA11 = 2577</code>）。在 Symbols Table -&gt; Symbols 表中角标 <code>2577</code> 位置处找到 NSLog，Data 为 <code>0xBE4</code>。</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_fishhook3.png"></p>
+<p>4、在 String Table 里找到起始位置为 <code>0x50BB8</code>，加上 Indirect Symbols 表里找到的 NSlog 的 Data 值 <code>0xBE4</code>，即：<code>0x50BB8 + 0xBE4 = 0x5179c</code>。在 String Table 里找到 <code>0x5179c</code> 位置，果然找到 <code>_NSLog</code> 字符。</p>
+<p><img src="http://image.gonghonglou.com/fishhook/machoview_fishhook4.png"><br><img src="http://image.gonghonglou.com/fishhook/machoview_fishhook5.png"></p>
+<p>此时匹配到目标符号后即可修改懒加载符号表里目标位置处绑定的符号地址了，将其修改为我们自定义的 <code>myLog</code> 函数地址即完成了 hook 操作。</p>
+<h1 id="fishhook-源码解读"><a href="#fishhook-源码解读" class="headerlink" title="fishhook 源码解读"></a>fishhook 源码解读</h1><h2 id="struct-rebinding"><a href="#struct-rebinding" class="headerlink" title="struct rebinding"></a>struct rebinding</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rebinding</span> &#123;</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *name;     <span class="comment">// 被 hook 的目标函数名称（旧函数名称）</span></span><br><span class="line">  <span class="type">void</span> *replacement;    <span class="comment">// 替换函数地址（新函数地址）</span></span><br><span class="line">  <span class="type">void</span> **replaced;      <span class="comment">// 被 hook 的目标函数地址的指针（旧函数地址的指针）</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>在 fishhook.h 里能够看到这个 rebinding 结构体，用来存储 hook 信息。</p>
+<h2 id="struct-rebindings-entry"><a href="#struct-rebindings-entry" class="headerlink" title="struct rebindings_entry"></a>struct rebindings_entry</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rebinding</span> *<span class="title">rebindings</span>;</span>     <span class="comment">// 将要 hook 的函数的 rebinding 数组</span></span><br><span class="line">  <span class="type">size_t</span> rebindings_nel;            <span class="comment">// 数组长度</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> *<span class="title">next</span>;</span>    <span class="comment">// 下个 entry，类似链表结构</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> *_<span class="title">rebindings_head</span>;</span> <span class="comment">// rebindings_entry head 入口</span></span><br></pre></td></tr></table></figure>
+
+<p><code>_rebindings_head</code> 静态变量，存储 <code>rebindings_entry</code> 入口<br>通过 <code>next</code> 遍历 <code>rebindings_entry</code> 结构体<br>每个 <code>rebindings_entry</code> 结构体里通过 <code>rebindings_nel</code> 遍历将要 hook 的函数的 <code>rebindings</code> 数组。</p>
+<p>在后续的 <code>perform_rebinding_with_section</code> 方法里能够看到具体的遍历规则</p>
+<h2 id="rebind-symbols-image"><a href="#rebind-symbols-image" class="headerlink" title="rebind_symbols_image"></a>rebind_symbols_image</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rebind_symbols_image</span><span class="params">(<span class="type">void</span> *header,</span></span><br><span class="line"><span class="params">                         <span class="type">intptr_t</span> slide,</span></span><br><span class="line"><span class="params">                         <span class="keyword">struct</span> rebinding rebindings[],</span></span><br><span class="line"><span class="params">                         <span class="type">size_t</span> rebindings_nel)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> *<span class="title">rebindings_head</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="type">int</span> retval = prepend_rebindings(&amp;rebindings_head, rebindings, rebindings_nel);</span><br><span class="line">    rebind_symbols_for_image(rebindings_head, header, slide);</span><br><span class="line">    <span class="built_in">free</span>(rebindings_head);</span><br><span class="line">    <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>指定 image 进行 hook，逻辑同 <code>rebind_symbols</code> 方法，具体分析看 <code>rebind_symbols</code> 方法。</p>
+<h2 id="rebind-symbols"><a href="#rebind-symbols" class="headerlink" title="rebind_symbols"></a>rebind_symbols</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rebind_symbols</span><span class="params">(<span class="keyword">struct</span> rebinding rebindings[], <span class="type">size_t</span> rebindings_nel)</span> &#123;</span><br><span class="line">  <span class="comment">// 将传入的 rebindings 数组存储到全局的链表中</span></span><br><span class="line">  <span class="type">int</span> retval = prepend_rebindings(&amp;_rebindings_head, rebindings, rebindings_nel);</span><br><span class="line">  <span class="comment">// 异常直接返回</span></span><br><span class="line">  <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> retval;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果是第一次调用，注册 image 加载回调</span></span><br><span class="line">  <span class="comment">// If this was the first call, register callback for image additions (which is also invoked for</span></span><br><span class="line">  <span class="comment">// existing images, otherwise, just run on existing images</span></span><br><span class="line">  <span class="keyword">if</span> (!_rebindings_head-&gt;next) &#123;</span><br><span class="line">    _dyld_register_func_for_add_image(_rebind_symbols_for_image);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 不是第一次调用，遍历所有的 image 进行 hook</span></span><br><span class="line">    <span class="type">uint32_t</span> c = _dyld_image_count();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uint32_t</span> i = <span class="number">0</span>; i &lt; c; i++) &#123;</span><br><span class="line">      _rebind_symbols_for_image(_dyld_get_image_header(i), _dyld_get_image_vmaddr_slide(i));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="prepend-rebindings"><a href="#prepend-rebindings" class="headerlink" title="prepend_rebindings"></a>prepend_rebindings</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">prepend_rebindings</span><span class="params">(<span class="keyword">struct</span> rebindings_entry **rebindings_head,</span></span><br><span class="line"><span class="params">                              <span class="keyword">struct</span> rebinding rebindings[],</span></span><br><span class="line"><span class="params">                              <span class="type">size_t</span> nel)</span> &#123;</span><br><span class="line">  <span class="comment">// 创建一个新的 rebindings_entry 结构体</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> *<span class="title">new_entry</span> =</span> <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> rebindings_entry));</span><br><span class="line">  <span class="keyword">if</span> (!new_entry) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 给 rebindings 开辟空间，大小即传入的 rebindings 数组的大小</span></span><br><span class="line">  new_entry-&gt;rebindings = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> rebinding) * nel);</span><br><span class="line">  <span class="keyword">if</span> (!new_entry-&gt;rebindings) &#123;</span><br><span class="line">    <span class="built_in">free</span>(new_entry);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 将传入的 rebindings 赋值给 new_entry-&gt;rebindings</span></span><br><span class="line">  <span class="built_in">memcpy</span>(new_entry-&gt;rebindings, rebindings, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> rebinding) * nel);</span><br><span class="line">  <span class="comment">// 将传入的 rebindings 的 长度赋值给 new_entry-&gt;rebindings_nel</span></span><br><span class="line">  new_entry-&gt;rebindings_nel = nel;</span><br><span class="line">  <span class="comment">// 将全局变量 rebindings_head 设置为链表的头部</span></span><br><span class="line">  new_entry-&gt;next = *rebindings_head;</span><br><span class="line">  *rebindings_head = new_entry;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="rebind-symbols-for-image"><a href="#rebind-symbols-for-image" class="headerlink" title="_rebind_symbols_for_image"></a>_rebind_symbols_for_image</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> _rebind_symbols_for_image(<span class="type">const</span> <span class="keyword">struct</span> mach_header *header,</span><br><span class="line">                                      <span class="type">intptr_t</span> slide) &#123;</span><br><span class="line">    rebind_symbols_for_image(_rebindings_head, header, slide);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该方法要么通过 <code>_dyld_register_func_for_add_image</code> 注册回调被调用，要么遍历所有的 image 主动调用，传入 <code>header</code> 及 <code>slide</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="type">void</span> _dyld_register_func_for_add_image(<span class="type">void</span> (*func)(<span class="type">const</span> <span class="keyword">struct</span> mach_header* mh, <span class="type">intptr_t</span> vmaddr_slide))    __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);</span><br></pre></td></tr></table></figure>
+
+<h2 id="rebind-symbols-for-image-1"><a href="#rebind-symbols-for-image-1" class="headerlink" title="rebind_symbols_for_image"></a>rebind_symbols_for_image</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">rebind_symbols_for_image</span><span class="params">(<span class="keyword">struct</span> rebindings_entry *rebindings,</span></span><br><span class="line"><span class="params">                                     <span class="type">const</span> <span class="keyword">struct</span> mach_header *header,</span></span><br><span class="line"><span class="params">                                     <span class="type">intptr_t</span> slide)</span> &#123;</span><br><span class="line">  Dl_info info;</span><br><span class="line">  <span class="comment">// dladdr 函数获取 header 地址的符号信息</span></span><br><span class="line">  <span class="keyword">if</span> (dladdr(header, &amp;info) == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="type">segment_command_t</span> *cur_seg_cmd;</span><br><span class="line">  <span class="type">segment_command_t</span> *linkedit_segment = <span class="literal">NULL</span>;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">symtab_command</span>* <span class="title">symtab_cmd</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">dysymtab_command</span>* <span class="title">dysymtab_cmd</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">uintptr_t</span> cur = (<span class="type">uintptr_t</span>)header + <span class="keyword">sizeof</span>(<span class="type">mach_header_t</span>);</span><br><span class="line">  <span class="comment">// 遍历 load commands，寻找 linkedit segment、symtab command、dysymtab command</span></span><br><span class="line">  <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; header-&gt;ncmds; i++, cur += cur_seg_cmd-&gt;cmdsize) &#123;</span><br><span class="line">    cur_seg_cmd = (<span class="type">segment_command_t</span> *)cur;</span><br><span class="line">    <span class="keyword">if</span> (cur_seg_cmd-&gt;cmd == LC_SEGMENT_ARCH_DEPENDENT) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">strcmp</span>(cur_seg_cmd-&gt;segname, SEG_LINKEDIT) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// cmd == LC_SEGMENT_64 &amp;&amp; segname == SEG_LINKEDIT 时，即为 linkedit segment</span></span><br><span class="line">        <span class="comment">// 注：</span></span><br><span class="line">        <span class="comment">// #define    LC_SEGMENT_64    0x19    /* 64-bit segment of this file to be mapped */</span></span><br><span class="line">        <span class="comment">// #define    SEG_LINKEDIT    &quot;__LINKEDIT&quot;    /* the segment containing all structs */</span></span><br><span class="line">        linkedit_segment = cur_seg_cmd;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (cur_seg_cmd-&gt;cmd == LC_SYMTAB) &#123;</span><br><span class="line">      <span class="comment">// cmd == LC_SYMTAB 即为 symtab command</span></span><br><span class="line">      <span class="comment">// 注：</span></span><br><span class="line">      <span class="comment">// #define    LC_SYMTAB    0x2    /* link-edit stab symbol table info */</span></span><br><span class="line">      symtab_cmd = (<span class="keyword">struct</span> symtab_command*)cur_seg_cmd;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (cur_seg_cmd-&gt;cmd == LC_DYSYMTAB) &#123;</span><br><span class="line">      <span class="comment">// cmd == LC_DYSYMTAB 即为 dysymtab command</span></span><br><span class="line">      <span class="comment">// 注：</span></span><br><span class="line">      <span class="comment">// #define    LC_DYSYMTAB    0xb    /* dynamic link-edit symbol table info */</span></span><br><span class="line">      dysymtab_cmd = (<span class="keyword">struct</span> dysymtab_command*)cur_seg_cmd;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 未找到目标信息，直接返回</span></span><br><span class="line">  <span class="keyword">if</span> (!symtab_cmd || !dysymtab_cmd || !linkedit_segment ||</span><br><span class="line">      !dysymtab_cmd-&gt;nindirectsyms) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 查找符号表/字符串表地址</span></span><br><span class="line">  <span class="comment">// Find base symbol/string table addresses</span></span><br><span class="line">  <span class="type">uintptr_t</span> linkedit_base = (<span class="type">uintptr_t</span>)slide + linkedit_segment-&gt;vmaddr - linkedit_segment-&gt;fileoff;</span><br><span class="line">  <span class="type">nlist_t</span> *symtab = (<span class="type">nlist_t</span> *)(linkedit_base + symtab_cmd-&gt;symoff);</span><br><span class="line">  <span class="type">char</span> *strtab = (<span class="type">char</span> *)(linkedit_base + symtab_cmd-&gt;stroff);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取间接符号表</span></span><br><span class="line">  <span class="comment">// Get indirect symbol table (array of uint32_t indices into symbol table)</span></span><br><span class="line">  <span class="type">uint32_t</span> *indirect_symtab = (<span class="type">uint32_t</span> *)(linkedit_base + dysymtab_cmd-&gt;indirectsymoff);</span><br><span class="line"></span><br><span class="line">  cur = (<span class="type">uintptr_t</span>)header + <span class="keyword">sizeof</span>(<span class="type">mach_header_t</span>);</span><br><span class="line">  <span class="comment">// 遍历 load commands，寻找懒加载符号表（S_LAZY_SYMBOL_POINTERS）、非懒加载符号表（S_NON_LAZY_SYMBOL_POINTERS），进行更改符号地址</span></span><br><span class="line">  <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; header-&gt;ncmds; i++, cur += cur_seg_cmd-&gt;cmdsize) &#123;</span><br><span class="line">    cur_seg_cmd = (<span class="type">segment_command_t</span> *)cur;</span><br><span class="line">    <span class="keyword">if</span> (cur_seg_cmd-&gt;cmd == LC_SEGMENT_ARCH_DEPENDENT) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">strcmp</span>(cur_seg_cmd-&gt;segname, SEG_DATA) != <span class="number">0</span> &amp;&amp;</span><br><span class="line">          <span class="built_in">strcmp</span>(cur_seg_cmd-&gt;segname, SEG_DATA_CONST) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">for</span> (uint j = <span class="number">0</span>; j &lt; cur_seg_cmd-&gt;nsects; j++) &#123;</span><br><span class="line">        <span class="type">section_t</span> *sect =</span><br><span class="line">          (<span class="type">section_t</span> *)(cur + <span class="keyword">sizeof</span>(<span class="type">segment_command_t</span>)) + j;</span><br><span class="line">        <span class="keyword">if</span> ((sect-&gt;flags &amp; SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) &#123;</span><br><span class="line">          <span class="comment">// 注：</span></span><br><span class="line">          <span class="comment">// #define    S_LAZY_SYMBOL_POINTERS        0x7    /* section with only lazy symbol pointers */</span></span><br><span class="line">          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> ((sect-&gt;flags &amp; SECTION_TYPE) == S_NON_LAZY_SYMBOL_POINTERS) &#123;</span><br><span class="line">          <span class="comment">// 注：</span></span><br><span class="line">          <span class="comment">// #define    S_NON_LAZY_SYMBOL_POINTERS    0x6    /* section with only non-lazy symbol pointers */</span></span><br><span class="line">          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="perform-rebinding-with-section"><a href="#perform-rebinding-with-section" class="headerlink" title="perform_rebinding_with_section"></a>perform_rebinding_with_section</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">perform_rebinding_with_section</span><span class="params">(<span class="keyword">struct</span> rebindings_entry *rebindings,</span></span><br><span class="line"><span class="params">                                           <span class="type">section_t</span> *section,</span></span><br><span class="line"><span class="params">                                           <span class="type">intptr_t</span> slide,</span></span><br><span class="line"><span class="params">                                           <span class="type">nlist_t</span> *symtab,</span></span><br><span class="line"><span class="params">                                           <span class="type">char</span> *strtab,</span></span><br><span class="line"><span class="params">                                           <span class="type">uint32_t</span> *indirect_symtab)</span> &#123;</span><br><span class="line">  <span class="comment">// 根据 section 里记录的 reserved1 查找 Indirect Symbols</span></span><br><span class="line">  <span class="comment">// 注：</span></span><br><span class="line">  <span class="comment">// uint32_t    reserved1;    /* reserved (for offset or index) */</span></span><br><span class="line">  <span class="type">uint32_t</span> *indirect_symbol_indices = indirect_symtab + section-&gt;reserved1;</span><br><span class="line">  <span class="comment">// 根据随机偏移量 slide + section 地址找到符号指针表，以修改其中的符号绑定</span></span><br><span class="line">  <span class="type">void</span> **indirect_symbol_bindings = (<span class="type">void</span> **)((<span class="type">uintptr_t</span>)slide + section-&gt;addr);</span><br><span class="line">  <span class="comment">// 遍历 section，查找目标符号</span></span><br><span class="line">  <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; section-&gt;size / <span class="keyword">sizeof</span>(<span class="type">void</span> *); i++) &#123;</span><br><span class="line">    <span class="comment">// 根据 section 角标位置，在 Indirect Symbols 里相应位置找到目标符号位置</span></span><br><span class="line">    <span class="type">uint32_t</span> symtab_index = indirect_symbol_indices[i];</span><br><span class="line">    <span class="keyword">if</span> (symtab_index == INDIRECT_SYMBOL_ABS || symtab_index == INDIRECT_SYMBOL_LOCAL ||</span><br><span class="line">        symtab_index == (INDIRECT_SYMBOL_LOCAL   | INDIRECT_SYMBOL_ABS)) &#123;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 根据在 Indirect Symbols 里找到目标符号位置，在 symtab 符号表里查找字符串表偏移位置</span></span><br><span class="line">    <span class="comment">// 注：</span></span><br><span class="line">    <span class="comment">// union &#123;</span></span><br><span class="line">    <span class="comment">//     uint32_t  n_strx; /* index into the string table */</span></span><br><span class="line">    <span class="comment">// &#125; n_un;</span></span><br><span class="line">    <span class="type">uint32_t</span> strtab_offset = symtab[symtab_index].n_un.n_strx;</span><br><span class="line">    <span class="comment">// 字符串表加上偏移位置即可找到符号名称</span></span><br><span class="line">    <span class="type">char</span> *symbol_name = strtab + strtab_offset;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rebindings_entry</span> *<span class="title">cur</span> =</span> rebindings;</span><br><span class="line">    <span class="comment">// 遍历 rebindings_entry，匹配出目标符号，进行符号地址重绑定</span></span><br><span class="line">    <span class="keyword">while</span> (cur) &#123;</span><br><span class="line">      <span class="comment">// 遍历每个 rebindings_entry 了的 rebindings 数组</span></span><br><span class="line">      <span class="keyword">for</span> (uint j = <span class="number">0</span>; j &lt; cur-&gt;rebindings_nel; j++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strlen</span>(symbol_name) &gt; <span class="number">1</span> &amp;&amp;</span><br><span class="line">            <span class="built_in">strcmp</span>(&amp;symbol_name[<span class="number">1</span>], cur-&gt;rebindings[j].name) == <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">if</span> (cur-&gt;rebindings[j].replaced != <span class="literal">NULL</span> &amp;&amp;</span><br><span class="line">              indirect_symbol_bindings[i] != cur-&gt;rebindings[j].replacement) &#123;</span><br><span class="line">            <span class="comment">// 将匹配到的目标符号地址赋值给 replaced</span></span><br><span class="line">            *(cur-&gt;rebindings[j].replaced) = indirect_symbol_bindings[i];</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="comment">// 匹配到目标符号，进行符号地址重绑定 replacement</span></span><br><span class="line">          indirect_symbol_bindings[i] = cur-&gt;rebindings[j].replacement;</span><br><span class="line">          <span class="keyword">goto</span> symbol_loop;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      cur = cur-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">  symbol_loop:;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至此，fishhook 的源码笔记就结束了。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/24858664">Mach-O文件格式</a></li>
+<li><a target="_blank" rel="noopener" href="https://juejin.cn/post/6897528762708000776">fishHook源码分析</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/b3dc9c429627">IOS之fishhook原理探究</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/08/08/cocoapods-update-pod-sources/" rel="next" title="修复 pod install 无法正确拉取 pod 代码">
+                <i class="fa fa-chevron-left"></i> 修复 pod install 无法正确拉取 pod 代码
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/09/04/FBRetainCycleDetector/" rel="prev" title="FBRetainCycleDetector 源码笔记">
+                FBRetainCycleDetector 源码笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%BA%93%E7%AC%A6%E5%8F%B7%E5%9C%B0%E5%9D%80%E6%9F%A5%E6%89%BE%E4%B8%8E%E7%BB%91%E5%AE%9A"><span class="nav-number">1.</span> <span class="nav-text">动态库符号地址查找与绑定</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fishhook-%E4%BD%BF%E7%94%A8%E5%8F%8A%E9%AA%8C%E8%AF%81"><span class="nav-number">2.</span> <span class="nav-text">fishhook 使用及验证</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E5%90%88-MachoView-%E9%AA%8C%E8%AF%81"><span class="nav-number">2.1.</span> <span class="nav-text">配合 MachoView 验证</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Mach-O-%E6%A0%BC%E5%BC%8F%E6%96%87%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">Mach-O 格式文件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#mach-header-64"><span class="nav-number">3.1.</span> <span class="nav-text">mach_header_64</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#load-command"><span class="nav-number">3.2.</span> <span class="nav-text">load_command</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#segment-command-64"><span class="nav-number">3.3.</span> <span class="nav-text">segment_command_64</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section-64"><span class="nav-number">3.4.</span> <span class="nav-text">section_64</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#symtab-command"><span class="nav-number">3.5.</span> <span class="nav-text">symtab_command</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dysymtab-command"><span class="nav-number">3.6.</span> <span class="nav-text">dysymtab_command</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nlist-64"><span class="nav-number">3.7.</span> <span class="nav-text">nlist_64</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fishhook-%E5%AE%98%E5%9B%BE%E6%B5%81%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">fishhook 官图流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fishhook-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB"><span class="nav-number">5.</span> <span class="nav-text">fishhook 源码解读</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#struct-rebinding"><span class="nav-number">5.1.</span> <span class="nav-text">struct rebinding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#struct-rebindings-entry"><span class="nav-number">5.2.</span> <span class="nav-text">struct rebindings_entry</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rebind-symbols-image"><span class="nav-number">5.3.</span> <span class="nav-text">rebind_symbols_image</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rebind-symbols"><span class="nav-number">5.4.</span> <span class="nav-text">rebind_symbols</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#prepend-rebindings"><span class="nav-number">5.5.</span> <span class="nav-text">prepend_rebindings</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rebind-symbols-for-image"><span class="nav-number">5.6.</span> <span class="nav-text">_rebind_symbols_for_image</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rebind-symbols-for-image-1"><span class="nav-number">5.7.</span> <span class="nav-text">rebind_symbols_for_image</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#perform-rebinding-with-section"><span class="nav-number">5.8.</span> <span class="nav-text">perform_rebinding_with_section</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reference"><span class="nav-number">6.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/08/21/fishhook/';
+          this.page.identifier = '2021/08/21/fishhook/';
+          this.page.title = 'fishhook 源码笔记';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

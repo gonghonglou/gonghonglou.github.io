@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="现在有些规模的工程大概都是实行组件化开发吧，将基础库，业务库划分成单独模块，以 Pod 的形式集成到 APP 中。其中组件化开发一个不可避免的问题就是解耦，本篇博客大概会总结一些现在常用的解耦方案。 首先，整个工程应该分为两个部分，基础库和业务库，而组件化解耦应该主要针对的是业务模块。将相似度比较高的业务或者功能明确的业务划分成模块，由一个或多个 Pod 组成，比如：首页模块、详情模块、支付模块、">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组件化解耦方案">
+<meta property="og:url" content="http://gonghonglou.com/2019/06/13/pod-decoupling/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="现在有些规模的工程大概都是实行组件化开发吧，将基础库，业务库划分成单独模块，以 Pod 的形式集成到 APP 中。其中组件化开发一个不可避免的问题就是解耦，本篇博客大概会总结一些现在常用的解耦方案。 首先，整个工程应该分为两个部分，基础库和业务库，而组件化解耦应该主要针对的是业务模块。将相似度比较高的业务或者功能明确的业务划分成模块，由一个或多个 Pod 组成，比如：首页模块、详情模块、支付模块、">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-06-13T07:25:47.000Z">
+<meta property="article:modified_time" content="2020-03-14T12:58:40.005Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2019/06/13/pod-decoupling/"/>
+
+
+
+
+
+  <title>组件化解耦方案 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/06/13/pod-decoupling/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">组件化解耦方案</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-13T15:25:47+08:00">
+                2019-06-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>现在有些规模的工程大概都是实行组件化开发吧，将基础库，业务库划分成单独模块，以 Pod 的形式集成到 APP 中。其中组件化开发一个不可避免的问题就是解耦，本篇博客大概会总结一些现在常用的解耦方案。</p>
+<p>首先，整个工程应该分为两个部分，基础库和业务库，而组件化解耦应该主要针对的是业务模块。将相似度比较高的业务或者功能明确的业务划分成模块，由一个或多个 Pod 组成，比如：首页模块、详情模块、支付模块、个人中心模块等等。每个业务模块可以依赖所有的基础库，但业务模块之间没有耦合，可以独立集成进工程中。</p>
+<p>接下来是针对业务库的几种解耦方案</p>
+<h1 id="Common-Pod"><a href="#Common-Pod" class="headerlink" title="Common Pod"></a>Common Pod</h1><p>最简单粗暴的方式，各个业务模块中肯定会有复用的 View，Model，业务相关的工具库等，将这部分内容归入到一个 common pod 中，所有的业务模块可以依赖该 pod。当然，随着复用的文件越来越多，common pod 肯定会越来越臃肿，那个时候还应该对 common pod 再做拆分，相当于随着业务的发展逐步抽离公用类，逐渐下沉到基础库中或者是业务基础库。</p>
+<h1 id="去-Model-化"><a href="#去-Model-化" class="headerlink" title="去 Model 化"></a>去 Model 化</h1><p>组件化解耦中很好用的一种方案，去 Model 化，通过 NSDictionary 代替 Model，优点很明显，解耦效果显著，且节省了 JSON 转 Model 的解析时间。当然缺点也很明显，会有很多硬编码，不可避免地要做很多保护判断，做好防崩溃措施。</p>
+<h1 id="Router"><a href="#Router" class="headerlink" title="Router"></a>Router</h1><p>组件化解耦绕不开的一个话题就是页面路由了，关于页面路由网上有很多文章在讲，这里大致介绍下其中两种常用方案：<br>1、无需注册 Target，由业务方维护自己的目标 Target 类和调起方法<br>2、提前注册 Target，无需维护调起方法</p>
+<h2 id="Target-Action"><a href="#Target-Action" class="headerlink" title="Target-Action"></a>Target-Action</h2><p>提供一个 <code>Mediator</code> 类，执行调起方法</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">nullable</span> <span class="type">id</span>)performTarget:(<span class="built_in">NSString</span> *)targetName action:(<span class="built_in">NSString</span> *)actionName params:(<span class="built_in">NSDictionary</span> *)params &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSString</span> *targetClassString = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;target_%@&quot;</span>, targetName];</span><br><span class="line">    <span class="built_in">NSString</span> *actionString = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;action_%@:&quot;</span>, actionName];</span><br><span class="line">    </span><br><span class="line">    Class targetClass = <span class="built_in">NSClassFromString</span>(targetClassString);</span><br><span class="line">    <span class="type">id</span> target = [targetClass new];</span><br><span class="line">    SEL action = <span class="built_in">NSSelectorFromString</span>(actionString);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (target == <span class="literal">nil</span>) <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> ([target respondsToSelector:action]) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> clang diagnostic push</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> clang diagnostic ignored <span class="string">&quot;-Warc-performSelector-leaks&quot;</span></span></span><br><span class="line">        <span class="keyword">return</span> [target performSelector:action withObject:params];</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> clang diagnostic pop</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>提供一个 <code>Router</code> 类，切割 url：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">id</span>)routerWithUrlString:(<span class="built_in">NSString</span> *)urlString &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSURL</span> *url = [<span class="built_in">NSURL</span> URLWithString:urlString];</span><br><span class="line">    <span class="built_in">NSMutableDictionary</span> *params = [<span class="built_in">NSMutableDictionary</span> new];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSString</span> *param <span class="keyword">in</span> [url.query componentsSeparatedByString:<span class="string">@&quot;&amp;&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *elts = [param componentsSeparatedByString:<span class="string">@&quot;=&quot;</span>];</span><br><span class="line">        <span class="keyword">if</span> ([elts count] &lt; <span class="number">2</span>) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="built_in">NSString</span> *key = [elts.firstObject stringByReplacingPercentEscapesUsingEncoding:<span class="built_in">NSUTF8StringEncoding</span>];</span><br><span class="line">        <span class="built_in">NSString</span> *value = [elts.lastObject stringByReplacingPercentEscapesUsingEncoding:<span class="built_in">NSUTF8StringEncoding</span>];</span><br><span class="line">        </span><br><span class="line">        params[key] = value;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> routerWithUrlString:url.path params:params];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)routerWithUrlString:(<span class="built_in">NSString</span> *)urlString params:(<span class="built_in">NSDictionary</span> *)params &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSURL</span> *url = [<span class="built_in">NSURL</span> URLWithString:urlString];</span><br><span class="line">    <span class="built_in">NSString</span> *target = url.pathComponents[<span class="number">0</span>];</span><br><span class="line">    <span class="built_in">NSString</span> *actionName = url.pathComponents[<span class="number">1</span>];</span><br><span class="line">    <span class="type">id</span> result = [[GHLMediator sharedInstance] performTarget:target action:actionName params:params];</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p>这样，假设想 push 一个 <code>HomeViewController</code>，提供一个 urlString：<code>home/homePage?page=1</code>，在 Home 的 POD 里提供一个 <code>target_home</code> 类，在 <code>target_home</code> 类里提供一个 <code>action_homePage</code> 方法：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (UIViewController *)action_homePage:(NSDictionary *)<span class="keyword">params</span> &#123;</span><br><span class="line">    GHLHomeViewController *vc = [GHLHomeViewController <span class="keyword">new</span>];</span><br><span class="line">    vc.page = <span class="keyword">params</span>[<span class="string">@&quot;page&quot;</span>];</span><br><span class="line">    <span class="keyword">return</span> vc;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以通过：</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">UIViewController</span> *vc = [[<span class="symbol">GHLRouter</span> sharedInstance] routerWithUrlString:@<span class="string">&quot;home/homePage?page=1&quot;</span>];</span><br></pre></td></tr></table></figure>
+
+<p>获取到 VC</p>
+<ul>
+<li>优点：无需提前注册 Target</li>
+<li>缺点：需要业务方维护自己的 <code>target</code> 类</li>
+</ul>
+<p>如果想为 <code>HomeViewController</code> 对外暴露一个指定入参的方法，可以给 <code>Mediator</code> 类添加一个 Home 的 Category，并添加方法：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">UIViewController</span> *)ghlHomeViewControllerWithPage:(<span class="built_in">NSString</span> *)page &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> performTarget:<span class="string">@&quot;home&quot;</span> action:<span class="string">@&quot;homePage&quot;</span> params:@&#123;<span class="string">@&quot;page&quot;</span> : page&#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以通过：</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">UIViewController</span> *vc = [[<span class="symbol">GHLMediator</span> sharedInstance] ghlHomeViewControllerWithPage:@<span class="string">&quot;1&quot;</span>];</span><br></pre></td></tr></table></figure>
+
+<p>获取到 VC</p>
+<ul>
+<li>优点：可对外暴露指定参数的方法，方便调用者</li>
+<li>缺点：需要业务方维护自己的 <code>Mediator</code> 的 Category</li>
+</ul>
+<h2 id="Register-URL"><a href="#Register-URL" class="headerlink" title="Register URL"></a>Register URL</h2><p>给每个 Pod 添加一个 <code>target</code> 资源文件，文件内记录了路由 url 和 ViewController 的对应关系，这样在调起 url 时取出 VC 之后 push 就好了。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">id</span>)openURLString:(<span class="built_in">NSString</span> *)urlString &#123;</span><br><span class="line">    <span class="built_in">NSURL</span> *url = [<span class="built_in">NSURL</span> URLWithString:urlString];</span><br><span class="line">    <span class="built_in">NSMutableDictionary</span> *params = [<span class="built_in">NSMutableDictionary</span> new];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSString</span> *param <span class="keyword">in</span> [url.query componentsSeparatedByString:<span class="string">@&quot;&amp;&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *elts = [param componentsSeparatedByString:<span class="string">@&quot;=&quot;</span>];</span><br><span class="line">        <span class="keyword">if</span> ([elts count] &lt; <span class="number">2</span>) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="built_in">NSString</span> *key = [elts.firstObject stringByReplacingPercentEscapesUsingEncoding:<span class="built_in">NSUTF8StringEncoding</span>];</span><br><span class="line">        <span class="built_in">NSString</span> *value = [elts.lastObject stringByReplacingPercentEscapesUsingEncoding:<span class="built_in">NSUTF8StringEncoding</span>];</span><br><span class="line">        </span><br><span class="line">        params[key] = value;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> openURLString:url.path params:params];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">nullable</span> <span class="type">id</span>)openURLString:(<span class="built_in">NSString</span> *)urlString params:(<span class="built_in">NSDictionary</span> *)params &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *classString = <span class="keyword">self</span>.targetDict[urlString];</span><br><span class="line">    <span class="keyword">if</span> (classString.length) &#123;</span><br><span class="line">        Class controllerClass = <span class="built_in">NSClassFromString</span>(classString);</span><br><span class="line">        <span class="built_in">UIViewController</span> *viewController = [controllerClass new];</span><br><span class="line">        </span><br><span class="line">        objc_setAssociatedObject(viewController, <span class="keyword">@selector</span>(params), [params <span class="keyword">copy</span>], OBJC_ASSOCIATION_RETAIN_NONATOMIC);</span><br><span class="line">        <span class="keyword">return</span> viewController;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - getter</span></span><br><span class="line">- (<span class="built_in">NSDictionary</span> *)targetDict &#123;</span><br><span class="line">    <span class="keyword">if</span> (!_targetDict) &#123;</span><br><span class="line">        <span class="built_in">NSURL</span> *url = [[<span class="built_in">NSBundle</span> mainBundle] URLForResource:<span class="string">@&quot;GHLRouter&quot;</span> withExtension:<span class="string">@&quot;bundle&quot;</span>];</span><br><span class="line">        <span class="built_in">NSBundle</span> *bundle = [<span class="built_in">NSBundle</span> bundleWithURL:url];</span><br><span class="line">        <span class="built_in">NSString</span> *path = [bundle pathForResource:<span class="string">@&quot;target&quot;</span> ofType:<span class="string">@&quot;plist&quot;</span>];</span><br><span class="line">        _targetDict = [<span class="built_in">NSDictionary</span> dictionaryWithContentsOfFile:path];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> _targetDict;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里为了方便演示，我给 <code>GHLRouter</code> 添加一个 plist 文件，在这个文件里注册路由 url 和 VC 的对应关系，在取注册关系时写死了 bundle 名，这么做的结果就是也就是新增路由 url 时都需要更新 <code>GHLRouter</code> pod 里的 plist 文件，但正确的做法应当是业务方在自己的 pod 里维护自己的 target 文件作为配置文件，YAML 是一个不错的配置文件的选择，参考：<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2016/07/yaml.html">http://www.ruanyifeng.com/blog/2016/07/yaml.html</a><br>例如：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># yaml 参考格式</span></span><br><span class="line"></span><br><span class="line"><span class="attribute">GHLHomeViewController</span><span class="punctuation">:</span></span><br><span class="line">    <span class="attribute">targets</span><span class="punctuation">:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">home/home_page</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">home/homePage</span></span><br></pre></td></tr></table></figure>
+
+<p>只不过加载各个 pod 里的资源文件会有点麻烦，可以写个脚本把所有 pod 里的 target 配置文件拼接起来写入沙盒中，在编译期执行这个脚本，程序运行起来之后去读取沙盒里的拼接文件，完成注册操作。这样业务方各自维护自己的 target 文件，所配置的路由 url 也一目了然。</p>
+<p>要注意的是：各个 Pod 里维护一个同名的 <code>target.yaml</code> 文件的话，那 podspec 文件里添加资源引用应该使用 <code>resource_bundles</code> 的方式避免重名的问题，例如：</p>
+<figure class="highlight sml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">s.resource_bundles = &#123;</span><br><span class="line">   <span class="symbol">&#x27;GHLHome&#x27;</span> =&gt; [<span class="symbol">&#x27;GHLHome</span>/<span class="type">Assets</span>/*.png&#x27;,<span class="symbol">&#x27;GHLHome</span>/<span class="type">Config</span>/*.yaml&#x27;]</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>不同于上一种方法，传参的时候给目标 VC 一一设置入参，这种做法是直接传入一个 NSDictionary，通过 runtime 的方式 setAssociated 一个 <code>params</code> 方法给 目标 VC，写一个 UIViewController 的 Category 实现 <code>params</code> 方法：</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">@implementation</span> UIViewController (GHLRouter)</span><br><span class="line"></span><br><span class="line">- (NSDictionary *)params &#123;</span><br><span class="line">    <span class="selector-tag">return</span> <span class="selector-tag">objc_getAssociatedObject</span>(self, <span class="variable">@selector</span>(params));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@<span class="selector-tag">end</span></span><br></pre></td></tr></table></figure>
+
+<p>这样就实现了参数传递。</p>
+<ul>
+<li>优点：不需要维护 target 类调起方法和 <code>Mediator</code> 的 Category</li>
+<li>缺点：传递 NSDictionary 包裹参数，入参要求对外不明确</li>
+</ul>
+<h1 id="Selector-Service"><a href="#Selector-Service" class="headerlink" title="Selector Service"></a>Selector Service</h1><p>这其实是上边讲的第一种 <code>Mediator</code> 方法的另一种应用场景，它不仅可以用来控制页面路由，它可以执行任何方法，组件之间的方法调用为了解耦，可以通过 <code>Mediator</code> 的这种方式对外暴露调起方法，通过字符串反射来执行。</p>
+<p>比如，PodA 有一个 selector1 方法，现在 PodB 想调用这个方法。解决方法有两种：<br>一是如果 selector1 方法比较基础、通用，可以将它挪到 common pod 里，前边也说了，任一业务组件都可以依赖 common pod，只需后期做好维护；<br>二是如果 selector1 方法不够通用，就放在 PodA 里，那可以在 PodA 里提供一个 SelectorService 类，在这个类提供一个对外暴露的方法，方法里调用 selector1，通过 <code>Mediator</code> 的方式来调用 PodA 对外暴露的方法。</p>
+<p>当然，为了区分与页面路由，最好新起一种规范，实现思路和 <code>Mediator</code> 一致，制定一些规范，比如通过<code>/</code>来分割类名、方法名，或者大驼峰命名法来分割，实现过程中做好校验等等细节。</p>
+<h1 id="Response-Event"><a href="#Response-Event" class="headerlink" title="Response Event"></a>Response Event</h1><p>这是一个我很喜欢的一种解耦方案，其实并非面向组件间的街耦，而是 View 间的解耦。<br>比如我们有一个 ViewController，<br>ViewController 上有一个 TableView，<br>TableView 上一个 TableViewCell，<br>TableViewCell 上有一个 Button，<br>点击 Button 更新 TableViewCell，或者更新 TableView，护着更新 ViewController 上的 View。</p>
+<p>正常我们会怎么做呢，发一个 Notification，设置代理，传入 Block，RAC 监听……</p>
+<p>以前我最常用的做法是从外层传入的 Model 里跟一个 Block，点击 Button 的时候触发 Block。但是在组件化解耦中有一种做法是去 Model 化，这时候就不方便传入 Block 了。</p>
+<p>仔细看一下上边的场景会发现页面层级和响应者链的关系，我们可以将响应和数据顺着响应者链向上传递，类似通知的形式，但不会有通知满天飞的尴尬，只会顺着响应者链传递。</p>
+<p>实现方法很简单：</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">@implementation</span> UIResponder (GHLEvent)</span><br><span class="line"></span><br><span class="line">- (void)<span class="attribute">ghl_event</span>:(NSString *)event <span class="attribute">params</span>:(NSDictionary *)params &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="selector-attr">[self.nextResponder ghl_event:event params:params]</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>在 TableViewCell 里发送通知，带着事件标识参数</p>
+<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">[</span><span class="built_in">self</span> ghl_event:@<span class="string">&quot;kHomeTableViewCellButtonClickEvent&quot;</span> <span class="keyword">params</span>:@&#123;@<span class="string">&quot;page&quot;</span>:@<span class="string">&quot;1&quot;</span>&#125;<span class="meta">]</span>;</span><br></pre></td></tr></table></figure>
+
+<p>然后在你需要响应事件的地方实现 ghl_event 方法就好了</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)ghl_event:(NSString *)<span class="keyword">event</span> <span class="keyword">params</span>:(NSDictionary *)<span class="keyword">params</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">event</span> isEqualToString:<span class="string">@&quot;kHomeTableViewCellButtonClickEvent&quot;</span>]) &#123;</span><br><span class="line">        NSLog(<span class="string">@&quot;params:%@&quot;</span>, <span class="keyword">params</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一种很巧妙的页面层级间的解耦方案。</p>
+<p>最后附上 Demo 地址：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/DemoRepo/tree/master/GHLDecouplingDemo">https://github.com/gonghonglou/DemoRepo/tree/master/GHLDecouplingDemo</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/18/mas-constraints/" rel="next" title="一探 mas_updateConstraints 究竟">
+                <i class="fa fa-chevron-left"></i> 一探 mas_updateConstraints 究竟
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/06/crash-guard-unrecognized-selector/" rel="prev" title="Crash 防护方案（一）：Unrecognized Selector">
+                Crash 防护方案（一）：Unrecognized Selector <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Common-Pod"><span class="nav-number">1.</span> <span class="nav-text">Common Pod</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%BB-Model-%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">去 Model 化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Router"><span class="nav-number">3.</span> <span class="nav-text">Router</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Target-Action"><span class="nav-number">3.1.</span> <span class="nav-text">Target-Action</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Register-URL"><span class="nav-number">3.2.</span> <span class="nav-text">Register URL</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Selector-Service"><span class="nav-number">4.</span> <span class="nav-text">Selector Service</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Response-Event"><span class="nav-number">5.</span> <span class="nav-text">Response Event</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2019/06/13/pod-decoupling/';
+          this.page.identifier = '2019/06/13/pod-decoupling/';
+          this.page.title = '组件化解耦方案';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

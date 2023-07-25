@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言之前打包机升级 Xcode12 之后发现私有库发版时执行 pod lib lint 命令报错，一开始看报错信息提示以为是 Xcode12 或者 CocoaPods 的锅，想着蹲个新版本出来也许就好了，就暂时没管，打包机仍旧使用 Xcode11 发版。后来因为另外的需求需要我们升级 Xcode12，要优先解决组件发版报错问题，所以就仔细排查了下这个问题。 复现随便找一个简单的开源库，以 Holo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64">
+<meta property="og:url" content="http://gonghonglou.com/2021/03/09/xcode12-lint-error/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="前言之前打包机升级 Xcode12 之后发现私有库发版时执行 pod lib lint 命令报错，一开始看报错信息提示以为是 Xcode12 或者 CocoaPods 的锅，想着蹲个新版本出来也许就好了，就暂时没管，打包机仍旧使用 Xcode11 发版。后来因为另外的需求需要我们升级 Xcode12，要优先解决组件发版报错问题，所以就仔细排查了下这个问题。 复现随便找一个简单的开源库，以 Holo">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode11-lint-log.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode11-build-settings-architectures.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode12-build-settings-architectures.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode12-pod-example-build.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode12-pod-example-build-log.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode12-lint-success-log.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-build-settings-excluded-archs.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/user-build-settings-excluded-archs.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip-CreateUniversalBinary.png">
+<meta property="og:image" content="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip-CreateUniversalBinary.png">
+<meta property="article:published_time" content="2021-03-09T04:43:52.000Z">
+<meta property="article:modified_time" content="2021-03-09T05:38:08.967Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/xcode12-lint-error/xcode11-lint-log.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/03/09/xcode12-lint-error/"/>
+
+
+
+
+
+  <title>Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/03/09/xcode12-lint-error/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-03-09T12:43:52+08:00">
+                2021-03-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>之前打包机升级 Xcode12 之后发现私有库发版时执行 <code>pod lib lint</code> 命令报错，一开始看报错信息提示以为是 Xcode12 或者 CocoaPods 的锅，想着蹲个新版本出来也许就好了，就暂时没管，打包机仍旧使用 Xcode11 发版。后来因为另外的需求需要我们升级 Xcode12，要优先解决组件发版报错问题，所以就仔细排查了下这个问题。</p>
+<h1 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h1><p>随便找一个简单的开源库，以 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView">HoloTableView</a> 为例，在其 podsepc 里随便依赖一个静态库，以 <a target="_blank" rel="noopener" href="https://github.com/AppsFlyerSDK/AppsFlyerFramework">AppsFlyerFramework</a> 为例：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">s.dependency <span class="string">&#x27;AppsFlyerFramework&#x27;</span></span><br><span class="line">s.static_framework = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>执行 lint 命令：<code>pod lib lint --allow-warnings --verbose</code> 即可得到报错内容：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">ld:</span> <span class="keyword">in</span> /var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/<span class="title class_">CocoaPods</span>-<span class="title class_">Lint</span>-<span class="number">20210302</span>-<span class="number">64250</span>-1vekyyp-<span class="title class_">HoloTableView</span>/<span class="title class_">Pods</span>/<span class="title class_">AppsFlyerFramework</span>/iOS/<span class="title class_">AppsFlyerLib</span>.framework/<span class="title class_">AppsFlyerLib</span>(<span class="title class_">AFSDKKeychainFactory</span>.o), building <span class="keyword">for</span> iOS <span class="title class_">Simulator</span>, but linking <span class="keyword">in</span> object file built <span class="keyword">for</span> iOS, file <span class="string">&#x27;/var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/CocoaPods-Lint-20210302-64250-1vekyyp-HoloTableView/Pods/AppsFlyerFramework/iOS/AppsFlyerLib.framework/AppsFlyerLib&#x27;</span> <span class="keyword">for</span> architecture arm64</span><br><span class="line"><span class="symbol">clang:</span> <span class="symbol">error:</span> linker command failed with exit code <span class="number">1</span> (use -v to see invocation)</span><br></pre></td></tr></table></figure>
+
+<p>报错信息写的很清楚，在为 iOS 模拟器编译过程中，链接 <code>AppsFlyerFramework</code> 这个库时找不到 <code>arm64</code> 架构。我们知道以往模拟器仅支持 <code>x86_64</code> 架构即可，因为我们的 Mac 就是 <code>x86_64</code> 架构，而 Mac 上带的模拟器自然是同一架构。现在竟然在模拟器上需要 <code>arm64</code> 架构了，应该是为了支持 Apple silicon。M1 正是 arm 架构，那 M1 上的模拟器自然就是需要 <code>arm64</code> 架构的了。</p>
+<p>根据报错信息 Google 一下就会发现已经有很多网友遇到了该问题并给出了解释和解决方案，主要有以下参考链接：</p>
+<p>1、<a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/issues/10065#issuecomment-694266259">https://github.com/CocoaPods/CocoaPods/issues/10065#issuecomment-694266259</a><br>(Braintree 他们首次在 4.36.1 版本里遇到了该问题，解决方案正是来自这个 issue：<a target="_blank" rel="noopener" href="https://github.com/braintree/braintree_ios/blob/4.36.1/Braintree.podspec#L136-L138">Braintree.podspec</a>)</p>
+<p>2、<a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/issues/10104#issuecomment-700918704">https://github.com/CocoaPods/CocoaPods/issues/10104#issuecomment-700918704</a></p>
+<p>3、<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/63607158/xcode-12-building-for-ios-simulator-but-linking-in-object-file-built-for-ios">https://stackoverflow.com/questions/63607158/xcode-12-building-for-ios-simulator-but-linking-in-object-file-built-for-ios</a></p>
+<p>问题似乎得到了解决，但实际应用中我们发现了新的问题（见下一章节 疑问 6）。也有同事发现 <code>pod lib lint</code> 跟上 <code>--skip-import-validation</code> 参数即可通过 lint 验证（见下一章节 疑问5）。</p>
+<p>最终我们向这个问题妥协了，选择了使用 <code>--skip-import-validation</code> 参数，通过跳过“某些”验证来让 lint 暂时通过以完成组件发版工作。但截至目前我们还不知究竟 “skip” 了哪些内容。</p>
+<p>最终关于这个问题我们存在以下这些疑问需要搞清楚。</p>
+<h1 id="疑问"><a href="#疑问" class="headerlink" title="疑问"></a>疑问</h1><p><strong>疑问 1</strong>、为什么有的库报错，有的库不报错？</p>
+<p><strong>疑问 2</strong>、为什么 Xcode12 报错， Xcode11 不报错？</p>
+<p><strong>疑问 3</strong>、为什么 Pod Example 工程编译没问题，lint 却报错？</p>
+<p><strong>疑问 4</strong>、为什么在 podspec 加上以下命令即可通过 lint 验证？这两行具体更改了什么？</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">s.pod_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br><span class="line">s.user_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>疑问 5</strong>、为什么 <code>pod lib lint</code> 跟上 <code>--skip-import-validation</code> 参数亦可通过 lint 验证？字面意思上的“跳过引用验证”究竟 “skip” 了什么？</p>
+<p><strong>疑问 6</strong>、PodA 依赖 PodB、PodB 依赖 PodC。PodC 删除了模拟器 <code>arm64</code> 架构导致 PodA lint 失败，即使 PodA 也删除了模拟器 <code>arm64</code> 架构，这是为什么？</p>
+<h1 id="从头开始"><a href="#从头开始" class="headerlink" title="从头开始"></a>从头开始</h1><p>带着上述这些问题我们来一一排查，相信解决完以上疑问后收获的绝不仅仅是 解决了一个“Xcode12 上发版失败”的问题。那么接下来就介绍下从头解决以上问题的经历。</p>
+<p>注：如果以上章节的内容你都熟悉了并搞清楚了这个问题的本质，那么以下章节刚开始的过程会让你觉得思路很愚蠢，但我只是想完整记录下“发现-排查-解决”这个问题的完整过程。</p>
+<h2 id="关于疑问-1：为什么有的库报错，有的库不报错？"><a href="#关于疑问-1：为什么有的库报错，有的库不报错？" class="headerlink" title="关于疑问 1：为什么有的库报错，有的库不报错？"></a>关于疑问 1：为什么有的库报错，有的库不报错？</h2><p>最开始我们发布业务库时几乎全在报错，导致我以为单纯的是 Xcode12 的问题，所以在 Google 到解决方案后计划在组件发版的时候，在 podspec 里无脑加上以下命令：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">s.pod_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br><span class="line">s.user_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>但当我们发布一个基础组件的时候却出现了「疑问 6」问题（关于这个疑问稍后解析），所以将以上命令暂时移除，决定看看基础库能不能通过验证。果然发布成功了，那么接下来就是找到哪些库能成功哪些库会报错，再看问题出现的根源。</p>
+<p>果然不久我们就发现了问题的根源，只有组件依赖了二进制库的时候，lint 才会报这个错。这么一看就恍然大悟了，当然啦，只有那些已经编译好的二进制库，它们已经包含了固定支持的架构。以 <code>HoloTableView</code> 的 Example 工程为例，<code>pod install</code> 之后在 <code>/Pods/AppsFlyerFramework/iOS/AppsFlyerLib.framework/Versions/A</code> 目录下找到 <code>AppsFlyerLib</code> 文件并用 <code>lipo -info AppsFlyerLib</code> 命令查看得到的结果是：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Architectures in the fat file: AppsFlyerLib are: i386 armv7 x86_64 arm64</span><br></pre></td></tr></table></figure>
+
+<p>在胖二进制（也叫通用二进制）文件 <code>AppsFlyerLib</code> 里包含的架构有 <code>i386、armv7、x86_64、arm64</code>，其中 <code>x86_64</code> 用于模拟器，而这里的 <code>arm64</code> 是支持真机架构的。所以在这样一个已经编译好了的二进制库被依赖了，lint 过程中链接器打算链接模拟器 <code>arm64</code> 架构时发现 <code>AppsFlyerLib</code> 没有这样的架构而报错：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Ld</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">Binary</span>/<span class="title class_">App</span> normal arm64 (<span class="keyword">in</span> target <span class="string">&#x27;App&#x27;</span> from project <span class="string">&#x27;App&#x27;</span>)</span><br><span class="line">        cd /var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/<span class="title class_">CocoaPods</span>-<span class="title class_">Lint</span>-<span class="number">20210303</span>-<span class="number">54294</span>-ti9bsz-<span class="title class_">HoloTableView</span></span><br><span class="line">        /<span class="title class_">Applications</span>/<span class="title class_">Xcode</span>.app/<span class="title class_">Contents</span>/<span class="title class_">Developer</span>/<span class="title class_">Toolchains</span>/<span class="title class_">XcodeDefault</span>.xctoolchain/usr/bin/clang -target arm64-apple-ios8.<span class="number">0</span>-simulator -isysroot /<span class="title class_">Applications</span>/<span class="title class_">Xcode</span>.app/<span class="title class_">Contents</span>/<span class="title class_">Developer</span>/<span class="title class_">Platforms</span>/iPhoneSimulator.platform/<span class="title class_">Developer</span>/<span class="title class_">SDKs</span>/iPhoneSimulator14.<span class="number">4</span>.sdk -L/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator -F/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator -F/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableView</span> -F/var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/<span class="title class_">CocoaPods</span>-<span class="title class_">Lint</span>-<span class="number">20210303</span>-<span class="number">54294</span>-ti9bsz-<span class="title class_">HoloTableView</span>/<span class="title class_">Pods</span>/<span class="title class_">AppsFlyerFramework</span>/iOS -filelist /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">App</span>.<span class="title class_">LinkFileList</span> -<span class="title class_">Xlinker</span> -rpath -<span class="title class_">Xlinker</span> <span class="variable">@executable_path</span>/<span class="title class_">Frameworks</span> -<span class="title class_">Xlinker</span> -rpath -<span class="title class_">Xlinker</span> <span class="variable">@loader_path</span>/<span class="title class_">Frameworks</span> -<span class="title class_">Xlinker</span> -rpath -<span class="title class_">Xlinker</span> <span class="variable">@executable_path</span>/<span class="title class_">Frameworks</span> -dead_strip -<span class="title class_">Xlinker</span> -object_path_lto -<span class="title class_">Xlinker</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">App</span>_lto.o -<span class="title class_">Xlinker</span> -objc_abi_version -<span class="title class_">Xlinker</span> <span class="number">2</span> -fobjc-arc -fobjc-link-runtime -<span class="title class_">Obj</span>C -framework <span class="title class_">AppsFlyerLib</span> -framework <span class="title class_">CoreTelephony</span> -framework <span class="title class_">HoloTableView</span> -framework <span class="title class_">Security</span> -framework <span class="title class_">SystemConfiguration</span> -<span class="title class_">Xlinker</span> -sectcreate -<span class="title class_">Xlinker</span> __TEXT -<span class="title class_">Xlinker</span> __entitlements -<span class="title class_">Xlinker</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">App</span>.app-<span class="title class_">Simulated</span>.xcent -framework <span class="title class_">Foundation</span> -framework <span class="title class_">Pods</span>_App -<span class="title class_">Xlinker</span> -no_adhoc_codesign -<span class="title class_">Xlinker</span> -dependency_info -<span class="title class_">Xlinker</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">App</span>_dependency_info.dat -o /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-aahatildizoismejitnvvpgympoq/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">App</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">App</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">Binary</span>/<span class="title class_">App</span></span><br><span class="line">    <span class="symbol">ld:</span> <span class="keyword">in</span> /var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/<span class="title class_">CocoaPods</span>-<span class="title class_">Lint</span>-<span class="number">20210303</span>-<span class="number">54294</span>-ti9bsz-<span class="title class_">HoloTableView</span>/<span class="title class_">Pods</span>/<span class="title class_">AppsFlyerFramework</span>/iOS/<span class="title class_">AppsFlyerLib</span>.framework/<span class="title class_">AppsFlyerLib</span>(<span class="title class_">AFSDKKeychainFactory</span>.o), building <span class="keyword">for</span> iOS <span class="title class_">Simulator</span>, but linking <span class="keyword">in</span> object file built <span class="keyword">for</span> iOS, file <span class="string">&#x27;/var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/CocoaPods-Lint-20210303-54294-ti9bsz-HoloTableView/Pods/AppsFlyerFramework/iOS/AppsFlyerLib.framework/AppsFlyerLib&#x27;</span> <span class="keyword">for</span> architecture arm64</span><br><span class="line">    <span class="symbol">clang:</span> <span class="symbol">error:</span> linker command failed with exit code <span class="number">1</span> (use -v to see invocation)</span><br></pre></td></tr></table></figure>
+
+<p>以上关键命令：<code>clang -target arm64-apple-ios8.0-simulator</code></p>
+<h2 id="关于疑问-2：为什么-Xcode12-报错，-Xcode11-不报错？"><a href="#关于疑问-2：为什么-Xcode12-报错，-Xcode11-不报错？" class="headerlink" title="关于疑问 2：为什么 Xcode12 报错， Xcode11 不报错？"></a>关于疑问 2：为什么 Xcode12 报错， Xcode11 不报错？</h2><p>从以上报错信息可以看到关键报错日志为：<code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target arm64-apple-ios8.0-simulator</code></p>
+<p>至于为什么 Xcode11 上不报错，我们保持相同内容的 podspec 在 Xcode11 执行下 <code>pod lib lint --allow-warnings --verbose</code> 看是什么结果。日志很多，我们用 <code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target</code> 全局搜索看看结果：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode11-lint-log.png"></p>
+<p>可以发现 Xcode11 上只链接了 <code>i386</code> 和 <code>x86_64</code> 两种模拟器架构，并未涉及 <code>arm64</code> 模拟器架构，所以也就不会报错。由此可见这是 Xcode12 带来的对 Apple silicon 的支持。</p>
+<p>在 Xcode 的 <code>Build Settings</code> 里查看 <code>Architectures</code> 模块可以看出差别：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode11-build-settings-architectures.png"></p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-build-settings-architectures.png"></p>
+<p>可以看到，Xcode11 指定了有效架构，而在 Xcode12 里将 <code>Valid Architectures</code> 这一项被移除掉了，新增了 <code>Excluded Architectures</code> 选项并默认为空。</p>
+<p>Xcode12 环境下，当我们在某一 podspec 里加上 <code>s.user_target_xcconfig = &#123; &#39;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#39; =&gt; &#39;arm64&#39; &#125;</code> 命令就能在这里看到移除了模拟器环境下的 <code>arm64</code> 架构。当然 CocoaPods 官方十分不建议使用 <code>user_target_xcconfig</code> 来更改宿主工程的环境，但这也正是令 <code>pod lib lint</code> 通过的根本原因。</p>
+<h2 id="关于疑问-3：为什么-Pod-Example-工程编译没问题，lint-却报错？"><a href="#关于疑问-3：为什么-Pod-Example-工程编译没问题，lint-却报错？" class="headerlink" title="关于疑问 3：为什么 Pod Example 工程编译没问题，lint 却报错？"></a>关于疑问 3：为什么 Pod Example 工程编译没问题，lint 却报错？</h2><p>解决了以上问题这个问题就更简单了，我们在 Xcode 里看下 Example 工程的编译过程：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-pod-example-build.png"></p>
+<p>为了更方便的查看编译过程，点击 “Export…” 按钮，能够导出一份 <code>Build HoloTableView-Example_2021-03-03T22-50-02.txt</code> 文本，在命令行通过 <code>cat</code> 命令查看下内容。由于内容很多，我们依旧用 <code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target</code> 全局搜索看看结果：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-pod-example-build-log.png"></p>
+<p>可以发现，仅存在一处对 <code>x86_64-apple-ios12.0-simulator</code> 的链接。这是因为我们在编译的时候选择了模拟器 iPhone12 Pro 机型。如果我们选择了 <code>Any iOS Device (arm64)</code> ，那搜索结果就是对 <code>arm64-apple-ios12.0</code> 的链接，也不会出错。理论上如果我们在 Mac M1 上选择模拟器进行编译应该就会出现对 <code>arm64-apple-ios12.0-simulator</code> 链接的报错了。</p>
+<h2 id="关于疑问-4：为什么在-podspec-加上以下命令即可通过-lint-验证？"><a href="#关于疑问-4：为什么在-podspec-加上以下命令即可通过-lint-验证？" class="headerlink" title="关于疑问 4：为什么在 podspec 加上以下命令即可通过 lint 验证？"></a>关于疑问 4：为什么在 podspec 加上以下命令即可通过 lint 验证？</h2><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">s.pod_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br><span class="line">s.user_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了解答这一疑问，我们将会上述 lint 报错的 <code>HoloTableView.podspec</code> 里加上这两行命令，再次执行 <code>pod lib lint --allow-warnings --verbose</code> 命令，然后同样用 <code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target</code> 全局搜索看看结果：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/xcode12-lint-success-log.png"></p>
+<p>可以发现，仅存在两处，<code>x86_64-apple-ios8.0-simulator</code> 和 <code>i386-apple-ios8.0-simulator</code> 链接操作。不再对 <code>arm64-apple-ios8.0-simulator</code> 进行链接也就不会再报错了。</p>
+<p><strong>至于这两行具体更改了什么呢？</strong></p>
+<p>先来根据 CocoaPods 的官方文档认识下 <a target="_blank" rel="noopener" href="https://guides.cocoapods.org/syntax/podspec.html#pod_target_xcconfig"><code>pod_target_xcconfig</code></a> 和 <a target="_blank" rel="noopener" href="https://guides.cocoapods.org/syntax/podspec.html#user_target_xcconfig"><code>user_target_xcconfig</code></a>：</p>
+<blockquote>
+<p>Typically clang compiler flags or precompiler macro definitions go in here if they are required when importing the pod in the user target. Note that, this influences not only the compiler view of the public interface of your pod, but also all other integrated pods alongside to yours. You should always prefer pod_target_xcconfig, which can contain the same settings, but only influence the toolchain when compiling your pod target.</p>
+</blockquote>
+<p>可以理解为 <code>pod_target_xcconfig</code> 仅作用于当前 pod，而 <code>user_target_xcconfig</code> 作用于当前 pod 的宿主工程，包括引入的其他 pod。</p>
+<p>根据实际的应用来看下这两行命令的具体作用：</p>
+<p>1、添加 <code>s.pod_target_xcconfig = &#123; &#39;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#39; =&gt; &#39;arm64&#39; &#125;</code> 这么一行之后执行 <code>pod install</code> 命令。在 <code>HoloTableView.debug.xcconfig</code> 和 <code>HoloTableView.release.xcconfig</code> 文件里就出现 <code>EXCLUDED_ARCHS[sdk=iphonesimulator*] = arm64</code> 这么一行，其会修改这一 pod target 的 <code>Build Settings</code>：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-build-settings-excluded-archs.png"></p>
+<p>2、添加 <code>s.user_target_xcconfig = &#123; &#39;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#39; =&gt; &#39;arm64&#39; &#125;</code> 这么一行之后执行 <code>pod install</code> 命令。会修改当前 pod 宿主工程的 <code>Build Settings</code>：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/user-build-settings-excluded-archs.png"></p>
+<p>正是因为在 <code>Build Settings</code> 里删除了模拟器环境下 <code>arm64</code> 架构才得以让 build 成功。</p>
+<h2 id="关于疑问-5：为什么-pod-lib-lint-跟上-skip-import-validation-参数亦可通过-lint-验证？字面意思上的“跳过引用验证”究竟-“skip”-了什么？"><a href="#关于疑问-5：为什么-pod-lib-lint-跟上-skip-import-validation-参数亦可通过-lint-验证？字面意思上的“跳过引用验证”究竟-“skip”-了什么？" class="headerlink" title="关于疑问 5：为什么 pod lib lint 跟上 --skip-import-validation 参数亦可通过 lint 验证？字面意思上的“跳过引用验证”究竟 “skip” 了什么？"></a>关于疑问 5：为什么 <code>pod lib lint</code> 跟上 <code>--skip-import-validation</code> 参数亦可通过 lint 验证？字面意思上的“跳过引用验证”究竟 “skip” 了什么？</h2><p>要弄明白这个问题，无疑查看 CocoaPods 源码是最直接的方式。在 <code>~/.rvm/rubies/ruby-2.5.1/lib/ruby/gems/2.5.0/gems/cocoapods-1.9.3/lib/cocoapods/command/lib/lint.rb</code> 目录打开 <code>lint.rb</code> 文件：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">initialize</span>(<span class="params">argv</span>)</span><br><span class="line">  ......</span><br><span class="line">  <span class="variable">@skip_import_validation</span> = argv.flag?(<span class="string">&#x27;skip-import-validation&#x27;</span>, <span class="literal">false</span>)</span><br><span class="line">  <span class="variable language_">super</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">run</span></span><br><span class="line">  <span class="variable constant_">UI</span>.puts</span><br><span class="line">  podspecs_to_lint.each <span class="keyword">do</span> |<span class="params">podspec</span>|</span><br><span class="line">    validator                = <span class="title class_">Validator</span>.new(podspec, <span class="variable">@source_urls</span>, <span class="variable">@platforms</span>)</span><br><span class="line">    validator.skip_import_validation = <span class="variable">@skip_import_validation</span></span><br><span class="line">    ......</span><br><span class="line">    validator.validate</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>省略了一些无关代码，可以看到传入的 <code>--skip-import-validation</code> 参数赋值给了 <code>@skip_import_validation</code> 字段，这个值在 <code>run</code>（类似 <code>main</code> 函数）函数里赋值给了新创建的一个 <code>Validator</code> 对象，并调用了这个对象的 <code>validate</code> 方法进行验证，这就是 <code>pod lib lint</code> 的入口函数。</p>
+<p>为了查看 <code>Validator</code> 这个类的 <code>validate</code> 方法又做了哪些事情，在 <code>~/.rvm/rubies/ruby-2.5.1/lib/ruby/gems/2.5.0/gems/cocoapods-1.9.3/lib/cocoapods/validator.rb</code> 目录打开 <code>validator.rb</code> 文件，感兴趣的话可以仔细看下这个类的代码，这里为了快速查找问题我们全局搜索 <code>skip_import_validation</code> 字段，能够定位到以下函数代码：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">build_pod</span></span><br><span class="line">      scheme = <span class="keyword">if</span> skip_import_validation?</span><br><span class="line">                 <span class="comment"># pod 名称</span></span><br><span class="line">                 validation_pod_target.label <span class="keyword">if</span> validation_pod_target.should_build?</span><br><span class="line">               <span class="keyword">else</span></span><br><span class="line">                 <span class="string">&#x27;App&#x27;</span></span><br><span class="line">               <span class="keyword">end</span></span><br><span class="line">          output = xcodebuild(<span class="string">&#x27;build&#x27;</span>, scheme, <span class="string">&#x27;Release&#x27;</span>)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">xcodebuild</span>(<span class="params">action, scheme, configuration</span>)</span><br><span class="line">  command = <span class="string">%W(clean <span class="subst">#&#123;action&#125;</span> -workspace <span class="subst">#&#123;<span class="title class_">File</span>.join(validation_dir, <span class="string">&#x27;App.xcworkspace&#x27;</span>)&#125;</span> -scheme <span class="subst">#&#123;scheme&#125;</span> -configuration <span class="subst">#&#123;configuration&#125;</span>)</span></span><br><span class="line">  ......</span><br><span class="line"></span><br><span class="line">  _xcodebuild(command, <span class="literal">true</span>)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">_xcodebuild</span>(<span class="params">command, raise_on_failure = <span class="literal">false</span></span>)</span><br><span class="line">  <span class="title class_">Executable</span>.execute_command(<span class="string">&#x27;xcodebuild&#x27;</span>, command, raise_on_failure)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>删除了一些无关代码逻辑就变的很简单了：声明了一个 <code>scheme</code> 变量，如果传入了 <code>skip_import_validation</code> 参数，<code>scheme</code> 变量赋值为当前 pod 名称，否则赋值 <code>App</code> 字符串，最终将这个变量值传给 <code>xcodebuild</code> 命令的 <code>scheme</code> 值。</p>
+<blockquote>
+<p>额外说明的是：关于 <code>App</code> 这个字符串，在执行 <code>pod lib lint</code> 命令时，CocoaPods 会根据当前的 podspec 文件创建一个叫 <code>App</code> 的工程，执行 <code>pod install</code> 命令生成 <code>App.xcworkspace</code> 文件，对这个工程文件执行 <code>xcodebuild</code> 命令进行校验。感兴趣详细过程的话可以仔细阅读下 <code>lint.rb</code> 这几个文件。</p>
+</blockquote>
+<p>到这里我们也就搞清楚了传入的 <code>--skip-import-validation</code> 参数究竟作用在了哪里，如果没传该参数的话 <code>xcodebuild</code> 命令的 <code>scheme</code> 值为 <code>App</code>，也就是将包含当前 pod 的所有相关 pod 链接进主工程进行编译；如果传递了该参数的话 <code>xcodebuild</code> 命令的 <code>scheme</code> 值为 “当前 pod 名称”，也就是仅编译当前 pod。通过查看这两种命令执行的 log 日志便一目了然：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip.png"></p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip.png"></p>
+<p>查看 log 日志结尾能够看到命令执行的结果最终的产物：</p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-no-skip-CreateUniversalBinary.png"></p>
+<p><img src="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-has-skip-CreateUniversalBinary.png"></p>
+<p><code>- scheme App</code> 的最终产物是<code>App.app</code>，而 <code>- scheme HoloTableView</code> 的最终产物仅是 <code>HoloTableView.freamwork</code>。至此，也就明白了 <code>--skip-import-validation</code> 参数的字面意思：“跳过引用验证”，就是仅仅编译当前 pod 这个 <code>freamwoek</code>，不会将这个 <code>freamwork</code> 引用进主工程进行链接验证。</p>
+<h2 id="关于疑问-6：PodA-依赖-PodB、PodB-依赖-PodC。PodC-删除了模拟器-arm64-架构导致-PodA-lint-失败，即使-PodA-也删除了模拟器-arm64-架构，这是为什么？"><a href="#关于疑问-6：PodA-依赖-PodB、PodB-依赖-PodC。PodC-删除了模拟器-arm64-架构导致-PodA-lint-失败，即使-PodA-也删除了模拟器-arm64-架构，这是为什么？" class="headerlink" title="关于疑问 6：PodA 依赖 PodB、PodB 依赖 PodC。PodC 删除了模拟器 arm64 架构导致 PodA lint 失败，即使 PodA 也删除了模拟器 arm64 架构，这是为什么？"></a>关于疑问 6：PodA 依赖 PodB、PodB 依赖 PodC。PodC 删除了模拟器 arm64 架构导致 PodA lint 失败，即使 PodA 也删除了模拟器 arm64 架构，这是为什么？</h2><p>这个疑问正是前文提到的，我们一开始在一个基础库 podspec 里移除了模拟器 <code>arm64</code> 架构，导致发布其他业务库失败的问题。关于这个问题的解答依然可以通过仔细观察 lint log 日志找到答案。现在我们模拟一个 lint 报错的环境：</p>
+<p>1、我们使用 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloCollectionView">HoloCollectionView</a>（PodA），使其依赖 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableViewMGPlugin">HoloTableViewMGPlugin</a>（PodB），并移除模拟器环境下 <code>arm64</code> 架构，其 podspec 如下：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">s.dependency <span class="string">&#x27;HoloTableViewMGPlugin&#x27;</span></span><br><span class="line">s.pod_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br><span class="line">s.user_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>2、使 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableViewMGPlugin">HoloTableViewMGPlugin</a>（PodB） 依赖 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView">HoloTableView</a>（PodC），其 podspec 如下：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">s.dependency <span class="string">&#x27;HoloTableView&#x27;</span>, <span class="string">&#x27;~&gt; 2.0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>3、使 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView">HoloTableView</a>（PodC）移除模拟器环境下 <code>arm64</code> 架构，其 podspec 如下：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">s.pod_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br><span class="line">s.user_target_xcconfig = &#123; <span class="string">&#x27;EXCLUDED_ARCHS[sdk=iphonesimulator*]&#x27;</span> =&gt; <span class="string">&#x27;arm64&#x27;</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这种环境下对 HoloCollectionView（PodA）执行 <code>pod lib lint --allow-warnings --verbose</code> 命令，应该就能出现期望的报错了。</p>
+<p>但因为 <code>pod lib lint</code> 命令是通过在一个临时目录下创建一个临时工程（<code>App.xcodeproj</code>）执行 <code>pod install</code> 生成 <code>App.xcworkspace</code> 进行 <code>xcodebuild</code> 验证的。那在 <code>pod install</code> 时要去拉取正式环境的开源组件，我不想发布这个一个测试版本到正式环境，所以手动修改下 repo 源里的 <code>HoloTableView.podspec.json</code> 的内容来模拟测试环境：</p>
+<p>使用 <code>pod repo list</code> 命令，获取 repo 地址，通过 <code>find * -iname HoloTableView</code> 命令找到 <code>HoloTableView.podspec.json</code> 进行修改。<br>注 1：因为没有指定依赖版本，默认使用最新版本，我只修改了当前的最新版本（2.4.0）的 <code>HoloTableView.podspec.json</code>。<br>注 2：因为存在 master 和 trunk 两个源，我这里 lint 默认用的是 trunk，所以我只修改了 trunk 源里的 <code>HoloTableView.podspec.json</code>。如果你那使用的 master 源进行 lint 就修改 master 源里的 <code>HoloTableView.podspec.json</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">gonghonglou@yujiaqideMacBook-Pro ~ % pod repo </span><br><span class="line"></span><br><span class="line">master</span><br><span class="line">- Type: git (master)</span><br><span class="line">- URL:  https://github.com/CocoaPods/Specs.git</span><br><span class="line">- Path: /Users/gonghonglou/.cocoapods/repos/master</span><br><span class="line"></span><br><span class="line">trunk</span><br><span class="line">- Type: CDN</span><br><span class="line">- URL:  https://cdn.cocoapods.org/</span><br><span class="line">- Path: /Users/gonghonglou/.cocoapods/repos/trunk</span><br><span class="line"></span><br><span class="line">2 repos</span><br><span class="line">gonghonglou@yujiaqideMacBook-Pro ~ % find /Users/gonghonglou/.cocoapods/repos/trunk -iname HoloTableView </span><br><span class="line">/Users/gonghonglou/.cocoapods/repos/trunk/Specs/4/3/b/HoloTableView</span><br><span class="line">gonghonglou@yujiaqideMacBook-Pro ~ % open /Users/gonghonglou/.cocoapods/repos/trunk/Specs/4/3/b/HoloTableView</span><br></pre></td></tr></table></figure>
+
+<p>如下所示，在 <code>HoloTableView.podspec.json</code> 末尾加上相关命令：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HoloTableView&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2.4.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;summary&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Harness the power of UITableView with a simplified, chainable and expressive syntax.&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HoloTableView is a light-weight extension for UITableView. Harness the power of UITableView with a simplified, chainable and expressive syntax.&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;homepage&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://github.com/HoloFoundation/HoloTableView&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;license&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;MIT&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;file&quot;</span><span class="punctuation">:</span> <span class="string">&quot;LICENSE&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;authors&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;gonghonglou&quot;</span><span class="punctuation">:</span> <span class="string">&quot;gonghonglou@icloud.com&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;source&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;git&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://github.com/HoloFoundation/HoloTableView.git&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;tag&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2.4.0&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;platforms&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ios&quot;</span><span class="punctuation">:</span> <span class="string">&quot;8.0&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;source_files&quot;</span><span class="punctuation">:</span> <span class="string">&quot;HoloTableView/Classes/**/*&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;pod_target_xcconfig&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;EXCLUDED_ARCHS[sdk=iphonesimulator*]&quot;</span><span class="punctuation">:</span> <span class="string">&quot;arm64&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;user_target_xcconfig&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;EXCLUDED_ARCHS[sdk=iphonesimulator*]&quot;</span><span class="punctuation">:</span> <span class="string">&quot;arm64&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外还要避免之前 CocoaPods 缓存的影响，可以通过 <code>pod cache clean --all</code> 删除全部缓存。我这里为了避免清空其他不必要的缓存，做法是：<code>pod cache list</code> 获取缓存目录，打开相应目录找到 <code>HoloTableView</code> 相关的源码缓存和 <code>HoloTableView.podspec.json</code> 缓存直接删除掉。</p>
+<p>提醒：如果有读者要做实验的话，记得修改过后再改回来啊！</p>
+<p>完成以上步骤对 <code>HoloCollectionView</code> 执行 <code>pod lib lint --allow-warnings --verbose</code> 命令就能得到报错：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Ld</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">Pods</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">Binary</span>/<span class="title class_">HoloTableViewMGPlugin</span> normal arm64 (<span class="keyword">in</span> target <span class="string">&#x27;HoloTableViewMGPlugin&#x27;</span> from project <span class="string">&#x27;Pods&#x27;</span>)</span><br><span class="line">    cd /var/folders/z7/9hq4dfq97cn4xt4v56vqykph0000gn/T/<span class="title class_">CocoaPods</span>-<span class="title class_">Lint</span>-<span class="number">20210308</span>-<span class="number">58021</span>-1him894-<span class="title class_">HoloCollectionView</span>/<span class="title class_">Pods</span></span><br><span class="line">    /<span class="title class_">Applications</span>/<span class="title class_">Xcode</span>.app/<span class="title class_">Contents</span>/<span class="title class_">Developer</span>/<span class="title class_">Toolchains</span>/<span class="title class_">XcodeDefault</span>.xctoolchain/usr/bin/clang -target arm64-apple-ios8.<span class="number">0</span>-simulator -dynamiclib -isysroot /<span class="title class_">Applications</span>/<span class="title class_">Xcode</span>.app/<span class="title class_">Contents</span>/<span class="title class_">Developer</span>/<span class="title class_">Platforms</span>/iPhoneSimulator.platform/<span class="title class_">Developer</span>/<span class="title class_">SDKs</span>/iPhoneSimulator14.<span class="number">4</span>.sdk -L/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span> -F/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span> -F/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableView</span> -F/<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">MGSwipeTableCell</span> -filelist /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">Pods</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">HoloTableViewMGPlugin</span>.<span class="title class_">LinkFileList</span> -install_name <span class="variable">@rpath</span>/<span class="title class_">HoloTableViewMGPlugin</span>.framework/<span class="title class_">HoloTableViewMGPlugin</span> -<span class="title class_">Xlinker</span> -rpath -<span class="title class_">Xlinker</span> <span class="variable">@executable_path</span>/<span class="title class_">Frameworks</span> -<span class="title class_">Xlinker</span> -rpath -<span class="title class_">Xlinker</span> <span class="variable">@loader_path</span>/<span class="title class_">Frameworks</span> -dead_strip -<span class="title class_">Xlinker</span> -object_path_lto -<span class="title class_">Xlinker</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">Pods</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">HoloTableViewMGPlugin</span>_lto.o -<span class="title class_">Xlinker</span> -objc_abi_version -<span class="title class_">Xlinker</span> <span class="number">2</span> -fobjc-arc -fobjc-link-runtime -framework <span class="title class_">Foundation</span> -framework <span class="title class_">HoloTableView</span> -framework <span class="title class_">MGSwipeTableCell</span> -<span class="title class_">Xlinker</span> -no_adhoc_codesign -compatibility_version <span class="number">1</span> -current_version <span class="number">1</span> -<span class="title class_">Xlinker</span> -dependency_info -<span class="title class_">Xlinker</span> /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">Pods</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">HoloTableViewMGPlugin</span>_dependency_info.dat -o /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Intermediates</span>.noindex/<span class="title class_">Pods</span>.build/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableViewMGPlugin</span>.build/<span class="title class_">Objects</span>-normal/arm64/<span class="title class_">Binary</span>/<span class="title class_">HoloTableViewMGPlugin</span></span><br><span class="line"><span class="symbol">ld:</span> <span class="symbol">warning:</span> ignoring file /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableView</span>/<span class="title class_">HoloTableView</span>.framework/<span class="title class_">HoloTableView</span>, missing required architecture arm64 <span class="keyword">in</span> file /<span class="title class_">Users</span>/gonghonglou/<span class="title class_">Library</span>/<span class="title class_">Developer</span>/<span class="title class_">Xcode</span>/<span class="title class_">DerivedData</span>/<span class="title class_">App</span>-dzvtulystxmgqlauixgfblgkmaay/<span class="title class_">Build</span>/<span class="title class_">Products</span>/<span class="title class_">Release</span>-iphonesimulator/<span class="title class_">HoloTableView</span>/<span class="title class_">HoloTableView</span>.framework/<span class="title class_">HoloTableView</span> (<span class="number">2</span> slices)</span><br><span class="line"><span class="title class_">Undefined</span> symbols <span class="keyword">for</span> architecture <span class="symbol">arm64:</span></span><br><span class="line">  <span class="string">&quot;_OBJC_CLASS_$_HoloTableRowMaker&quot;</span>, referenced <span class="symbol">from:</span></span><br><span class="line">      __OBJC_<span class="variable">$_CATEGORY_HoloTableRowMaker</span>_<span class="variable">$_MGPlugin</span> <span class="keyword">in</span> <span class="title class_">HoloTableRowMaker</span>+<span class="title class_">MGPlugin</span>.o</span><br><span class="line"><span class="symbol">ld:</span> symbol(s) <span class="keyword">not</span> found <span class="keyword">for</span> architecture arm64</span><br><span class="line"><span class="symbol">clang:</span> <span class="symbol">error:</span> linker command failed with exit code <span class="number">1</span> (use -v to see invocation)</span><br></pre></td></tr></table></figure>
+
+<p>从报错信息清楚的查到报错原因： <code>HoloTableViewMGPlugin</code>（PodB）因为依赖 <code>HoloTableView</code>（PodC），在 <code>arm64-apple-ios8.0-simulator</code> 环境下链接 <code>HoloTableView.framework</code> 找不到 <code>arm64</code> 架构。这当然了，因为我们把 <code>HoloTableView.framework</code> 的模拟器 <code>arm64</code> 架构删掉了嘛。</p>
+<p>仔细查看全文 log （**<a target="_blank" rel="noopener" href="http://image.gonghonglou.com/xcode12-lint-error/pod-lib-lint-HoloCollectionView-podspec.txt">pod-lib-lint-HoloCollectionView-podspec.txt</a>**）可以看出，<code>pod lib lint --allow-warnings --verbose</code> 命令就是为了校验 <code>App.xcworkspace</code> 工程能够编译成功，而在编译 <code>App.xcworkspace</code> 这个主工程之前会先编译引入的各个 Pod，将各个 Pod 编译成功之后再引入到 <code>App.xcworkspace</code> 里进行打包。</p>
+<p>在整个编译过程中，先编译了 <code>HoloTableView</code> 得到了产物 <code>HoloTableView.framework</code>（不包含模拟器 <code>arm64</code> 架构），然后在编译 <code>HoloTableViewMGPlugin</code>（依赖 <code>HoloTableView</code>）时，对 <code>arm64-apple-ios8.0-simulator</code> 环境下链接 <code>HoloTableView.framework</code> 出错了。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>所以，如果你在使用 Xcode12 进行组件发版，对于这个问题的解决方案可以参考 Braintree 的方案（<a target="_blank" rel="noopener" href="https://github.com/braintree/braintree_ios/blob/4.36.1/Braintree.podspec#L136-L138">Braintree.podspec</a>)，在 podsepc 里加上移除模拟器环境 <code>arm64</code> 架构支持的命令。但因为 “疑问 6” 场景的存在，这意味着你可能需要将所有的组件重新打个版本。<br>或者也可以像我们一样暂时使用 <code>pod lib lint --skip-import-validation</code> 参数跳过引用验证，但这可能导致某些问题的隐藏，并非长久之计。<br>看来也只有等待三方库们各自支持了模拟器环境下的 <code>arm64</code> 架构之后才能彻底忽略这一问题了。</p>
+<p>终于，我们通过查看大量的 log 日志和部分 CocoaPods 源码搞清楚了所有的疑问。也弄明白了 lint 过程，或者说 <code>xcodebuild</code> 过程的一些内容。过后才觉得对我们来说这本该是 App 编译产出的基础知识，却因为学了一点 iOS 技能就早早开始了业务开发，平时也不太用到所以就被忽略了，导致一开始看到问题的时候并未理解到本质。希望之后能多了解些基础知识，多遇到些这样的问题和这样的 Debug 过程吧。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/12/31/saybye2020/" rel="next" title="Say Bye 2020">
+                <i class="fa fa-chevron-left"></i> Say Bye 2020
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/07/17/cocoapods-plugin-tool/" rel="prev" title="记一次 CocoaPods 插件整合开发工具">
+                记一次 CocoaPods 插件整合开发工具 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A4%8D%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">复现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%96%91%E9%97%AE"><span class="nav-number">3.</span> <span class="nav-text">疑问</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E5%A4%B4%E5%BC%80%E5%A7%8B"><span class="nav-number">4.</span> <span class="nav-text">从头开始</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-1%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E7%9A%84%E5%BA%93%E6%8A%A5%E9%94%99%EF%BC%8C%E6%9C%89%E7%9A%84%E5%BA%93%E4%B8%8D%E6%8A%A5%E9%94%99%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">关于疑问 1：为什么有的库报错，有的库不报错？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-2%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-Xcode12-%E6%8A%A5%E9%94%99%EF%BC%8C-Xcode11-%E4%B8%8D%E6%8A%A5%E9%94%99%EF%BC%9F"><span class="nav-number">4.2.</span> <span class="nav-text">关于疑问 2：为什么 Xcode12 报错， Xcode11 不报错？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-3%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-Pod-Example-%E5%B7%A5%E7%A8%8B%E7%BC%96%E8%AF%91%E6%B2%A1%E9%97%AE%E9%A2%98%EF%BC%8Clint-%E5%8D%B4%E6%8A%A5%E9%94%99%EF%BC%9F"><span class="nav-number">4.3.</span> <span class="nav-text">关于疑问 3：为什么 Pod Example 工程编译没问题，lint 却报错？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-4%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E5%9C%A8-podspec-%E5%8A%A0%E4%B8%8A%E4%BB%A5%E4%B8%8B%E5%91%BD%E4%BB%A4%E5%8D%B3%E5%8F%AF%E9%80%9A%E8%BF%87-lint-%E9%AA%8C%E8%AF%81%EF%BC%9F"><span class="nav-number">4.4.</span> <span class="nav-text">关于疑问 4：为什么在 podspec 加上以下命令即可通过 lint 验证？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-5%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-pod-lib-lint-%E8%B7%9F%E4%B8%8A-skip-import-validation-%E5%8F%82%E6%95%B0%E4%BA%A6%E5%8F%AF%E9%80%9A%E8%BF%87-lint-%E9%AA%8C%E8%AF%81%EF%BC%9F%E5%AD%97%E9%9D%A2%E6%84%8F%E6%80%9D%E4%B8%8A%E7%9A%84%E2%80%9C%E8%B7%B3%E8%BF%87%E5%BC%95%E7%94%A8%E9%AA%8C%E8%AF%81%E2%80%9D%E7%A9%B6%E7%AB%9F-%E2%80%9Cskip%E2%80%9D-%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">4.5.</span> <span class="nav-text">关于疑问 5：为什么 pod lib lint 跟上 --skip-import-validation 参数亦可通过 lint 验证？字面意思上的“跳过引用验证”究竟 “skip” 了什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%96%91%E9%97%AE-6%EF%BC%9APodA-%E4%BE%9D%E8%B5%96-PodB%E3%80%81PodB-%E4%BE%9D%E8%B5%96-PodC%E3%80%82PodC-%E5%88%A0%E9%99%A4%E4%BA%86%E6%A8%A1%E6%8B%9F%E5%99%A8-arm64-%E6%9E%B6%E6%9E%84%E5%AF%BC%E8%87%B4-PodA-lint-%E5%A4%B1%E8%B4%A5%EF%BC%8C%E5%8D%B3%E4%BD%BF-PodA-%E4%B9%9F%E5%88%A0%E9%99%A4%E4%BA%86%E6%A8%A1%E6%8B%9F%E5%99%A8-arm64-%E6%9E%B6%E6%9E%84%EF%BC%8C%E8%BF%99%E6%98%AF%E4%B8%BA%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">4.6.</span> <span class="nav-text">关于疑问 6：PodA 依赖 PodB、PodB 依赖 PodC。PodC 删除了模拟器 arm64 架构导致 PodA lint 失败，即使 PodA 也删除了模拟器 arm64 架构，这是为什么？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/03/09/xcode12-lint-error/';
+          this.page.identifier = '2021/03/09/xcode12-lint-error/';
+          this.page.title = 'Xcode12 执行 pod lib lint 报错：building for iOS Simulator, not found for architecture arm64';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

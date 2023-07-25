@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言受 Masonry 链式语法和之前公司做法的影响，我封装了 HoloTableView &amp; HoloCollectionView 两个库，提供链式调用组装数据源数据及代理事件。 1、省去了设置代理（tableView.dataSource &#x3D; self; tableView.delegate &#x3D; self;）、遵守代理（&lt;UITableViewDataSource, UITabl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HoloTableView &amp; HoloCollectionView 让你的列表更好维护">
+<meta property="og:url" content="http://gonghonglou.com/2020/08/10/HoloTableView-HoloCollectionView/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="前言受 Masonry 链式语法和之前公司做法的影响，我封装了 HoloTableView &amp; HoloCollectionView 两个库，提供链式调用组装数据源数据及代理事件。 1、省去了设置代理（tableView.dataSource &#x3D; self; tableView.delegate &#x3D; self;）、遵守代理（&lt;UITableViewDataSource, UITabl">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-08-10T15:31:01.000Z">
+<meta property="article:modified_time" content="2022-02-26T14:02:51.811Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/08/10/HoloTableView-HoloCollectionView/"/>
+
+
+
+
+
+  <title>HoloTableView & HoloCollectionView 让你的列表更好维护 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/08/10/HoloTableView-HoloCollectionView/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">HoloTableView & HoloCollectionView 让你的列表更好维护</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-08-10T23:31:01+08:00">
+                2020-08-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>受 <code>Masonry</code> 链式语法和之前公司做法的影响，我封装了 <code>HoloTableView</code> &amp; <code>HoloCollectionView</code> 两个库，提供链式调用组装数据源数据及代理事件。</p>
+<p>1、省去了设置代理（<code>tableView.dataSource = self;</code> <code>tableView.delegate = self;</code>）、遵守代理（<code>&lt;UITableViewDataSource, UITableViewDelegate&gt;</code>）以及实现各种代理方法的工作。<br>2、消除了 <code>NSIndexPath</code> 的概念，用代码执行次数和顺序决定 <code>cell</code> 数量及位置，并且将所有的代理事件分发到每个 <code>cell</code> 身上。</p>
+<h2 id="Preview-1-GitHub-地址"><a href="#Preview-1-GitHub-地址" class="headerlink" title="Preview 1: GitHub 地址"></a>Preview 1: GitHub 地址</h2><p><a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView">https://github.com/HoloFoundation/HoloTableView</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloCollectionView">https://github.com/HoloFoundation/HoloCollectionView</a></p>
+<h2 id="Preview-2-使用预览"><a href="#Preview-2-使用预览" class="headerlink" title="Preview 2: 使用预览"></a>Preview 2: 使用预览</h2><p>给 <code>UITableView</code>、<code>UICollectionView</code> 扩展了 <code>holo_makeRows:</code> 方法，在这个方法里每次 <code>make.row()</code> 就代表着创建一个 <code>cell</code>，后边的 <code>.model()</code>、<code>.height()</code> 就是给这个 <code>cell</code> 设置 model、高度等信息</p>
+<p><code>HoloTableView</code> 简要用法：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UITableView</span> *tableView = [[<span class="built_in">UITableView</span> alloc] initWithFrame:<span class="keyword">self</span>.view.bounds style:<span class="built_in">UITableViewStylePlain</span>];</span><br><span class="line">[<span class="keyword">self</span>.view addSubview:tableView];</span><br><span class="line"></span><br><span class="line">[tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">   <span class="comment">// make a cell</span></span><br><span class="line">   make.row(ExampleTableViewCell.class).model(<span class="built_in">NSDictionary</span>.new).height(<span class="number">44</span>);</span><br><span class="line">   </span><br><span class="line">   <span class="comment">// make a list</span></span><br><span class="line">   <span class="keyword">for</span> (<span class="built_in">NSObject</span> *obj <span class="keyword">in</span> <span class="built_in">NSArray</span>.new) &#123;</span><br><span class="line">       make.row(ExampleTableViewCell.class).model(obj).didSelectHandler(^(<span class="type">id</span>  _Nullable model) &#123;</span><br><span class="line">           <span class="built_in">NSLog</span>(<span class="string">@&quot;did select row : %@&quot;</span>, model);</span><br><span class="line">       &#125;);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line">[tableView reloadData];</span><br></pre></td></tr></table></figure>
+
+<p><code>HoloCollectionView</code> 简要用法：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UICollectionViewFlowLayout</span> *flowLayout = [<span class="built_in">UICollectionViewFlowLayout</span> new];</span><br><span class="line"><span class="built_in">UICollectionView</span> *collectionView = [[<span class="built_in">UICollectionView</span> alloc] initWithFrame:<span class="keyword">self</span>.view.bounds collectionViewLayout:flowLayout];</span><br><span class="line">[<span class="keyword">self</span>.view addSubview:collectionView];</span><br><span class="line"></span><br><span class="line">[collectionView holo_makeRows:^(HoloCollectionViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">    <span class="comment">// make a cell</span></span><br><span class="line">    make.row(ExampleCollectionViewCell.class).model(<span class="built_in">NSDictionary</span>.new).size(<span class="built_in">CGSizeMake</span>(<span class="number">100</span>, <span class="number">200</span>));</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// make a list</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSObject</span> *obj <span class="keyword">in</span> <span class="built_in">NSArray</span>.new) &#123;</span><br><span class="line">        make.row(ExampleCollectionViewCell.class).model(obj).didSelectHandler(^(<span class="type">id</span>  _Nullable model) &#123;</span><br><span class="line">            <span class="built_in">NSLog</span>(<span class="string">@&quot;did select row : %@&quot;</span>, model);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line">[collectionView reloadData];</span><br></pre></td></tr></table></figure>
+
+<p>** 注：从以上简要用法里也可以看出，<code>HoloTableView</code> 和 <code>HoloCollectionView</code> 的调用 API 几乎一致，所以为节省篇幅以下介绍及代码示例主要以 <code>HoloTableView</code> 为例。**</p>
+<h1 id="封装历程"><a href="#封装历程" class="headerlink" title="封装历程"></a>封装历程</h1><p>以上篇幅主要是为了让读者对这两个库有个大概的认知，以下来讲一下对 <code>UITableView</code> 到 <code>HoloTableView</code> 的封装历程。以 <code>UITableView</code> 的实际使用举例。<br>以下代码极大的简化了逻辑，主要是为了展示 <code>UITableView</code> 代理方法的实现方式。</p>
+<h2 id="1、入门版写法"><a href="#1、入门版写法" class="headerlink" title="1、入门版写法"></a>1、入门版写法</h2><p>假设现在要写一个列表，如下是入门版代理方法的实现过程：1、总共多少行，2、每行什么 cell，3、每个 cell 高度多少，4、点击每行 cell 的事件是什么</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">NSInteger</span>)tableView:(<span class="built_in">UITableView</span> *)tableView numberOfRowsInSection:(<span class="built_in">NSInteger</span>)section &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">UITableViewCell</span> *)tableView:(<span class="built_in">UITableView</span> *)tableView cellForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="keyword">if</span> (indexPath.row == <span class="number">0</span>) &#123;</span><br><span class="line">        ProfileTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:<span class="string">@&quot;ProfileTableViewCell&quot;</span>];</span><br><span class="line">        <span class="keyword">return</span> cell;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        OrderTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:<span class="string">@&quot;OrderTableViewCell&quot;</span>];</span><br><span class="line">        <span class="keyword">return</span> cell;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">CGFloat</span>)tableView:(<span class="built_in">UITableView</span> *)tableView heightForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="keyword">if</span> (indexPath.row == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">100</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">60</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView didSelectRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="keyword">if</span> (indexPath.row == <span class="number">0</span>) &#123;</span><br><span class="line">        [<span class="keyword">self</span> _pushVC1];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        [<span class="keyword">self</span> _pushVC2];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2、优化版写法"><a href="#2、优化版写法" class="headerlink" title="2、优化版写法"></a>2、优化版写法</h2><p>以上写法的问题是，假设某天要在中间插入一行别样的 cell，那么在每个代理方法都要去改对应的 if-else 逻辑，势必造成代码的可维护性很差，为了解决这一问题可将代理优化成如下样子：组装数据源，根据数据源实现代理方法</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数据源</span></span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">NSDictionary</span> *&gt; *)listData &#123;</span><br><span class="line">    <span class="keyword">return</span> @[</span><br><span class="line">            @&#123;<span class="string">@&quot;cell&quot;</span>   : ProfileTableViewCell.class,</span><br><span class="line">              <span class="string">@&quot;height&quot;</span> : @<span class="number">100</span>,</span><br><span class="line">              <span class="string">@&quot;didSelectSEL&quot;</span>  : <span class="built_in">NSStringFromSelector</span>(<span class="keyword">@selector</span>(_pushVC1))</span><br><span class="line">            &#125;,</span><br><span class="line">            @&#123;<span class="string">@&quot;cell&quot;</span>   : OrderTableViewCell.class,</span><br><span class="line">              <span class="string">@&quot;height&quot;</span> : @<span class="number">60</span>,</span><br><span class="line">              <span class="string">@&quot;didSelectSEL&quot;</span>  : <span class="built_in">NSStringFromSelector</span>(<span class="keyword">@selector</span>(_pushVC2))</span><br><span class="line">            &#125;</span><br><span class="line">    ];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 代理方法实现</span></span><br><span class="line">- (<span class="built_in">NSInteger</span>)tableView:(<span class="built_in">UITableView</span> *)tableView numberOfRowsInSection:(<span class="built_in">NSInteger</span>)section &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>.listData.count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">UITableViewCell</span> *)tableView:(<span class="built_in">UITableView</span> *)tableView cellForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *dict = <span class="keyword">self</span>.listData[indexPath.row];</span><br><span class="line">    <span class="built_in">NSString</span> *identifier = <span class="built_in">NSStringFromClass</span>(dict[<span class="string">@&quot;cell&quot;</span>]);</span><br><span class="line">    <span class="built_in">UITableViewCell</span> *cell = [tableView dequeueReusableCellWithIdentifier:identifier];</span><br><span class="line">    <span class="keyword">return</span> cell;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">CGFloat</span>)tableView:(<span class="built_in">UITableView</span> *)tableView heightForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *dict = <span class="keyword">self</span>.listData[indexPath.row];</span><br><span class="line">    <span class="keyword">return</span> [dict[<span class="string">@&quot;height&quot;</span>] floatValue];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView didSelectRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *dict = <span class="keyword">self</span>.listData[indexPath.row];</span><br><span class="line">    SEL sel = <span class="built_in">NSSelectorFromString</span>(dict[<span class="string">@&quot;didSelectedSEL&quot;</span>]);</span><br><span class="line">    <span class="keyword">if</span> (sel) &#123;</span><br><span class="line">        [<span class="keyword">self</span> performSelector:sel];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3、复用版写法"><a href="#3、复用版写法" class="headerlink" title="3、复用版写法"></a>3、复用版写法</h2><p>以上的优化版解决简单场景还好，但如果场景复杂，需要组装的数据源就会变得复杂起来，而且每个页面都要写这么一套还是会显得很繁琐。由此，我们可以想到进一步封装，将这一套逻辑封装成统一的框架，随处可用。<br>需要提供的数据源工具无非就两种，一种 <code>row</code>：带有 <code>cell</code> 类型，高度，数据，点击事件等；一种 <code>section</code>：带有 <code>header</code>、<code>footer</code> 等和一份 <code>row</code> 的数组。<br>使用时，组装好一份 <code>section</code> 数组，根据这个数据来实现代理方法就好了，如下：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数据类型</span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Section</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSArray</span>&lt;Row *&gt; *rows;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) Class header;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) Class footer;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="built_in">CGFloat</span> headerHeight;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="built_in">CGFloat</span> footerHeight;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>) <span class="type">id</span> headerModel;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>) <span class="type">id</span> footerModel;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Row</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) Class cell;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="built_in">CGFloat</span> height;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>) <span class="type">id</span> model;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="type">void</span> (^didSelectHandler)(<span class="type">id</span> _Nullable model);</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 代理对象</span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">TableViewProxy</span> () &lt;<span class="title">UITableViewDataSource</span>, <span class="title">UITableViewDelegate</span>&gt;</span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSArray</span> &lt;Section *&gt; *sectionArray;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">TableViewProxy</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - reload 方法</span></span><br><span class="line">- (<span class="type">void</span>)reloadDataWithTableView:(<span class="built_in">UITableView</span> *)tableView listData:(<span class="built_in">NSArray</span>&lt;Section *&gt; *)listData &#123;</span><br><span class="line">    tableView.delegate = <span class="keyword">self</span>;</span><br><span class="line">    tableView.dataSource = <span class="keyword">self</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">self</span>.sectionArray = listData;</span><br><span class="line">    </span><br><span class="line">    [tableView reloadData];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - UITableViewDataSource, UITableViewDelegate</span></span><br><span class="line">- (<span class="built_in">NSInteger</span>)numberOfSectionsInTableView:(<span class="built_in">UITableView</span> *)tableView &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>.sectionArray.count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">NSInteger</span>)tableView:(<span class="built_in">UITableView</span> *)tableView numberOfRowsInSection:(<span class="built_in">NSInteger</span>)section &#123;</span><br><span class="line">    Section *section = <span class="keyword">self</span>.sectionArray[section];</span><br><span class="line">    <span class="keyword">return</span> section.rows.count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">UITableViewCell</span> *)tableView:(<span class="built_in">UITableView</span> *)tableView cellForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    Section *section = <span class="keyword">self</span>.sectionArray[indexPath.section];</span><br><span class="line">    Row *row = section.rows[indexPath.row];</span><br><span class="line">    <span class="built_in">UITableViewCell</span> *cell = [tableView dequeueReusableCellWithIdentifier:<span class="built_in">NSStringFromClass</span>(row.cell)];</span><br><span class="line">    <span class="keyword">if</span> (!cell) &#123;</span><br><span class="line">        cell = [[row.cell alloc] initWithStyle:<span class="built_in">UITableViewCellStyleDefault</span> reuseIdentifier:<span class="built_in">NSStringFromClass</span>(row.cell)];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> cell;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">CGFloat</span>)tableView:(<span class="built_in">UITableView</span> *)tableView heightForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    Section *section = <span class="keyword">self</span>.sectionArray[indexPath.section];</span><br><span class="line">    Row *row = section.rows[indexPath.row];</span><br><span class="line">    <span class="keyword">return</span> row.height;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView didSelectRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    Section *section = <span class="keyword">self</span>.sectionArray[indexPath.section];</span><br><span class="line">    Row *row = section.rows[indexPath.row];</span><br><span class="line">    <span class="keyword">if</span> (row.didSelectHandler) &#123;</span><br><span class="line">        row.didSelectHandler(row.model);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样一来，使用的时候只需组装出一份 <code>section</code> 数组进行 <code>reloadData</code> 就可以刷出列表了，如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 组装数据</span></span><br><span class="line">Section *section = [Section new];</span><br><span class="line">Row *row1 = [Row new];</span><br><span class="line">row1.cellClass = ProfileTableViewCell.class;</span><br><span class="line">row1.height = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line">Row *row2 = [Row new];</span><br><span class="line">row2.cellClass = OrderTableViewCell.class;</span><br><span class="line">row2.height = <span class="number">60</span>;</span><br><span class="line">row2.didSelectHandler = ^(<span class="type">id</span>  _Nullable model) &#123;</span><br><span class="line">    [<span class="keyword">self</span> _pushVC1];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">section.rows = @[row1, row2];</span><br><span class="line"><span class="built_in">NSArray</span> *sections = @[section];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 刷新列表</span></span><br><span class="line"><span class="keyword">self</span>.proxy = [TableViewProxy new];</span><br><span class="line">[<span class="keyword">self</span>.proxy reloadDataWithTableView:<span class="keyword">self</span>.tableView listData:sections];</span><br></pre></td></tr></table></figure>
+
+<p>至此，就是 <code>HoloTableView</code> 封装及分发代理方法的核心思想了，进一步要做的就是完善 <code>row</code> 和 <code>section</code> 的属性支持，实现更全面的代理方法。</p>
+<blockquote>
+<p>完善的属性支持见：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Row/HoloTableRow.h">HoloTableRow.h</a>、<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Section/HoloTableSection.h">HoloTableSection.h</a><br>全面的代理实现见：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloProxy/HoloTableViewProxy.m">HoloTableViewProxy.m</a></p>
+</blockquote>
+<p>而除了完善更多的字段支持和代理实现之外，如何更方便快捷的组装数据就是 <code>HoloTableView</code> 的另一重点了。以下来介绍链式语法的实现来便捷的组装数据。</p>
+<h1 id="链式语法"><a href="#链式语法" class="headerlink" title="链式语法"></a>链式语法</h1><p><code>HoloTableView</code> 完全参照 <code>Masonry</code> 的设计思路，甚至 API 的定义也是高度致敬 <code>Masonry</code>。先说下 <code>Masonry</code> 里的链式语法的大体实现，主要是：<code>- (NSArray *)mas_makeConstraints:(void(NS_NOESCAPE ^)(MASConstraintMaker *make))block;</code> 这个 API<br>1、声明一个 block，传入一个 <code>maker</code> 对象<br>2、给 <code>maker</code> 声明了一堆的属性（<code>left</code>，<code>right</code> 等），每个属性的返回值类型都相同，就可以实现链式语法<br>3、调用 <code>maker</code> 的每个属性都是往同一个对象上（当前 View）设置不同的值（left 约束，right 约束等）<br>4、最后执行 <code>install</code> 方法返回这个包含这堆约束的数组</p>
+<p><code>HoloTableView</code> 也是这样的做法，提供 <code>- (void)holo_makeRows:(void(NS_NOESCAPE ^)(HoloTableViewRowMaker *make))block;</code> API 用来组装数据<br>1、声明一个 block，传入一个 <code>maker</code> 对象<br>2、给 <code>maker</code> 声明了一个属性：<code>row</code>，这个属性再返回 <code>HoloTableRowMaker</code> 类型，通过给这个类提供一堆的属性（<code>cell</code>，<code>model</code>，<code>height</code> 等），每个属性的返回值类型相同，实现链式调用<br>3、调用这些属性都是为了组装 <code>HoloTableRow</code>，设置每个 <code>row</code> 的各种数据<br>4、最后内部执行 <code>install</code> 方法返回一个包含 <code>HoloTableRow</code> 的数组</p>
+<p>特别要说明一点的是，<code>Masonry</code> 提供的 <code>mas_makeConstraints:</code> 方法是为了操作同一个 View，所以他的 Maker 提供的每个属性都是同级的，每个属性的返回值类型都相同<br>但是 <code>HoloTableView</code> 提供的 <code>holo_makeRows:</code> 方法是为了组装一堆的 cell，每次 <code>make.row()</code> 都代表创建一个新的 cell，每个 cell 都有独立的数据。所以 <code>maker</code> 提供了一个一级属性 <code>row</code>，通过这个属性创建 <code>HoloTableRow</code> 对象并返回另一个 <code>RowMaker</code> 类来提供二级属性操作 <code>HoloTableRow</code> 对象</p>
+<p>另外一点不同的是，<code>Masonry</code> 提供的属性大部分都是不带参数的，比如 <code>make.top.left.right</code>，这些是通过属性（property）提供的：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>, <span class="keyword">readonly</span>) MASConstraint *left;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>, <span class="keyword">readonly</span>) MASConstraint *top;</span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>, <span class="keyword">readonly</span>) MASConstraint *right;</span><br></pre></td></tr></table></figure>
+
+<p>也有一些带参数的，比如 equalTo 方法：<code>make.top.equalTo(self)</code></p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (MASConstraint * (^)(<span class="type">id</span>))equalTo &#123;</span><br><span class="line">    <span class="keyword">return</span> ^<span class="type">id</span>(<span class="type">id</span> attribute) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">self</span>.equalToWithRelation(attribute, <span class="built_in">NSLayoutRelationEqual</span>);</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>HoloTableRow</code> 提供的字段都是需要传入参数的，采用的是：声明 block 属性和入参，标记为 <code>readonly</code>，并重写这个属性的 <code>getter</code> 方法。<code>getter</code> 方法里创建一个 block 对象并返回，执行这个 block 的话，将传入参数设置给 已创建的 <code>HoloTableRow</code> 对象，并返回 <code>self</code>，保证可以继续链式调用。以 model 这个字段举例：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// .h 声明</span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>, <span class="keyword">readonly</span>) HoloTableRowMaker *(^model)(<span class="type">id</span> model);</span><br><span class="line"></span><br><span class="line"><span class="comment">// .m 重写 getter</span></span><br><span class="line">- (HoloTableRowMaker *(^)(<span class="type">id</span>))model &#123;</span><br><span class="line">    <span class="keyword">return</span> ^<span class="type">id</span>(<span class="type">id</span> obj) &#123;</span><br><span class="line">        <span class="keyword">self</span>.tableRow.model = obj;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用的时候就是 <code>make.row(UITableViewCell.class).model(NSDictionary.new)</code>，这里的 <code>model()</code> 就是执行了上边的 block，将入参（一个字典对象）设置给了 <code>tableRow</code> 对象的 <code>model</code> 属性，再返回 <code>self</code>。</p>
+<p>之所以选择定义成一个属性而不是像 <code>equalTo</code> 一样定义成方法是因为入参看起来更明确，此外还有个好处是，兼容 Swift 里的方法调用。如果定义成方法，原本在 OC 里调用方式为 <code>.model(NSObject.new)</code> 的链式，在 Swift 需要写成这样 <code>.model()(NSObject.new)</code>，Swift 需要先执行 <code>model()</code> 方法获取闭包再调用，这种写法显然是不能接受的。</p>
+<h1 id="用法介绍"><a href="#用法介绍" class="headerlink" title="用法介绍"></a>用法介绍</h1><p>了解了以上介绍的「组装数据源思想」和「通过链式语法便捷组装数据」这两块主要卖点后，接下来就看下具体怎么使用的吧</p>
+<h2 id="row"><a href="#row" class="headerlink" title="row"></a>row</h2><p><code>UITableView</code> 最常见的用法就是创建一个简单的列表，在文章开头的预览里也看到了：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[<span class="keyword">self</span>.tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">   make.row(ExampleTableViewCell.class);</span><br><span class="line">   make.row(ExampleTableViewCell.class);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>直接调用 	<code>holo_makeRows:</code> 方法的话，会默认创建一个 tag 为 nil 的 section（section 的用法下一章节介绍） 用来承载将要创建的 row，就像系统代理方法 <code>numberOfSectionsInTableView:</code> 一样，不实现的话默认为 1。</p>
+<p>每次 <code>make.row()</code> 都是创建一个 row（即一个 cell），上边示例代理里执行了两次那就是创建两行 cell，传入 cell 的 class。</p>
+<p><strong>Q：怎么给 cell 设置 model 呢？</strong><br>A：<code>make.row().mode()</code> &amp; <code>- (void)holo_configureCellWithModel:(id)model;</code><br>通过 <code>.mode()</code> 传入 model 数据，但是传入的 model 怎么设置给 cell 呢？你在 cell 的 .m 里怎么拿到这个 model 呢？<code>HoloTableView</code> 是根据你传入的 cell class，new 一个 cell 对象，用这个 cell 调用默认的方法：<code>holo_configureCellWithModel:</code>，所以你需要在你的 cell 里实现这个方法，就能拿到传入的 model 了。如果你不喜欢这个方法的名字，可以通过 <code>make.row().mode().configSEL()</code> 传入你自己的方法名。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 给 cell 赋值，这里的 model 就是 make.model() 传入的数据</span></span><br><span class="line">- (<span class="type">void</span>)holo_configureCellWithModel:(<span class="type">id</span>)model &#123;</span><br><span class="line">    <span class="keyword">self</span>.model = model;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Q：怎么给 cell 设置高度呢？</strong><br>A：三种方式：<br>1、<code>make.row().height(44)</code><br>2、<code>make.row().heightHandler(^CGFloat(id  _Nullable model) &#123; return 44 &#125;)</code><br>3、<code>+ (CGFloat)holo_heightForCellWithModel:(id)model;</code><br>如果 cell 的高度固定又比较简单可以通过 <code>.height()</code> 直接设置一个高度。<br>如果 cell 的高度是变化的，可以通过 <code>.heightHandler</code> 这个 block 返回高度。<br>如果这些计算高度的代码不想写在 VC 里，想要 cell 自己处理，那么可以在你的 cell 的 .m 里实现 <code>holo_heightForCellWithModel:</code> 方法返回高度。建议尽量用这个方法来控制高度，可以把 cell 高度的代码逻辑内敛到 cell 内部。当然，如果你不喜欢这个方法名还可以通过 <code>make.row().heightSEL()</code> 指定自己的方法名。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 返回 cell 高度，这里的 model 就是 make.model() 传入的数据</span></span><br><span class="line">+ (<span class="built_in">CGFloat</span>)holo_heightForCellWithModel:(<span class="type">id</span>)model &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">44</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>除了 height 这个逻辑（<code>height</code>&#x2F;<code>heightHandler</code>&#x2F;<code>heightSEL</code>），你在 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Row/HoloTableRowMaker.h">HoloTableRowMaker.h</a> 这个文件里会发现提供给的很多字段都同时拥有三个类似的属性：<code>xxx</code>、<code>xxxHandler</code>、<code>xxxSEL</code>，这类的字段都拥有<strong>调用优先级</strong>：<br>1、如果你的 cell 里实现了 <code>xxxSEL</code> 方法，会优先使用这个方法，否则的话<br>2、如果你的 maker 设置了 <code>xxxHandler</code> block，会优先使用这个 block，否则的话<br>3、才会使用 <code>xxx</code> 这个字段</p>
+<p>有些功能可能只有以上其中两个字断，优先级同样如上。</p>
+<p><strong>Q：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Row/HoloTableRowMaker.h">HoloTableRowMaker.h</a> 里 tag 属性的作用是什么？</strong><br>A：<code>HoloTableView</code> 消除了 <code>NSIndexPath</code> 的概念，所以需要用 tag 值来给每个 row，每个 section 打上标记，通过这个 tag 来找到目标，执行更新、删除等操作。（tag 的用法后续章节介绍 row、section 更新操作时会有示例）</p>
+<p><strong>Q：cell 不再是自己创建了，那如果 cell 有事件产生怎么回调到 VC 里呢？</strong><br>A：rowMaker 的 <code>willDisplayHandler</code> 这个 block 会在 <code>willDisplayCell:</code> 代理方法执行的时候被回调，并且传回当前 cell，就可以拿到 cell 对象了，至于 cell 头文件暴露了什么也一并可以操作了。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="keyword">self</span>.tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">    make.row(ExampleTableViewCell.class).willDisplayHandler(^(<span class="built_in">UITableViewCell</span> * _Nonnull cell, <span class="type">id</span>  _Nullable model) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cell:%@&quot;</span>, cell);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>还有一种方式是，传入的 model 是你自己自装的对象：model 里声明 block，VC 里实现这个 blcok，cell 内部调用这个 block。</p>
+<p>或者：给 <code>UIResponder</code> 扩展了一个方法 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Responder%20Event/UIResponder%2BHoloEvent.m">UIResponder+HoloEvent.m</a>，沿着响应者链向上传递消息：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UIResponder 扩展方法</span></span><br><span class="line">- (<span class="type">void</span>)holo_event:(<span class="built_in">NSString</span> *)event params:(<span class="built_in">NSDictionary</span> *)params &#123;</span><br><span class="line">    [<span class="keyword">self</span>.nextResponder holo_event:event params:params];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// cell 里发送消息</span></span><br><span class="line">[<span class="keyword">self</span>.nextResponder holo_event:<span class="string">@&quot;event&quot;</span> params:@&#123;&#125;];</span><br><span class="line"><span class="comment">// vc 里拦截消息</span></span><br><span class="line">- (<span class="type">void</span>)holo_event:(<span class="built_in">NSString</span> *)event params:(<span class="built_in">NSDictionary</span> *)params &#123;</span><br><span class="line">    <span class="keyword">if</span> ([event isEqualToString:<span class="string">@&quot;event&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;params: %@&quot;</span>, params);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="section"><a href="#section" class="headerlink" title="section"></a>section</h2><p>同样可以通过 <code>holo_makeSections:</code> 方法创建一个或多个 <code>section</code>，每个 <code>section</code> 可以包含着 <code>header</code>、<code>fooer</code> 和 一堆的 <code>row</code>：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[<span class="keyword">self</span>.tableView holo_makeSections:^(HoloTableViewSectionMaker * _Nonnull make) &#123;</span><br><span class="line">    make.section(<span class="string">@&quot;tag1&quot;</span>);</span><br><span class="line">    make.section(<span class="string">@&quot;tag2&quot;</span>)</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>和	<code>holo_makeRows:</code> 方法一样，每次 <code>make.section()</code> 都是创建一个 section，可以给这个 section 设置 header 及相关的数据，比如 model、高度等；可以设置 footer 及相关的数据，比如 model、高度等：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[<span class="keyword">self</span>.tableView holo_makeSections:^(HoloTableViewSectionMaker * _Nonnull make) &#123;</span><br><span class="line">    make.section(<span class="string">@&quot;tag1&quot;</span>)</span><br><span class="line">    .header(ExampleHeaderView.class).headerModel(@&#123;&#125;).headerHeight(<span class="number">100</span>)</span><br><span class="line">    .footer(ExampleFooterView.class).footerModel(@&#123;&#125;).footerHeight(<span class="number">100</span>);</span><br><span class="line"></span><br><span class="line">    make.section(<span class="string">@&quot;tag2&quot;</span>)</span><br><span class="line">    .header(ExampleHeaderView.class).headerModel(@&#123;&#125;).headerHeight(<span class="number">80</span>)</span><br><span class="line">    .footer(ExampleFooterView.class).footerModel(@&#123;&#125;).footerHeight(<span class="number">80</span>);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p><code>header</code> 或者 <code>footer</code> 的设计可以类比 <code>row</code>，所拥有的字段也都很像，查看：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Section/HoloTableSectionMaker.h">HoloTableSectionMaker.h</a> </p>
+<p><code>section</code> 同样可以通过 <code>makeRows</code> 方法便捷的创建它所拥有的 <code>row</code>：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[<span class="keyword">self</span>.tableView holo_makeSections:^(HoloTableViewSectionMaker * _Nonnull make) &#123;</span><br><span class="line">    make.section(<span class="string">@&quot;tag1&quot;</span>)</span><br><span class="line">    .header(ExampleHeaderView.class).headerModel(@&#123;&#125;).headerHeight(<span class="number">100</span>)</span><br><span class="line">    .footer(ExampleFooterView.class).footerModel(@&#123;&#125;).footerHeight(<span class="number">100</span>)</span><br><span class="line">    .makeRows(^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">        make.row(ExampleTableViewCell.class).height(<span class="number">44</span>);</span><br><span class="line">        make.row(ExampleTableViewCell.class).height(<span class="number">44</span>);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    make.section(<span class="string">@&quot;tag2&quot;</span>)</span><br><span class="line">    .header(ExampleHeaderView.class).headerModel(@&#123;&#125;).headerHeight(<span class="number">100</span>)</span><br><span class="line">    .footer(ExampleFooterView.class).footerModel(@&#123;&#125;).footerHeight(<span class="number">100</span>)</span><br><span class="line">    .makeRows(^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">        make.row(ExampleTableViewCell.class).height(<span class="number">66</span>);</span><br><span class="line">        make.row(ExampleTableViewCell.class).height(<span class="number">66</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<h2 id="protocol"><a href="#protocol" class="headerlink" title="protocol"></a>protocol</h2><p>前文介绍 row 的时候提到了，如何将 model 设置 cell？cell 需要实现 <code>- (void)holo_configureCellWithModel:(id)model;</code> 方法；如何设定 cell 的高度？cell 可以实现 <code>+ (CGFloat)holo_heightForCellWithModel:(id)model;</code> 方法。除了这两个最常用的方法， <code>HoloTableView</code> 给 cell、header、fooer 提供了很多的其他功能的默认方法，参见：<br><a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/HoloProtocol/HoloTableViewCellProtocol.h">HoloTableViewCellProtocol.h</a><br><a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/HoloProtocol/HoloTableViewHeaderProtocol.h">HoloTableViewHeaderProtocol.h</a><br><a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/HoloProtocol/HoloTableViewFooterProtocol.h">HoloTableViewFooterProtocol.h</a></p>
+<p>在 <code>HoloTableView</code> 的 1.x 时代，是把 <code>UITableView</code> 的代理方法分发到每个 row 身上，比如 <code>didSelectCell</code>、<code>willDisplayCell</code> 等事件，所以给 row 提供了对应的 <code>didSelectHandler</code>、<code>willDisplayHandler</code> 字段。这个字段的使用也大多都在 VC 里，但很多业务逻辑其实只是 cell 自己内部的事情。某些时候，如果把这些逻辑交给 cell 自己处理可能会让代码更清晰，更好维护，所以有了 2.0 版本的迭代。<br>在 <code>HoloTableView</code> 的 2.0 时代，可以把更多的事件分发到 cell 内部处理，比如 <code>didSelectCell</code>、<code>willDisplayCell</code> 等事件，cell 遵守 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/HoloProtocol/HoloTableViewCellProtocol.h">HoloTableViewCellProtocol.h</a> 协议并实现 <code>- (void)holo_didSelectCellWithModel:(id)model;</code>、<code>- (void)holo_willDisplayCellWithModel:(id)model;</code> 等方法即可。<br>需要注意的是，一旦 cell 实现了对应的方法，对应的 <code>didSelectCell</code>、<code>willDisplayCell</code> 等 block 便失效了，也就是前文提到的<strong>调用优先级</strong>。</p>
+<p><code>header</code>、<code>footer</code> 同样适用于以上逻辑。以 cell 为例，遵守 <code>HoloTableViewCellProtocol</code> 协议并实现方法：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ExampleTableViewCell.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;HoloTableView/HoloTableView.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ExampleTableViewCell</span> () &lt;<span class="title">HoloTableViewCellProtocol</span>&gt;</span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">strong</span>) <span class="type">id</span> model;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">HoloExampleTableViewCell</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - HoloTableViewCellProtocol</span></span><br><span class="line">- (<span class="type">void</span>)holo_configureCellWithModel:(<span class="built_in">NSDictionary</span> *)model &#123;</span><br><span class="line">    <span class="keyword">self</span>.model = model;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="built_in">CGFloat</span>)holo_heightForCellWithModel:(<span class="built_in">NSDictionary</span> *)model &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">44</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)holo_didSelectCellWithModel:(<span class="type">id</span>)model &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)holo_willDisplayCellWithModel:(<span class="type">id</span>)model &#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// etc</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="section-row：make、update、remake、insert、remove"><a href="#section-row：make、update、remake、insert、remove" class="headerlink" title="section &amp; row：make、update、remake、insert、remove"></a>section &amp; row：make、update、remake、insert、remove</h2><p>除了前文提到的 <code>holo_makeSections:</code> 方法用于给 tableView 新增 <code>section</code>；<code>holo_makeRows:</code> 方法用于给 tableView 新增 <code>row</code> 之外，还提供了一系列的方法用于对 <code>section</code>、<code>row</code> 的增删改查操作。<br>参见：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/UITableView%2BHoloTableView.h">UITableView+HoloTableView.h</a></p>
+<p>特别说明的是：<br>1、每个方法都同时拥有一个 <code>withReloadAnimation:</code> 方法，比如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)holo_makeRows:(<span class="type">void</span>(<span class="built_in">NS_NOESCAPE</span> ^)(HoloTableViewRowMaker *make))block;</span><br><span class="line">- (<span class="type">void</span>)holo_makeRows:(<span class="type">void</span>(<span class="built_in">NS_NOESCAPE</span> ^)(HoloTableViewRowMaker *make))block</span><br><span class="line">  withReloadAnimation:(<span class="built_in">UITableViewRowAnimation</span>)animation;</span><br></pre></td></tr></table></figure>
+<p>区别在于上边的方法执行过后需要执行 <code>[tableView reloadData]</code> 刷新列表，下边的方法则会自动刷新，但并非调用的 <code>reloadData</code> 方法，而是对应的 <code>insertRowsAtIndexPaths:</code>、<code>reloadRowsAtIndexPaths:</code> 等方法。<br>和原生方法表现一致：如果是新增或者更新一个或者几个 cell 的话，可以使用带 <code>withReloadAnimation:</code> 的方法，仅刷新某一行性能更好。但如果刷新的 cell 很多的话反而不如 <code>reloadData</code> 方法性能表现更好，所以需要合理选择。</p>
+<p>2、类比 <code>Masonry</code> 的 API 逻辑：<br><code>make</code> 系列的方法就是新增 <code>section</code> 或 <code>row</code><br><code>update</code> 系列的方法就是通过 <code>make.tag()</code> 匹配到对应的 <code>section</code> 或 <code>row</code>，进行更新某部分数据，比如 model、高度等<br><code>remake</code> 系列的方法就是通过 <code>make.tag()</code> 匹配到对应的 <code>section</code> 或 <code>row</code>，将原本的数据清空，重新赋值数据</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// make</span></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">    make.row(ExampleTableViewCell.class).model(@&#123;&#125;).height(<span class="number">44</span>).tag(<span class="string">@&quot;a&quot;</span>);</span><br><span class="line">&#125;];</span><br><span class="line"><span class="comment">// update</span></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_updateRows:^(HoloTableViewUpdateRowMaker * _Nonnull make) &#123;</span><br><span class="line">    make.tag(<span class="string">@&quot;a&quot;</span>).height(<span class="number">88</span>);</span><br><span class="line">&#125;];</span><br><span class="line"><span class="comment">// remake</span></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_remakeRows:^(HoloTableViewUpdateRowMaker * _Nonnull make) &#123;</span><br><span class="line">    make.tag(<span class="string">@&quot;a&quot;</span>).height(<span class="number">88</span>);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>比如以上代码：<br>1）<code>holo_makeRows:</code> 方法创建了一个 <code>row</code>，给了 <code>calss</code>，<code>model</code>，<code>height</code>，设置了 tag 标记<br>2）如果执行 <code>holo_updateRows:</code> 方法的话，那这个 cell 就是从高度 44 刷新到了 88<br>3）如果执行 <code>holo_remakeRows:</code> 方法的话，因为将原来的数据清空了，所以 model 就不在了，class 也不在了，需要重新赋值</p>
+<h2 id="scrollDelegate、delegate、datasource"><a href="#scrollDelegate、delegate、datasource" class="headerlink" title="scrollDelegate、delegate、datasource"></a>scrollDelegate、delegate、datasource</h2><p>在 <code>HoloTableView</code> 代理了 <code>UITableViewDelegate</code>、<code>UITableViewDataSource</code> 之后，某些场景下，你可能还想再拿到这些代理方法，自己实现一些逻辑，尤其是 <code>UIScrollViewDelegate</code> 的代理方法最为常用。<br>因为当前 tableView 的代理已经设置给 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloProxy/HoloTableViewProxy.h">HoloTableViewProxy.h</a> 对象，再次夺回代理的话有两种方式：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方式一</span></span><br><span class="line"><span class="keyword">self</span>.tableView.holo_proxy.dataSource = <span class="keyword">self</span>;</span><br><span class="line"><span class="keyword">self</span>.tableView.holo_proxy.delegate = <span class="keyword">self</span>;</span><br><span class="line"><span class="keyword">self</span>.tableView.holo_proxy.scrollDelegate = <span class="keyword">self</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 方式二</span></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_makeTableView:^(HoloTableViewMaker * _Nonnull make) &#123;</span><br><span class="line">    make.dataSource(<span class="keyword">self</span>).delegate(<span class="keyword">self</span>).scrollDelegate(<span class="keyword">self</span>);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>设置过代理之后，一旦自己实现了某个代理方法，那这个代理方法 <code>HoloTableView</code> 就不再处理了。比如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">NSInteger</span>)numberOfSectionsInTableView:(<span class="built_in">UITableView</span> *)tableView &#123;</span><br><span class="line">    <span class="keyword">if</span> ([<span class="keyword">self</span>.dataSource respondsToSelector:<span class="keyword">@selector</span>(numberOfSectionsInTableView:)]) &#123;</span><br><span class="line">        <span class="keyword">return</span> [<span class="keyword">self</span>.dataSource numberOfSectionsInTableView:tableView];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>.holoSections.count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="swipe-action"><a href="#swipe-action" class="headerlink" title="swipe action"></a>swipe action</h2><p><code>UITableViewCell</code> 的左滑、右滑功能在 iOS 各个系统版本间的差异比较大，直接写在业务代码里判断会非常多，<code>HoloTableView</code> 将这部分功能做了个总结，提供了 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/Holo/HoloTableViewRowSwipeAction.h">HoloTableViewRowSwipeAction.h</a> 这个类，提供的属性都标记了 iOS 版本，调用起来相对会比较方便。</p>
+<p>可以组装好数组传递给 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView/blob/master/HoloTableView/Classes/HoloMaker/Row/HoloTableRowMaker.h">HoloTableRowMaker.h</a>   类的 <code>leadingSwipeActions</code> or <code>trailingSwipeActions</code> 属性：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">HoloTableViewRowSwipeAction *leftSwipeAction1 = [HoloTableViewRowSwipeAction rowSwipeActionWithStyle:HoloTableViewRowSwipeActionStyleNormal title:<span class="string">@&quot;left1&quot;</span>];</span><br><span class="line">HoloTableViewRowSwipeAction *leftSwipeAction2 = [HoloTableViewRowSwipeAction rowSwipeActionWithStyle:HoloTableViewRowSwipeActionStyleNormal title:<span class="string">@&quot;left2&quot;</span>];</span><br><span class="line"></span><br><span class="line">HoloTableViewRowSwipeAction *rightSwipeAction1 = [HoloTableViewRowSwipeAction rowSwipeActionWithStyle:HoloTableViewRowSwipeActionStyleNormal title:<span class="string">@&quot;Right1&quot;</span>];</span><br><span class="line">HoloTableViewRowSwipeAction *rightSwipeAction2 = [HoloTableViewRowSwipeAction rowSwipeActionWithStyle:HoloTableViewRowSwipeActionStyleNormal title:<span class="string">@&quot;Right2&quot;</span>];</span><br><span class="line"></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">    make.row(HoloExampleTableViewCell.class)</span><br><span class="line">    .leadingSwipeActions(@[leftSwipeAction1, leftSwipeAction2])</span><br><span class="line">    .trailingSwipeActions(@[rightSwipeAction1, rightSwipeAction2]);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<h1 id="Plugin"><a href="#Plugin" class="headerlink" title="Plugin"></a>Plugin</h1><p>之前遇到过一个关于 <a target="_blank" rel="noopener" href="http://localhost:4000/2020/03/01/sdwebimage-gif/">SDWebImage 4.x &amp; 5.x 对 GIF 类型的处理问题</a> 的bug，在排查问题过程中，查看了 SD 5.x 源码，发现 SD 的一个策略：把对很多第三方库的支持封装成插件（plugin），引入某个插件便能够拥有对某个库的支持，比如这些：<a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage#integration-with-3rd-party-libraries">Integration with 3rd party libraries
+</a>。</p>
+<p>对于 <code>UITableViewCell</code> 的左滑、右滑功能，业界也有个比较知名的三方库：<a target="_blank" rel="noopener" href="https://github.com/MortimerGoro/MGSwipeTableCell">MGSwipeTableCell</a>。<code>HoloTableView</code> 借鉴 <code>SDWebImage</code> 的做法，封装了一个 plugin 库：<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableViewMGPlugin">HoloTableViewMGPlugin</a>，API 的定义完全参照的 <code>MGSwipeTableCell</code>，字段尽量保持一致，以降低上手成本。</p>
+<p>需要注意的是，<code>HoloTableViewMGPlugin</code> 和 <code>HoloTableView</code> 一样，只是帮你处理代理事件。至于其他的必要条件还是要满足的，比如你的 cell 需要继承 <code>MGSwipeTableCell</code> 基类。<br>使用姿势：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;HoloTableViewMGPlugin/HoloTableViewMGPlugin.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">[<span class="keyword">self</span>.tableView holo_makeRows:^(HoloTableViewRowMaker * _Nonnull make) &#123;</span><br><span class="line">    <span class="comment">// 方式一：直接赋值</span></span><br><span class="line">    make.row(ExampleMGSwipeTableCell.class)</span><br><span class="line">    .canSwipe(<span class="literal">YES</span>)</span><br><span class="line">    .makeSwipButtons(^(HoloTableRowMGMaker * _Nonnull make) &#123;</span><br><span class="line">        make.direction(MGSwipeDirectionLeftToRight).title(<span class="string">@&quot;Left&quot;</span>).backgroundColor(<span class="built_in">UIColor</span>.redColor);</span><br><span class="line">        make.direction(MGSwipeDirectionRightToLeft).title(<span class="string">@&quot;Right&quot;</span>).backgroundColor(<span class="built_in">UIColor</span>.redColor)</span><br><span class="line">        .callback(^<span class="type">BOOL</span>(MGSwipeTableCell * _Nonnull cell) &#123;</span><br><span class="line">            <span class="built_in">NSLog</span>(<span class="string">@&quot;tag Right2 swip button&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 方式二：blcok 回调</span></span><br><span class="line">    make.row(ExampleMGSwipeTableCell.class)</span><br><span class="line">    .canSwipeHandler(^<span class="type">BOOL</span>(MGSwipeTableCell * _Nonnull cell, MGSwipeDirection direction, <span class="built_in">CGPoint</span> fromPoint) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;)</span><br><span class="line">    .swipeButtonsHandler(^<span class="built_in">NSArray</span>&lt;<span class="built_in">UIView</span> *&gt; * _Nonnull(MGSwipeTableCell * _Nonnull cell, MGSwipeDirection direction, MGSwipeSettings * _Nonnull swipeSettings, MGSwipeExpansionSettings * _Nonnull expansionSettings) &#123;</span><br><span class="line">        <span class="keyword">if</span> (direction == MGSwipeDirectionLeftToRight) &#123;</span><br><span class="line">            <span class="keyword">return</span> @[[MGSwipeButton buttonWithTitle:<span class="string">@&quot;Left&quot;</span> backgroundColor:<span class="built_in">UIColor</span>.redColor]];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> @[[MGSwipeButton buttonWithTitle:<span class="string">@&quot;Right&quot;</span> backgroundColor:<span class="built_in">UIColor</span>.redColor]];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    .willBeginSwipingHandler(^(MGSwipeTableCell * _Nonnull cell) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;begin swiping: %@&quot;</span>, cell);</span><br><span class="line">    &#125;)</span><br><span class="line">    .willEndSwipingHandler(^(MGSwipeTableCell * _Nonnull cell) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;end swiping: %@&quot;</span>, cell);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h1><ul>
+<li>Diff reload data.</li>
+<li>Adapt new APIs from iOS 13 and iOS 14. ( HoloCollectionView )</li>
+<li>Modern Objective-C and better Swift support.</li>
+</ul>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>感谢不知出处的前辈大佬们提供的「数据源代理」和「链式语法组装数据」思路。<br>感谢 <a target="_blank" rel="noopener" href="https://github.com/SnapKit/Masonry">Masonry</a>、<a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage">SDWebImage</a>、<a target="_blank" rel="noopener" href="https://github.com/MortimerGoro/MGSwipeTableCell">MGSwipeTableCell</a> 提供的 API 定义、封装思路 及 源码支持。</p>
+<p>希望 <a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloTableView">HoloTableView</a>、<a target="_blank" rel="noopener" href="https://github.com/HoloFoundation/HoloCollectionView">HoloCollectionView</a> 这两个库可以切实的帮助到你减轻列表维护压力，有任何问题欢迎 Issues 或 PR。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/07/pod-target/" rel="next" title="组件化页面跳转及路由方案">
+                <i class="fa fa-chevron-left"></i> 组件化页面跳转及路由方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/09/06/pod-lifecycle-aop-libffi/" rel="prev" title="组件化分发生命周期 - AOP 方案（libffi 实现）">
+                组件化分发生命周期 - AOP 方案（libffi 实现） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Preview-1-GitHub-%E5%9C%B0%E5%9D%80"><span class="nav-number">1.1.</span> <span class="nav-text">Preview 1: GitHub 地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Preview-2-%E4%BD%BF%E7%94%A8%E9%A2%84%E8%A7%88"><span class="nav-number">1.2.</span> <span class="nav-text">Preview 2: 使用预览</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%81%E8%A3%85%E5%8E%86%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">封装历程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E5%85%A5%E9%97%A8%E7%89%88%E5%86%99%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">1、入门版写法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E4%BC%98%E5%8C%96%E7%89%88%E5%86%99%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">2、优化版写法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E5%A4%8D%E7%94%A8%E7%89%88%E5%86%99%E6%B3%95"><span class="nav-number">2.3.</span> <span class="nav-text">3、复用版写法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%93%BE%E5%BC%8F%E8%AF%AD%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">链式语法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%94%A8%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="nav-number">4.</span> <span class="nav-text">用法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#row"><span class="nav-number">4.1.</span> <span class="nav-text">row</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section"><span class="nav-number">4.2.</span> <span class="nav-text">section</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#protocol"><span class="nav-number">4.3.</span> <span class="nav-text">protocol</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section-row%EF%BC%9Amake%E3%80%81update%E3%80%81remake%E3%80%81insert%E3%80%81remove"><span class="nav-number">4.4.</span> <span class="nav-text">section &amp; row：make、update、remake、insert、remove</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#scrollDelegate%E3%80%81delegate%E3%80%81datasource"><span class="nav-number">4.5.</span> <span class="nav-text">scrollDelegate、delegate、datasource</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#swipe-action"><span class="nav-number">4.6.</span> <span class="nav-text">swipe action</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Plugin"><span class="nav-number">5.</span> <span class="nav-text">Plugin</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TODO"><span class="nav-number">6.</span> <span class="nav-text">TODO</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">7.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/08/10/HoloTableView-HoloCollectionView/';
+          this.page.identifier = '2020/08/10/HoloTableView-HoloCollectionView/';
+          this.page.title = 'HoloTableView & HoloCollectionView 让你的列表更好维护';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="ReactiveCocoa 是一个Objective-C 框架，受 Functional Reactive Programming的启发。它提供了一系列用来组合和转换值流的API。 如果你早已熟悉了函数响应式编程或者知道ReactiveCocoa的基本前提，看看Documentation这个文件夹里的framework overview等文件更深一步来了解它是怎样在实践中工作的。 介绍Reacti">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初识ReactiveCocoa">
+<meta property="og:url" content="http://gonghonglou.com/2016/03/17/meet-ReactiveCocoa/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="ReactiveCocoa 是一个Objective-C 框架，受 Functional Reactive Programming的启发。它提供了一系列用来组合和转换值流的API。 如果你早已熟悉了函数响应式编程或者知道ReactiveCocoa的基本前提，看看Documentation这个文件夹里的framework overview等文件更深一步来了解它是怎样在实践中工作的。 介绍Reacti">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
+<meta property="article:published_time" content="2016-03-17T15:12:45.000Z">
+<meta property="article:modified_time" content="2020-03-14T12:58:58.177Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/cheaptalk.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2016/03/17/meet-ReactiveCocoa/"/>
+
+
+
+
+
+  <title>初识ReactiveCocoa | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2016/03/17/meet-ReactiveCocoa/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">初识ReactiveCocoa</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-17T23:12:45+08:00">
+                2016-03-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa">ReactiveCocoa</a> 是一个Objective-C 框架，受 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Functional_reactive_programming">Functional Reactive Programming</a>的启发。它提供了一系列用来<strong>组合和转换值流</strong>的API。</p>
+<p>如果你早已熟悉了函数响应式编程或者知道ReactiveCocoa的基本前提，看看<a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/tree/v2.5/Documentation">Documentation</a>这个文件夹里的framework overview等文件更深一步来了解它是怎样在实践中工作的。</p>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>ReactiveCocoa受<a target="_blank" rel="noopener" href="http://blog.maybeapps.com/post/42894317939/input-and-output">functional reactive programming</a>的启发。在那些能被替换和修改的地方，RAC提供信号(由<code>RACSignal</code>代表)来捕获当前和将来的值而不是使用可变的变量。</p>
+<p>通过链接，组合，和反馈的信号，软件可以不需要写那些持续观察和更新value的代码。</p>
+<p>例如，一个文本框能够根据它的改变被绑定到最后一次的值，而不是使用额外的代码每秒去监控时钟和更新文本框。这点跟KVO很像，不过是使用了block，而非<code>-observeValueForKeyPath:ofObject:change:context:</code></p>
+<p>信号也可以进行异步操作，就像<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Futures_and_promises">futures and promises</a>。这极大的简化了异步软件中网络连接的代码。</p>
+<p>RAC的重大优势之一就是它提供信号(<code>signal</code>)这种方式来统一的处理所有异步的行为，包括代理方法、block 回调、target-action 机制、通知和KVO。</p>
+<p><img src="http://image.gonghonglou.com/cheaptalk.png"> </p>
+<p>这里是简单的例子：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 当self.username改变时，打印新的名字到控制台</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> RACObserve(self, username)创建一个新的RACSignal，当前self.username的值发生改变时，发送新值给newName</span><br><span class="line"><span class="regexp">//</span> -subscribeNext: 当信号发送值时将触发block</span><br><span class="line">[RACObserve(self, username) subscribeNext:^(NSString *newName) &#123;</span><br><span class="line">	NSLog(@<span class="string">&quot;%@&quot;</span>, newName);</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>与KVO 通知不同的是信号能够进行统一的链式操作：</p>
+<figure class="highlight haxe"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 只有当名字的开头为&quot;j&quot;时才打印</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// -filter 只有当block返回YES时才会创建一个新的RACSignal发送一个新值</span></span><br><span class="line">[[RACObserve(self, username)</span><br><span class="line">	filter:<span class="type"></span>^(NSString *<span class="keyword">new</span><span class="type">Name</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> [<span class="keyword">new</span><span class="type">Name</span> hasPrefix:<span class="type"></span>@<span class="string">&quot;j&quot;</span>];</span><br><span class="line">	&#125;]</span><br><span class="line">	subscribeNext:<span class="type"></span>^(NSString *<span class="keyword">new</span><span class="type">Name</span>) &#123;</span><br><span class="line">		NSLog(@<span class="string">&quot;%@&quot;</span>, <span class="keyword">new</span><span class="type">Name</span>);</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>信号也能被用来派生状态。在响应新值中RAC代替观察属性和设置其他的属性，能够在信号和运行周期内传达属性：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 当self.password 和 self.passwordConfirmation相同时创建一个单向的binding使得self.createEnabled为true</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> RAC() 是一个宏指令使得binding看起来nicer</span><br><span class="line"><span class="regexp">//</span> </span><br><span class="line"><span class="regexp">//</span> +combineLatest:reduce: 建一个信号数组</span><br><span class="line"><span class="regexp">//</span> 当任一个信号的最后一个值发生改变时触发这个block，返回一个新的RACSignal，将block返回的值作为values发送出去</span><br><span class="line">RAC(self, createEnabled) = [RACSignal </span><br><span class="line">	combineLatest:@[ RACObserve(self, password), RACObserve(self, passwordConfirmation) ] </span><br><span class="line">	reduce:^(NSString *password, NSString *passwordConfirm) &#123;</span><br><span class="line">		return @([passwordConfirm isEqualToString:password]);</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>信号不仅是在KVO上，还能在建立在随着时间而改变的值流上。例如，它们可以代表按钮点击：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 当按钮被点击时打印信息</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> RACCommand创建信号去表示UI行为。例如，每一个信号可以表示一个按钮的点击、与它相关联的附加工作</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> -rac_command是封装的NSButton方法. 当按钮被点击时触发该命令</span><br><span class="line">self.button.rac_command = [[RACCommand alloc] initWithSignalBlock:^(id _) &#123;</span><br><span class="line">	NSLog(@<span class="string">&quot;button was pressed!&quot;</span>);</span><br><span class="line">	return [RACSignal empty];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>或者是异步网络操作：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 连接<span class="string">&quot;Log in&quot;</span>按钮给网络登录</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> 当登录命令执行时运行block，开始登录进度</span><br><span class="line">self.loginCommand = [[RACCommand alloc] initWithSignalBlock:^(id sender) &#123;</span><br><span class="line">	<span class="regexp">//</span> 假设当网络请求完成时 -logIn 方法返回一个信号发送一个value</span><br><span class="line">	return [client logIn];</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> -executionSignals 每次执行该命令时，这个方法返回一个信号，包括以前的block返回的信号</span><br><span class="line">[self.loginCommand.executionSignals subscribeNext:^(RACSignal *loginSignal) &#123;</span><br><span class="line">	<span class="regexp">//</span> 成功登录时打印信息</span><br><span class="line">	[loginSignal subscribeCompleted:^&#123;</span><br><span class="line">		NSLog(@<span class="string">&quot;Logged in successfully!&quot;</span>);</span><br><span class="line">	&#125;];</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span> 按钮被点击时执行登录命令</span><br><span class="line">self.loginButton.rac_command = self.loginCommand;</span><br></pre></td></tr></table></figure>
+
+<p>信号也可以代表定时器，其他的UI事件，或者别的什么随时间而改变的事件。</p>
+<p>在异步操作方面，通过链接和转换信号可以建立更复杂的行为。在一组完整的操作之后更简单的来执行工作：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 执行<span class="number">2</span>个网络操作，当它们都完成时打印信息到控制台</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> +merge: 当数组里的所有信号完成时，返回一个新的RACSignal</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> -subscribeCompleted: 当信号完成时将执行这个block</span><br><span class="line">[[RACSignal </span><br><span class="line">	merge:@[ [client fetchUserRepos], [client fetchOrgRepos] ]] </span><br><span class="line">	subscribeCompleted:^&#123;</span><br><span class="line">		NSLog(@<span class="string">&quot;They&#x27;re both done!&quot;</span>);</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>信号可以被链接到顺序执行异步操作，而不是使用一堆block回调。通常这样简单的来使用<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Futures_and_promises">futures and promises</a>：</p>
+<figure class="highlight wren"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用户登录，下载缓存信息，获取服务器信息。都完成后将信息打印到控制台</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// 假设登录之后 -logInUser 方法返回一个信号</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// -flattenMap: 当信号发送一个value时触发这个block</span></span><br><span class="line"><span class="comment">// 并且返回一个新的RACSignal来整合从block返回的所有的信号到一个单一信号中</span></span><br><span class="line">[[[[<span class="variable">client</span> </span><br><span class="line">	<span class="variable">logInUser</span>] </span><br><span class="line">	<span class="variable">flattenMap</span>:<span class="title function_">^</span>(<span class="params">User</span> *<span class="params">user</span>) &#123;</span><br><span class="line">		<span class="comment">// 下载缓存信息，给用户返回一个信号</span></span><br><span class="line">		<span class="keyword">return</span> [<span class="variable">client</span> <span class="variable">loadCachedMessagesForUser</span>:<span class="variable">user</span>];</span><br><span class="line">	&#125;]</span><br><span class="line">	<span class="variable">flattenMap</span>:<span class="title function_">^</span>(<span class="params">NSArray</span> *<span class="params">messages</span>) &#123;</span><br><span class="line">		<span class="comment">// Return a signal that fetches any remaining messages.</span></span><br><span class="line">		<span class="keyword">return</span> [<span class="variable">client</span> <span class="variable">fetchMessagesAfterMessage</span>:<span class="variable">messages</span>.<span class="property">lastObject</span>];</span><br><span class="line">	&#125;]</span><br><span class="line">	<span class="variable">subscribeNext</span>:<span class="title function_">^</span>(<span class="params">NSArray</span> *<span class="params">newMessages</span>) &#123;</span><br><span class="line">		<span class="title class_">NSLog</span>(@<span class="string">&quot;New messages: %@&quot;</span>, <span class="variable">newMessages</span>);</span><br><span class="line">	&#125; <span class="variable">completed</span>:<span class="operator">^</span>&#123;</span><br><span class="line">		<span class="title class_">NSLog</span>(@<span class="string">&quot;Fetched all messages.&quot;</span>);</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>RAC甚至可以简单的建立在一个异步操作的结果上：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 创建一个单向的binding，让 self.imageView.image 来放置下载下来的user的头像</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> 假设 -fetchUserWithUsername: 方法返回一个信号发送给user</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> -deliverOn: 创建新的信号在其他的队列中进行他们的工作</span><br><span class="line"><span class="regexp">//</span> 在这个例子中，此方法被用来将工作转移到后台队列和回到主线程</span><br><span class="line"><span class="regexp">//</span></span><br><span class="line"><span class="regexp">//</span> -map: 每个user调用这个block，获取并且返回一个新的RACSignal，并且将从block返回的值发送出去</span><br><span class="line">RAC(self.imageView, image) = [[[[client </span><br><span class="line">	fetchUserWithUsername:@<span class="string">&quot;joshaber&quot;</span>]</span><br><span class="line">	deliverOn:[RACScheduler scheduler]]</span><br><span class="line">	map:^(User *user) &#123;</span><br><span class="line">		<span class="regexp">//</span> 下载头像 (在后台队列中进行).</span><br><span class="line">		return [[NSImage alloc] initWithContentsOfURL:user.avatarURL];</span><br><span class="line">	&#125;]</span><br><span class="line">	<span class="regexp">//</span> 此时这个任务将在主线程中执行</span><br><span class="line">	deliverOn:RACScheduler.mainThreadScheduler];</span><br></pre></td></tr></table></figure>
+<p>这是一些使用RAC的示范操作，但是它并不能说明RAC为什么如此强大。<br>更多示例代码参见<a target="_blank" rel="noopener" href="https://github.com/AshFurrow/C-41">C-41</a> 或 <a target="_blank" rel="noopener" href="https://github.com/jspahrsummers/GroceryList">GroceryList</a>,这些是使用ReactiveCocoa编写的iOS APP。在这个文件夹<a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/tree/v2.5/Documentation">Documentation</a>中可以查到更多的关于RAC的信息。</p>
+<h2 id="使用ReactiveCocoa"><a href="#使用ReactiveCocoa" class="headerlink" title="使用ReactiveCocoa"></a>使用ReactiveCocoa</h2><p>乍一看ReactiveCocoa是非常抽象的，很难理解该怎样将它应用到具体的问题上。</p>
+<p>这有一些示例来展示RAC的优势</p>
+<h3 id="处理异步或事件驱动的数据源"><a href="#处理异步或事件驱动的数据源" class="headerlink" title="处理异步或事件驱动的数据源"></a>处理异步或事件驱动的数据源</h3><p>许多Cocoa编程的重点是对用户事件的反应或应用状态的变化。处理这些事件的代码很快变得非常复杂的就像意大利面一样，伴随着许多回调函数和状态变量处理顺序的问题。</p>
+<p>表面上看起来模式不同，比如UI回调，网络响应和KVO通知，实际上有很多共同之处。<a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/v2.5/ReactiveCocoa/RACSignal.h">RACSignal</a>统一了所有的这些不同的API，使他们可以组合在一起，并以同样的方式操纵。</p>
+<p>例如这样的代码：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> void <span class="operator">*</span><span class="type">ObservationContext</span> <span class="operator">=</span> <span class="operator">&amp;</span><span class="type">ObservationContext</span>;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)viewDidLoad &#123;</span><br><span class="line">	[<span class="keyword">super</span> viewDidLoad];</span><br><span class="line"></span><br><span class="line">	[<span class="type">LoginManager</span>.sharedManager addObserver:<span class="keyword">self</span> forKeyPath:@<span class="string">&quot;loggingIn&quot;</span> options:<span class="type">NSKeyValueObservingOptionInitial</span> context:<span class="operator">&amp;</span><span class="type">ObservationContext</span>];</span><br><span class="line">	[<span class="type">NSNotificationCenter</span>.defaultCenter addObserver:<span class="keyword">self</span> selector:<span class="meta">@selector</span>(loggedOut:) name:<span class="type">UserDidLogOutNotification</span> object:<span class="type">LoginManager</span>.sharedManager];</span><br><span class="line"></span><br><span class="line">	[<span class="keyword">self</span>.usernameTextField addTarget:<span class="keyword">self</span> action:<span class="meta">@selector</span>(updateLogInButton) forControlEvents:<span class="type">UIControlEventEditingChanged</span>];</span><br><span class="line">	[<span class="keyword">self</span>.passwordTextField addTarget:<span class="keyword">self</span> action:<span class="meta">@selector</span>(updateLogInButton) forControlEvents:<span class="type">UIControlEventEditingChanged</span>];</span><br><span class="line">	[<span class="keyword">self</span>.logInButton addTarget:<span class="keyword">self</span> action:<span class="meta">@selector</span>(logInPressed:) forControlEvents:<span class="type">UIControlEventTouchUpInside</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)dealloc &#123;</span><br><span class="line">	[<span class="type">LoginManager</span>.sharedManager removeObserver:<span class="keyword">self</span> forKeyPath:@<span class="string">&quot;loggingIn&quot;</span> context:<span class="type">ObservationContext</span>];</span><br><span class="line">	[<span class="type">NSNotificationCenter</span>.defaultCenter removeObserver:<span class="keyword">self</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)updateLogInButton &#123;</span><br><span class="line">	<span class="type">BOOL</span> textFieldsNonEmpty <span class="operator">=</span> <span class="keyword">self</span>.usernameTextField.text.length <span class="operator">&gt;</span> <span class="number">0</span> <span class="operator">&amp;&amp;</span> <span class="keyword">self</span>.passwordTextField.text.length <span class="operator">&gt;</span> <span class="number">0</span>;</span><br><span class="line">	<span class="type">BOOL</span> readyToLogIn <span class="operator">=</span> <span class="operator">!</span><span class="type">LoginManager</span>.sharedManager.isLoggingIn <span class="operator">&amp;&amp;</span> <span class="operator">!</span><span class="keyword">self</span>.loggedIn;</span><br><span class="line">	<span class="keyword">self</span>.logInButton.enabled <span class="operator">=</span> textFieldsNonEmpty <span class="operator">&amp;&amp;</span> readyToLogIn;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (<span class="type">IBAction</span>)logInPressed:(<span class="type">UIButton</span> <span class="operator">*</span>)sender &#123;</span><br><span class="line">	[[<span class="type">LoginManager</span> sharedManager]</span><br><span class="line">		logInWithUsername:<span class="keyword">self</span>.usernameTextField.text</span><br><span class="line">		password:<span class="keyword">self</span>.passwordTextField.text</span><br><span class="line">		success:<span class="operator">^</span>&#123;</span><br><span class="line">			<span class="keyword">self</span>.loggedIn <span class="operator">=</span> <span class="type">YES</span>;</span><br><span class="line">		&#125; failure:<span class="operator">^</span>(<span class="type">NSError</span> <span class="operator">*</span>error) &#123;</span><br><span class="line">			[<span class="keyword">self</span> presentError:error];</span><br><span class="line">		&#125;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)loggedOut:(<span class="type">NSNotification</span> <span class="operator">*</span>)notification &#123;</span><br><span class="line">	<span class="keyword">self</span>.loggedIn <span class="operator">=</span> <span class="type">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)observeValueForKeyPath:(<span class="type">NSString</span> <span class="operator">*</span>)keyPath ofObject:(id)object change:(<span class="type">NSDictionary</span> <span class="operator">*</span>)change context:(void <span class="operator">*</span>)context &#123;</span><br><span class="line">	<span class="keyword">if</span> (context <span class="operator">==</span> <span class="type">ObservationContext</span>) &#123;</span><br><span class="line">		[<span class="keyword">self</span> updateLogInButton];</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		[<span class="keyword">super</span> observeValueForKeyPath:keyPath ofObject:object change:change context:context];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>… 可以用RAC这样的表示：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">-</span> (void)viewDidLoad &#123;</span><br><span class="line">	[<span class="keyword">super</span> viewDidLoad];</span><br><span class="line"></span><br><span class="line">	<span class="meta">@weakify</span>(<span class="keyword">self</span>);</span><br><span class="line"></span><br><span class="line">	<span class="type">RAC</span>(<span class="keyword">self</span>.logInButton, enabled) <span class="operator">=</span> [<span class="type">RACSignal</span></span><br><span class="line">		combineLatest:@[</span><br><span class="line">			<span class="keyword">self</span>.usernameTextField.rac_textSignal,</span><br><span class="line">			<span class="keyword">self</span>.passwordTextField.rac_textSignal,</span><br><span class="line">			<span class="type">RACObserve</span>(<span class="type">LoginManager</span>.sharedManager, loggingIn),</span><br><span class="line">			<span class="type">RACObserve</span>(<span class="keyword">self</span>, loggedIn)</span><br><span class="line">		] reduce:<span class="operator">^</span>(<span class="type">NSString</span> <span class="operator">*</span>username, <span class="type">NSString</span> <span class="operator">*</span>password, <span class="type">NSNumber</span> <span class="operator">*</span>loggingIn, <span class="type">NSNumber</span> <span class="operator">*</span>loggedIn) &#123;</span><br><span class="line">			<span class="keyword">return</span> @(username.length <span class="operator">&gt;</span> <span class="number">0</span> <span class="operator">&amp;&amp;</span> password.length <span class="operator">&gt;</span> <span class="number">0</span> <span class="operator">&amp;&amp;</span> <span class="operator">!</span>loggingIn.boolValue <span class="operator">&amp;&amp;</span> <span class="operator">!</span>loggedIn.boolValue);</span><br><span class="line">		&#125;];</span><br><span class="line"></span><br><span class="line">	[[<span class="keyword">self</span>.logInButton rac_signalForControlEvents:<span class="type">UIControlEventTouchUpInside</span>] subscribeNext:<span class="operator">^</span>(<span class="type">UIButton</span> <span class="operator">*</span>sender) &#123;</span><br><span class="line">		<span class="meta">@strongify</span>(<span class="keyword">self</span>);</span><br><span class="line"></span><br><span class="line">		<span class="type">RACSignal</span> <span class="operator">*</span>loginSignal <span class="operator">=</span> [<span class="type">LoginManager</span>.sharedManager</span><br><span class="line">			logInWithUsername:<span class="keyword">self</span>.usernameTextField.text</span><br><span class="line">			password:<span class="keyword">self</span>.passwordTextField.text];</span><br><span class="line"></span><br><span class="line">			[loginSignal subscribeError:<span class="operator">^</span>(<span class="type">NSError</span> <span class="operator">*</span>error) &#123;</span><br><span class="line">				<span class="meta">@strongify</span>(<span class="keyword">self</span>);</span><br><span class="line">				[<span class="keyword">self</span> presentError:error];</span><br><span class="line">			&#125; completed:<span class="operator">^</span>&#123;</span><br><span class="line">				<span class="meta">@strongify</span>(<span class="keyword">self</span>);</span><br><span class="line">				<span class="keyword">self</span>.loggedIn <span class="operator">=</span> <span class="type">YES</span>;</span><br><span class="line">			&#125;];</span><br><span class="line">	&#125;];</span><br><span class="line"></span><br><span class="line">	<span class="type">RAC</span>(<span class="keyword">self</span>, loggedIn) <span class="operator">=</span> [[<span class="type">NSNotificationCenter</span>.defaultCenter</span><br><span class="line">		rac_addObserverForName:<span class="type">UserDidLogOutNotification</span> object:<span class="literal">nil</span>]</span><br><span class="line">		mapReplace:<span class="meta">@NO</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="链接依赖操作"><a href="#链接依赖操作" class="headerlink" title="链接依赖操作"></a>链接依赖操作</h3><p>依赖在网络请求中是常见的，在下一个请求建立之前，需要完成当前对服务器的请求，比如：</p>
+<figure class="highlight wren"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[<span class="variable">client</span> <span class="variable">logInWithSuccess</span>:<span class="operator">^</span>&#123;</span><br><span class="line">	[<span class="variable">client</span> <span class="variable">loadCachedMessagesWithSuccess</span>:<span class="title function_">^</span>(<span class="params">NSArray</span> *<span class="params">messages</span>) &#123;</span><br><span class="line">		[<span class="variable">client</span> <span class="variable">fetchMessagesAfterMessage</span>:<span class="variable">messages</span>.<span class="property">lastObject</span> <span class="variable">success</span>:<span class="title function_">^</span>(<span class="params">NSArray</span> *<span class="params">nextMessages</span>) &#123;</span><br><span class="line">			<span class="title class_">NSLog</span>(@<span class="string">&quot;Fetched all messages.&quot;</span>);</span><br><span class="line">		&#125; <span class="variable">failure</span>:<span class="title function_">^</span>(<span class="params">NSError</span> *<span class="params">error</span>) &#123;</span><br><span class="line">			[<span class="variable">self</span> <span class="variable">presentError</span>:<span class="variable">error</span>];</span><br><span class="line">		&#125;];</span><br><span class="line">	&#125; <span class="variable">failure</span>:<span class="title function_">^</span>(<span class="params">NSError</span> *<span class="params">error</span>) &#123;</span><br><span class="line">		[<span class="variable">self</span> <span class="variable">presentError</span>:<span class="variable">error</span>];</span><br><span class="line">	&#125;];</span><br><span class="line">&#125; <span class="variable">failure</span>:<span class="title function_">^</span>(<span class="params">NSError</span> *<span class="params">error</span>) &#123;</span><br><span class="line">	[<span class="variable">self</span> <span class="variable">presentError</span>:<span class="variable">error</span>];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>在ReactiveCocoa中可以这样简单的实现：</p>
+<figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[[[[<span class="name">client</span> logIn]</span><br><span class="line">	then:^&#123;</span><br><span class="line">		return [<span class="name">client</span> loadCachedMessages]<span class="comment">;</span></span><br><span class="line">	&#125;]</span><br><span class="line">	flattenMap:^(<span class="name">NSArray</span> *messages) &#123;</span><br><span class="line">		return [<span class="name">client</span> fetchMessagesAfterMessage:messages.lastObject]<span class="comment">;</span></span><br><span class="line">	&#125;]</span><br><span class="line">	subscribeError:^(<span class="name">NSError</span> *error) &#123;</span><br><span class="line">		[<span class="name">self</span> presentError:error]<span class="comment">;</span></span><br><span class="line">	&#125; completed:^&#123;</span><br><span class="line">		NSLog(<span class="name">@</span><span class="string">&quot;Fetched all messages.&quot;</span>)<span class="comment">;</span></span><br><span class="line">	&#125;]<span class="comment">;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="并行独立工作"><a href="#并行独立工作" class="headerlink" title="并行独立工作"></a>并行独立工作</h3><p>与独立的数据集合并行工作，然后将它们合并成一个non-trivial函数到Cocoa，并经常涉及大量的同步：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">__block <span class="built_in">NSArray</span> *databaseObjects;</span><br><span class="line">__block <span class="built_in">NSArray</span> *fileContents;</span><br><span class="line"> </span><br><span class="line"><span class="built_in">NSOperationQueue</span> *backgroundQueue = [[<span class="built_in">NSOperationQueue</span> alloc] init];</span><br><span class="line"><span class="built_in">NSBlockOperation</span> *databaseOperation = [<span class="built_in">NSBlockOperation</span> blockOperationWithBlock:^&#123;</span><br><span class="line">	databaseObjects = [databaseClient fetchObjectsMatchingPredicate:predicate];</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line"><span class="built_in">NSBlockOperation</span> *filesOperation = [<span class="built_in">NSBlockOperation</span> blockOperationWithBlock:^&#123;</span><br><span class="line">	<span class="built_in">NSMutableArray</span> *filesInProgress = [<span class="built_in">NSMutableArray</span> array];</span><br><span class="line">	<span class="keyword">for</span> (<span class="built_in">NSString</span> *path <span class="keyword">in</span> files) &#123;</span><br><span class="line">		[filesInProgress addObject:[<span class="built_in">NSData</span> dataWithContentsOfFile:path]];</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fileContents = [filesInProgress <span class="keyword">copy</span>];</span><br><span class="line">&#125;];</span><br><span class="line"> </span><br><span class="line"><span class="built_in">NSBlockOperation</span> *finishOperation = [<span class="built_in">NSBlockOperation</span> blockOperationWithBlock:^&#123;</span><br><span class="line">	[<span class="keyword">self</span> finishProcessingDatabaseObjects:databaseObjects fileContents:fileContents];</span><br><span class="line">	<span class="built_in">NSLog</span>(<span class="string">@&quot;Done processing&quot;</span>);</span><br><span class="line">&#125;];</span><br><span class="line"> </span><br><span class="line">[finishOperation addDependency:databaseOperation];</span><br><span class="line">[finishOperation addDependency:filesOperation];</span><br><span class="line">[backgroundQueue addOperation:databaseOperation];</span><br><span class="line">[backgroundQueue addOperation:filesOperation];</span><br><span class="line">[backgroundQueue addOperation:finishOperation];</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码可以用简单的合成信号来清理和优化：</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">RACSignal</span> *databaseSignal = [[databaseClient</span><br><span class="line">	fetchObjectsMatchingPredicate:predicate]</span><br><span class="line">	subscribeOn:[<span class="symbol">RACScheduler</span> scheduler]];</span><br><span class="line"></span><br><span class="line"><span class="symbol">RACSignal</span> *fileSignal = [<span class="symbol">RACSignal</span> startEagerlyWithScheduler:[<span class="symbol">RACScheduler</span> scheduler] block:^(id&lt;<span class="symbol">RACSubscriber</span>&gt; subscriber) &#123;</span><br><span class="line">	<span class="symbol">NSMutableArray</span> *filesInProgress = [<span class="symbol">NSMutableArray</span> array];</span><br><span class="line">	for (<span class="symbol">NSString</span> *path in files) &#123;</span><br><span class="line">		[filesInProgress addObject:[<span class="symbol">NSData</span> dataWithContentsOfFile:path]];</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	[subscriber sendNext:[filesInProgress copy]];</span><br><span class="line">	[subscriber sendCompleted];</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line">[[<span class="symbol">RACSignal</span></span><br><span class="line">	combineLatest:@[ databaseSignal, fileSignal ]</span><br><span class="line">	reduce:^ id (<span class="symbol">NSArray</span> *databaseObjects, <span class="symbol">NSArray</span> *fileContents) &#123;</span><br><span class="line">		[self finishProcessingDatabaseObjects:databaseObjects fileContents:fileContents];</span><br><span class="line">		return nil;</span><br><span class="line">	&#125;]</span><br><span class="line">	subscribeCompleted:^&#123;</span><br><span class="line">		<span class="symbol">NSLog</span>(@<span class="string">&quot;Done processing&quot;</span>);</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<h3 id="简化collection转换"><a href="#简化collection转换" class="headerlink" title="简化collection转换"></a>简化collection转换</h3><p>高阶函数比如 <code>map</code>, <code>filter</code>, <code>fold</code>&#x2F;<code>reduce</code>在Foundation中是非常缺少的，导致循环中的代码像这样：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSMutableArray</span> *results = [<span class="built_in">NSMutableArray</span> array];</span><br><span class="line"><span class="keyword">for</span> (<span class="built_in">NSString</span> *str <span class="keyword">in</span> strings) &#123;</span><br><span class="line">	<span class="keyword">if</span> (str.length &lt; <span class="number">2</span>) &#123;</span><br><span class="line">		<span class="keyword">continue</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">NSString</span> *newString = [str stringByAppendingString:<span class="string">@&quot;foobar&quot;</span>];</span><br><span class="line">	[results addObject:newString];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/v2.5/ReactiveCocoa/RACSequence.h">RACSequence</a>允许所有Cocoa collection在统一的和声明的方式下被操作：</p>
+<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">RACSequence *results = [[strings.<span class="property">rac_sequence</span></span><br><span class="line">	<span class="built_in">filter</span>:^ <span class="title function_">BOOL</span> (NSString *<span class="built_in">str</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="built_in">str</span>.<span class="property">length</span> &gt;= <span class="number">2</span>;</span><br><span class="line">	&#125;]</span><br><span class="line">	<span class="built_in">map</span>:^(NSString *<span class="built_in">str</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> [<span class="built_in">str</span> stringByAppendingString:@<span class="string">&quot;foobar&quot;</span>];</span><br><span class="line">	&#125;];</span><br></pre></td></tr></table></figure>
+
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><ul>
+<li><p>以上文章摘译自ReactiveCocoa的Objective-C官方文档<a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/v2.5/README.md#when-to-use-reactivecocoa">ReactiveCocoa Documentation</a></p>
+</li>
+<li><p>以上内容介绍了RAC的基本用法，仅限于使用，所以墙裂建议仔细学习下节的<strong>参考链接</strong>，了解RAC原理及高阶用法。</p>
+</li>
+</ul>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li>ReactiveCocoa的Objective-C官方文档<a target="_blank" rel="noopener" href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/v2.5/README.md#when-to-use-reactivecocoa">ReactiveCocoa Documentation</a></li>
+<li>雷纯锋的<a target="_blank" rel="noopener" href="http://blog.leichunfeng.com/blog/2015/12/25/reactivecocoa-v2-dot-5-yuan-ma-jie-xi-zhi-jia-gou-zong-lan/">ReactiveCocoa v2.5 源码解析之架构总览</a></li>
+<li>吖了个峥的<a target="_blank" rel="noopener" href="http://www.jianshu.com/p/87ef6720a096">最快让你上手ReactiveCocoa之基础篇</a> 和 <a target="_blank" rel="noopener" href="http://www.jianshu.com/p/e10e5ca413b7">最快让你上手ReactiveCocoa之进阶篇</a></li>
+<li>李忠的<a target="_blank" rel="noopener" href="http://limboy.me/ios/2013/06/19/frp-reactivecocoa.html">ReactiveCocoa与Functional Reactive Programming</a></li>
+<li>唐巧的<a target="_blank" rel="noopener" href="http://devtang.com/2016/01/03/reactive-cocoa-discussion/">ReactiveCocoa 讨论会</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/03/protect-apple-id/" rel="next" title="由丢失一部iPhone6引发的祸端">
+                <i class="fa fa-chevron-left"></i> 由丢失一部iPhone6引发的祸端
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/01/CocoaPods/" rel="prev" title="iOS的库依赖管理工具CocoaPods">
+                iOS的库依赖管理工具CocoaPods <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8ReactiveCocoa"><span class="nav-number">2.</span> <span class="nav-text">使用ReactiveCocoa</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E6%88%96%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E6%BA%90"><span class="nav-number">2.1.</span> <span class="nav-text">处理异步或事件驱动的数据源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E4%BE%9D%E8%B5%96%E6%93%8D%E4%BD%9C"><span class="nav-number">2.2.</span> <span class="nav-text">链接依赖操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B6%E8%A1%8C%E7%8B%AC%E7%AB%8B%E5%B7%A5%E4%BD%9C"><span class="nav-number">2.3.</span> <span class="nav-text">并行独立工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8C%96collection%E8%BD%AC%E6%8D%A2"><span class="nav-number">2.4.</span> <span class="nav-text">简化collection转换</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">3.</span> <span class="nav-text">后记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference"><span class="nav-number">4.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2016/03/17/meet-ReactiveCocoa/';
+          this.page.identifier = '2016/03/17/meet-ReactiveCocoa/';
+          this.page.title = '初识ReactiveCocoa';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

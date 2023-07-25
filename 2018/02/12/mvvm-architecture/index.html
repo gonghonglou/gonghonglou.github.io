@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前段时间将公司的 iOS 移动端项目采用 MVVM 设计模式重构了，说是重构，其实是新开了一个工程按照原工程业务逻辑重写了一遍。重构结束后整个工程清爽了不要太多，逻辑清晰，维护轻松，新功能开发起来效率得到明显提升。重构结束后就打算将项目基础架构总结一下，结合 MVVM 设计模式写份小结，但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 首先声明的是，本篇文章是对自己过去几个月里重构工">
+<meta property="og:type" content="article">
+<meta property="og:title" content="采用MVVM设计模式搭建项目基础架构初探">
+<meta property="og:url" content="http://gonghonglou.com/2018/02/12/mvvm-architecture/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="前段时间将公司的 iOS 移动端项目采用 MVVM 设计模式重构了，说是重构，其实是新开了一个工程按照原工程业务逻辑重写了一遍。重构结束后整个工程清爽了不要太多，逻辑清晰，维护轻松，新功能开发起来效率得到明显提升。重构结束后就打算将项目基础架构总结一下，结合 MVVM 设计模式写份小结，但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。 首先声明的是，本篇文章是对自己过去几个月里重构工">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/mvvm-architecture/mvc_mvvm.png">
+<meta property="og:image" content="http://image.gonghonglou.com/mvvm-architecture/files_category.png">
+<meta property="og:image" content="http://image.gonghonglou.com/mvvm-architecture/operate_view.png">
+<meta property="og:image" content="http://image.gonghonglou.com/mvvm-architecture/push_view.png">
+<meta property="og:image" content="http://image.gonghonglou.com/cheaptalk.png">
+<meta property="og:image" content="http://image.gonghonglou.com/mvvm-architecture/flow_path.png">
+<meta property="article:published_time" content="2018-02-12T06:47:12.000Z">
+<meta property="article:modified_time" content="2020-03-14T12:58:45.797Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/mvvm-architecture/mvc_mvvm.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2018/02/12/mvvm-architecture/"/>
+
+
+
+
+
+  <title>采用MVVM设计模式搭建项目基础架构初探 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2018/02/12/mvvm-architecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">采用MVVM设计模式搭建项目基础架构初探</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-12T14:47:12+08:00">
+                2018-02-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前段时间将公司的 iOS 移动端项目采用 MVVM 设计模式重构了，说是重构，其实是新开了一个工程按照原工程业务逻辑重写了一遍。重构结束后整个工程清爽了不要太多，逻辑清晰，维护轻松，新功能开发起来效率得到明显提升。重构结束后就打算将项目基础架构总结一下，结合 MVVM 设计模式写份小结，但苦于一直没有时间，以致拖到了现在，马上过年了现在来还账。。。</p>
+<p>首先声明的是，本篇文章是对自己过去几个月里重构工作中项目架构方面的总结，因为项目比较轻，所以文章讲的内容更适合一个轻量型工程，至于对复杂工程的适用程度则另当别论，小白经验求轻喷～</p>
+<p>对于这篇博客的内容 MVVM 是重点，但不是目的，目的是讲清对一个项目怎样搭建基础架构，所以文章会以 MVVM 设计模式为中心展开讲解整个项目基础架构的搭建，以及在项目中对架构方面自己的处理方法。</p>
+<h1 id="MVC-与-MVVM"><a href="#MVC-与-MVVM" class="headerlink" title="MVC 与 MVVM"></a>MVC 与 MVVM</h1><p>关于 <code>MVC</code>、<code>MVP</code>、<code>MVVM</code> 各种设计模式的区别及特点网上已经有了一大推的文章去讲，这里就不再详细赘述了，毕竟这不是本篇文章的重点。但我们总归要先认识 <code>MVVM</code> 设计模式嘛，提到 <code>MVVM</code> 就离不开 <code>MVC</code> 的延伸，毕竟 <code>MVVM</code> 设计模式是从 <code>MVC</code> 衍生出来的，请看图：</p>
+<p><img src="http://image.gonghonglou.com/mvvm-architecture/mvc_mvvm.png" alt="MVC-MVVM 设计模式"></p>
+<p>通过这张图我想尽量将这两种设计模式的不同点区分清楚</p>
+<ul>
+<li><p><code>MVC</code> 设计模式</p>
+<ol>
+<li><code>View</code> 绑定事件并响应，传递给 <code>Controller</code> 处理</li>
+<li><code>Controller</code> 处理逻辑，发起网络请求向 <code>Model</code> 存储数据，或调用缓存方法向 <code>Model</code> 获取数据以控制 <code>View</code> 的展示</li>
+<li><code>Model</code> 负责数据存储</li>
+</ol>
+</li>
+<li><p><code>MVVM</code> 设计模式</p>
+<ol>
+<li><code>View</code> 绑定事件并响应，传递给 <code>ViewModel</code> 处理</li>
+<li><code>ViewModel</code> 处理逻辑，发起网络请求向 <code>Model</code> 存储数据</li>
+<li><code>Model</code> 负责数据存储</li>
+<li><code>Model</code> 数据变动，<code>ViewModel</code> 会得到响应并进行逻辑处理</li>
+<li><code>ViewModel</code> 数据变动，<code>View</code> 会得到响应并改变页面</li>
+</ol>
+</li>
+</ul>
+<h1 id="文件分类与功能划分"><a href="#文件分类与功能划分" class="headerlink" title="文件分类与功能划分"></a>文件分类与功能划分</h1><p>对于每一模块如 <code>Login</code>、<code>Home</code>、<code>Detail</code> 等都有对应的自己的 <code>ViewContainer</code>、<code>ViewController</code>、<code>ViewModel</code>，基本一个模块对应一块页面，文件分区如下：</p>
+<p><img src="http://image.gonghonglou.com/mvvm-architecture/files_category.png" alt="文件分类"></p>
+<p>简单讲一下各个文件的作用：</p>
+<ul>
+<li><p>1.<code>ViewContainer</code>：</p>
+<ul>
+<li>1.在 <code>MVVM</code> 设计模式中与 <code>ViewController</code> 共同扮演 <code>View</code> 的角色</li>
+<li>2.负责页面子控件布局，可接收一个 <code>VO</code> 类决定该页面内容所需要的数据模型，对于页面</li>
+<li>3.对于页面内容所需要的数据可对外暴露一个接口，接收一个包含该页面所需数据的 <code>VO</code> 类</li>
+</ul>
+</li>
+<li><p>2.<code>ViewController</code>：</p>
+<ul>
+<li>1.在 <code>MVVM</code> 设计模式中与 <code>ViewContainer</code> 共同扮演 <code>View</code> 的角色</li>
+<li>2.负责绑定子控件事件、代理，实现绑定事件到 <code>ViewModel</code>、实现代理方法</li>
+<li>3.响应 <code>ViewModel</code> 数据变化以控制 <code>View</code> 层页面展示</li>
+</ul>
+</li>
+<li><p>3.<code>ViewModel</code>：</p>
+<ul>
+<li>1.在 <code>MVVM</code> 设计模式中扮演 <code>ViewModel</code> 的角色</li>
+<li>2.负责处理 <code>ViewController</code> 传递的点击等事件</li>
+<li>3.负责逻辑处理，业务处理。如：发起网络请求、处理缓存数据、生成 <code>VO</code> 类对象</li>
+<li>4.响应 <code>Model</code> 数据变化</li>
+</ul>
+</li>
+</ul>
+<p>以上涉及到额外的两个概念： <code>VO</code> 类和 <code>Model</code> 类：</p>
+<ul>
+<li><p>1.<code>VO</code> 类：</p>
+<ul>
+<li>1.专职于 <code>View</code> 层页面展示所需要的数据，提供给 <code>View</code> 层</li>
+<li>2.这样 <code>View</code> 层就不必关心源数据如何，而仅关心 <code>VO</code> 类有什么样的数据就展示什么样的页面，将源数据的处理操作交给 <code>ViewModel</code> 去做</li>
+<li>3.<code>VO</code> 类既可以给 <code>Cell</code> 提供为 <code>CellVO</code>，也可以给子视图提供为 <code>SubViewVO</code></li>
+</ul>
+</li>
+<li><p>2.<code>Model</code> 类：</p>
+<ul>
+<li>1.在 <code>MVVM</code> 设计模式中扮演 <code>Model</code> 的角色</li>
+<li>2.基本每个模块都有拥有一份 <code>ViewContainer</code>、<code>ViewController</code>、<code>ViewModel</code>，但并非每个模块都拥有一份 <code>Model</code>，所以只给需要 <code>Model</code> 类的模块添加该类文件</li>
+<li>3.并非因为该模块没有 <code>Model</code> 类文件就说这个模块没有 <code>Model</code> 层，我们所说的 <code>MVVM</code> 设计模式是一个抽象的概念，不要被上图中存在的一一对应的物理文件就忽略了工程中的 <code>Model</code> 层</li>
+<li>4.我们通常会将整个工程的 <code>Model</code> 层抽离出来放在一起，比如网络请求部分、缓存部分、配置文件这些都属于 <code>MVVM</code> 设计模式里的 <code>Model</code> 层的内容，而这些内容大都可以抽离成单独的工具类，所以不会存在于每个模块的文件夹分类中</li>
+<li>5.当然，如果某模块需要一份私有的 <code>Model</code> 类文件，我们仍然会为该模块新建 <code>Model</code> 类文件</li>
+</ul>
+</li>
+</ul>
+<h1 id="双向绑定"><a href="#双向绑定" class="headerlink" title="双向绑定"></a>双向绑定</h1><p><code>MVVM</code> 设计模式有一个最大的特点就是双向绑定，当 <code>ViewModel</code> 中的数据发生变化时，<code>View</code> 层会自动响应数据变化以更改页面，而实现这一功能的方法可以通过 <code>KVO</code>、通知等方式，只不过自己去实现这些功能难免会让 <code>MVVM</code> 的使用变得复杂，而作为函数式响应式编程的大神级作品 <code>ReactiveCocoa</code> 可以完美的帮我们实现这些操作。</p>
+<p>网络上关于 <code>MVVM</code> + <code>ReactiveCocoa</code> 工作方式的文章也是一大推，这里也就不详细赘述了，这里用到的 <code>ReactiveCocoa</code> 的功能非常少，我们仅仅实现双向绑定能够响应数据变化即可。</p>
+<h2 id="方式一：监听属性"><a href="#方式一：监听属性" class="headerlink" title="方式一：监听属性"></a>方式一：监听属性</h2><p>如，<code>ViewModel</code> 存在一个属性 <code>dataArray</code>，当该属性变化时，<code>View</code> 层的 <code>UITableView</code> 自动刷新。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSArray</span> *dataArray;</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>ViewController</code> 里实现对 	<code>dataArray</code> 属性的监听：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@weakify(<span class="params">self</span>);</span></span><br><span class="line">[RACObserve(self.viewModel, dataArray) subscribeNext:^(<span class="built_in">id</span>  _Nullable x) &#123;</span><br><span class="line"><span class="meta">   @strongify(<span class="params">self</span>);</span></span><br><span class="line">   [self.viewContainer.tableView reloadData];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<h2 id="方式二：监听消息"><a href="#方式二：监听消息" class="headerlink" title="方式二：监听消息"></a>方式二：监听消息</h2><p>如，<code>ViewModel</code> 存在一个属性 <code>dataArray</code>，但并不对外暴露，而是对外暴露一个 <code>RACSignal</code> 方法，当产生 <code>RACSignal</code> 信号时，<code>View</code> 层的 <code>UITableView</code> 自动刷新。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (RACSignal *)arraySignal &#123;</span><br><span class="line">	<span class="keyword">return</span> [RACObserve(<span class="keyword">self</span>, dataArray) filter:^<span class="type">BOOL</span>(<span class="type">id</span> value) &#123;</span><br><span class="line">	   <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">	&#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>ViewController</code> 里实现对 	<code>arraySignal</code> 信号的监听：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@weakify(<span class="params">self</span>);</span></span><br><span class="line">[self.viewModel.arraySignal subscribeNext:^(<span class="built_in">id</span> x) &#123;</span><br><span class="line"><span class="meta">   @strongify(<span class="params">self</span>);</span></span><br><span class="line">   [self.viewContainer.tableView reloadData];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>这两种方式相比，方式一写法简单，但需要对外暴露属性，方式二写法复杂但不需要暴露属性，只对外暴露一个信号方法。</p>
+<h1 id="页面跳转"><a href="#页面跳转" class="headerlink" title="页面跳转"></a>页面跳转</h1><p>当 <code>View</code> 响应事件并驱动 <code>ViewModel</code> 进行业务逻辑处理涉及到页面变动或跳转时，我们的逻辑应当是这样的：</p>
+<h2 id="页面操作流程"><a href="#页面操作流程" class="headerlink" title="页面操作流程"></a>页面操作流程</h2><p>对于页面内局部内容的改变，不涉及 <code>push</code>、<code>present</code> 等操作时，页面操作由当前 <code>View</code> 控制，流程如下：</p>
+<p><img src="http://image.gonghonglou.com/mvvm-architecture/operate_view.png" alt="页面操作"><br>上图为页面操作的流程：<br>1、<code>View</code> 响应事件并传递给 <code>ViewModel</code><br>2、<code>ViewModel</code> 逻辑处理完成后通知 <code>View</code><br>3、<code>View</code> 接收 <code>ViewModel</code> 的通知并进行页面操作</p>
+<h2 id="页面跳转流程"><a href="#页面跳转流程" class="headerlink" title="页面跳转流程"></a>页面跳转流程</h2><p>对于页面跳转，比如 <code>push</code>、<code>present</code> 等操作时，跳转行为由 <code>Mediator</code> 控制，流程如下：</p>
+<p><img src="http://image.gonghonglou.com/mvvm-architecture/push_view.png" alt="页面跳转"><br>上图为页面跳转的流程：<br>1、<code>View</code> 响应事件并传递给 <code>ViewModel</code><br>2、<code>ViewModel</code> 逻辑处理完成后通知中介者<br>3、<code>Mediator</code> 中介者操作页面进行跳转</p>
+<h2 id="中介者（Mediator）"><a href="#中介者（Mediator）" class="headerlink" title="中介者（Mediator）"></a>中介者（Mediator）</h2><p>其中，这里涉及到 <code>中介者（Mediator）</code> 的概念：<br>为了方便进行页面跳转的操作及避免依赖，我们引入了 <code>中介者（Mediator）</code> 的概念，<code>ViewModel</code> 持有 <code>Mediator</code>，<code>Mediator</code> 控制所有页面的跳转，只对外暴露跳转接口。<br>这样，<code>ViewModel</code> 并不关心页面跳转的细节，只需调用 <code>Mediator</code> 的方法即可，而页面跳转的实现，甚至是跳转的方向都可以有 <code>Mediator</code> 来决定。</p>
+<p><img src="http://image.gonghonglou.com/cheaptalk.png"></p>
+<h1 id="代码实践"><a href="#代码实践" class="headerlink" title="代码实践"></a>代码实践</h1><p>我们努力以最简单的例子展现整个架构的流程，涉及到大概三个页面：<br>1、登录页：点击按钮执行登录操作并推出主页面<br>2、主页：展示一个 <code>UITableView</code>，并且可点击 <code>UITableViewCell</code> 推出详情页面<br>3、详情页：展示详情信息</p>
+<h2 id="登录页（Login）"><a href="#登录页（Login）" class="headerlink" title="登录页（Login）"></a>登录页（Login）</h2><p>1、<code>ViewContainer</code> 完成布局，添加登录按钮：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">-</span> (instancetype)<span class="keyword">init</span> &#123;</span><br><span class="line">    <span class="keyword">self</span> <span class="operator">=</span> [<span class="keyword">super</span> <span class="keyword">init</span>];</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="keyword">self</span>.confirmButton <span class="operator">=</span> [<span class="type">UIButton</span> buttonWithType:<span class="type">UIButtonTypeSystem</span>];</span><br><span class="line">        <span class="keyword">self</span>.confirmButton.frame <span class="operator">=</span> <span class="type">CGRectMake</span>(<span class="number">100</span>, <span class="number">300</span>, <span class="number">175</span>, <span class="number">40</span>);</span><br><span class="line">        <span class="keyword">self</span>.confirmButton.layer.cornerRadius <span class="operator">=</span> <span class="number">4.0</span>;</span><br><span class="line">        <span class="keyword">self</span>.confirmButton.backgroundColor <span class="operator">=</span> [<span class="type">UIColor</span> redColor];</span><br><span class="line">        [<span class="keyword">self</span>.confirmButton setTitle:@<span class="string">&quot;点击登录&quot;</span> forState:<span class="type">UIControlStateNormal</span>];</span><br><span class="line">        [<span class="keyword">self</span>.confirmButton setTitleColor:[<span class="type">UIColor</span> whiteColor] forState:<span class="type">UIControlStateNormal</span>];</span><br><span class="line">        [<span class="keyword">self</span> addSubview:<span class="keyword">self</span>.confirmButton];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>2、<code>ViewController</code> 绑定登录按钮方法：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">void</span>)clickConfirmButton &#123;</span><br><span class="line"><span class="string">    [self.viewModel login]</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3、<code>ViewModel</code> 处理登录逻辑，操作 <code>MACoordinatingController</code> 进行页面跳转：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">void</span>)login &#123;    </span><br><span class="line"><span class="string">    [[MACoordinatingController sharedInstance]</span> pushToHomeViewController];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>4、<code>MACoordinatingController</code> 执行页面跳转：</p>
+<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="literal">void</span>)pushToHomeViewController &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">self</span>.homeVC) <span class="built_in">self</span>.homeVC = <span class="meta">[</span>MAHomeViewController <span class="literal">new</span><span class="meta">]</span>;</span><br><span class="line">    <span class="meta">[</span>_activeViewController.navigationController pushViewController:<span class="built_in">self</span>.homeVC animated:YES<span class="meta">]</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主页（Home）"><a href="#主页（Home）" class="headerlink" title="主页（Home）"></a>主页（Home）</h2><p>1、<code>ViewContainer</code> 完成布局，添加 <code>UITableView</code><br>2、<code>ViewController</code> 设置 <code>UITableView</code> 代理并实现代理方法：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// self.viewContainer.tableView.dataSource = self;</span></span><br><span class="line"><span class="comment">// self.viewContainer.tableView.delegate = self;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - UITableViewDataSource</span></span><br><span class="line">- (<span class="built_in">NSInteger</span>)tableView:(<span class="built_in">UITableView</span> *)tableView numberOfRowsInSection:(<span class="built_in">NSInteger</span>)section &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>.viewModel.dataArray.count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">UITableViewCell</span> *)tableView:(<span class="built_in">UITableView</span> *)tableView cellForRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    MAHomeTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[MAHomeTableViewCell cellIdentifier]];</span><br><span class="line">    <span class="keyword">if</span> (!cell) &#123;</span><br><span class="line">        cell = [[MAHomeTableViewCell alloc] initWithStyle:<span class="built_in">UITableViewCellStyleDefault</span> reuseIdentifier:[MAHomeTableViewCell cellIdentifier]];</span><br><span class="line">    &#125;</span><br><span class="line">    [cell setHomeTableViewCellWithVO:<span class="keyword">self</span>.viewModel.dataArray[indexPath.row]];</span><br><span class="line">    <span class="keyword">return</span> cell;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - UITableViewDelegate</span></span><br><span class="line">- (<span class="type">void</span>)tableView:(<span class="built_in">UITableView</span> *)tableView didSelectRowAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    [<span class="keyword">self</span>.viewModel didSelectedCellWithIndexPath:indexPath];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并设置 <code>ViewModel</code> 数据监听：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">- (void)setObserve &#123;</span><br><span class="line"><span class="meta">    @weakify(<span class="params">self</span>);</span></span><br><span class="line">    [RACObserve(self.viewModel, dataArray) subscribeNext:^(<span class="built_in">id</span>  _Nullable x) &#123;</span><br><span class="line"><span class="meta">        @strongify(<span class="params">self</span>);</span></span><br><span class="line">        [self.viewContainer.tableView reloadData];</span><br><span class="line">    &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3、<code>ViewModel</code> 进行逻辑处理，生成数据</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)operateDataArray &#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *mutableArray = [<span class="built_in">NSMutableArray</span> new];</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">        MAHomeTableViewCellVO *cellVO = [MAHomeTableViewCellVO new];</span><br><span class="line">        cellVO.title = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;title -- %ld&quot;</span>, (<span class="type">long</span>)i];</span><br><span class="line">        cellVO.message = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@&quot;message -- %ld&quot;</span>, (<span class="type">long</span>)i];</span><br><span class="line">        [mutableArray addObject:cellVO];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">self</span>.dataArray = [mutableArray <span class="keyword">copy</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并响应 <code>cell</code> 点击，操作 <code>MACoordinatingController</code> 进行页面跳转</p>
+<p>4、<code>MACoordinatingController</code> 执行页面跳转</p>
+<p>其中，<code>MAHomeTableViewCell</code> 的内容是由 <code>MAHomeTableViewCellVO</code> 来决定的。</p>
+<h2 id="详情页（Detail）"><a href="#详情页（Detail）" class="headerlink" title="详情页（Detail）"></a>详情页（Detail）</h2><p>1、<code>ViewContainer</code> 完成布局<br>2、<code>ViewController</code> 设置 <code>ViewModel</code> 数据监听<br>3、<code>ViewModel</code> 进行逻辑处理，生成数据</p>
+<p>整体流程大概如下图：</p>
+<p><img src="http://image.gonghonglou.com/mvvm-architecture/flow_path.png"></p>
+<h1 id="关于页面跳转"><a href="#关于页面跳转" class="headerlink" title="关于页面跳转"></a>关于页面跳转</h1><p>对于中介者跳转页面代码如：</p>
+<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="literal">void</span>)pushToHomeViewController &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">self</span>.homeVC) <span class="built_in">self</span>.homeVC = <span class="meta">[</span>MAHomeViewController <span class="literal">new</span><span class="meta">]</span>;</span><br><span class="line">    <span class="meta">[</span>_activeViewController.navigationController pushViewController:<span class="built_in">self</span>.homeVC animated:YES<span class="meta">]</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们需要记录 <code>_activeViewController</code> 的值来对当前页面进行操作，其中处理方法有两种。</p>
+<h2 id="方式一："><a href="#方式一：" class="headerlink" title="方式一："></a>方式一：</h2><p>令所有的 <code>ViewController</code> 继承 <code>BaseViewController</code>，在 <code>BaseViewController</code> 的 <code>- (void)viewWillAppear:</code> 方法里设置 <code>_activeViewController</code>：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)viewWillAppear:(<span class="type">BOOL</span>)animated &#123;</span><br><span class="line">    [<span class="variable language_">super</span> viewWillAppear:animated];</span><br><span class="line">    [MACoordinatingController sharedInstance].activeViewController = <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="方式二："><a href="#方式二：" class="headerlink" title="方式二："></a>方式二：</h2><p>采用第一种方式就需要令所有的 <code>ViewController</code> 继承 <code>BaseViewController</code>，显示不太友好，我们可以选用 <code>Method Swizzling</code> 的方式替换掉所有的 <code>ViewController</code> 的 <code>- (void)viewWillAppear:</code> 方法，在已替换的 <code>- (void)ma_viewWillAppear:</code> 方法里设置 <code>MACoordinatingController</code> 的 <code>activeViewController</code> 为当前的 <code>ViewController</code>：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">UIViewController</span> (<span class="title">MAAppear</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">dispatch_once_t</span> onceToken;</span><br><span class="line">    <span class="built_in">dispatch_once</span>(&amp;onceToken, ^&#123;</span><br><span class="line">        Class <span class="keyword">class</span> = [<span class="keyword">self</span> <span class="keyword">class</span>];</span><br><span class="line"></span><br><span class="line">        SEL originalSelector = <span class="keyword">@selector</span>(viewWillAppear:);</span><br><span class="line">        SEL swizzledSelector = <span class="keyword">@selector</span>(ma_viewWillAppear:);</span><br><span class="line"></span><br><span class="line">        Method originalMethod = class_getInstanceMethod(<span class="keyword">class</span>, originalSelector);</span><br><span class="line">        Method swizzledMethod = class_getInstanceMethod(<span class="keyword">class</span>, swizzledSelector);</span><br><span class="line"></span><br><span class="line">        <span class="type">BOOL</span> success = class_addMethod(<span class="keyword">class</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</span><br><span class="line">        <span class="keyword">if</span> (success) &#123;</span><br><span class="line">            class_replaceMethod(<span class="keyword">class</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            method_exchangeImplementations(originalMethod, swizzledMethod);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> mark - Method Swizzling</span></span><br><span class="line">- (<span class="type">void</span>)ma_viewWillAppear:(<span class="type">BOOL</span>)animated &#123;</span><br><span class="line">    [<span class="keyword">self</span> ma_viewWillAppear:animated];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (![<span class="keyword">self</span> isKindOfClass:<span class="built_in">NSClassFromString</span>(<span class="string">@&quot;UIInputWindowController&quot;</span>)]) &#123;</span><br><span class="line">        [MACoordinatingController sharedInstance].activeViewController = <span class="keyword">self</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>关于 <code>Method Swizzling</code> 可以参考我之前的文章：<a href="http://gonghonglou.com/2017/09/07/analyse-safekit/">从 SafeKit 看异常保护及 Method Swizzling 使用分析</a></p>
+<p>到这里，采用MVVM设计模式搭建项目基础架构初探大概就结束了，这是篇对自己项目经验的总结，也希望这篇文章能够帮到大家一点点。新年快乐！</p>
+<p>附上 <a target="_blank" rel="noopener" href="https://github.com/gonghonglou/DemoRepo/tree/master/MVVMArchitectureDemo">MVVMArchitectureDemo GitHub 地址</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/11/scrollview-tableview/" rel="next" title="关于UIScrollView和UITableView手势冲突的解决方法">
+                <i class="fa fa-chevron-left"></i> 关于UIScrollView和UITableView手势冲突的解决方法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/13/saybye2017/" rel="prev" title="Say Bye 2017">
+                Say Bye 2017 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MVC-%E4%B8%8E-MVVM"><span class="nav-number">1.</span> <span class="nav-text">MVC 与 MVVM</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%88%86%E7%B1%BB%E4%B8%8E%E5%8A%9F%E8%83%BD%E5%88%92%E5%88%86"><span class="nav-number">2.</span> <span class="nav-text">文件分类与功能划分</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A"><span class="nav-number">3.</span> <span class="nav-text">双向绑定</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E5%BC%8F%E4%B8%80%EF%BC%9A%E7%9B%91%E5%90%AC%E5%B1%9E%E6%80%A7"><span class="nav-number">3.1.</span> <span class="nav-text">方式一：监听属性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E5%BC%8F%E4%BA%8C%EF%BC%9A%E7%9B%91%E5%90%AC%E6%B6%88%E6%81%AF"><span class="nav-number">3.2.</span> <span class="nav-text">方式二：监听消息</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E8%B7%B3%E8%BD%AC"><span class="nav-number">4.</span> <span class="nav-text">页面跳转</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E6%93%8D%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-number">4.1.</span> <span class="nav-text">页面操作流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E8%B7%B3%E8%BD%AC%E6%B5%81%E7%A8%8B"><span class="nav-number">4.2.</span> <span class="nav-text">页面跳转流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AD%E4%BB%8B%E8%80%85%EF%BC%88Mediator%EF%BC%89"><span class="nav-number">4.3.</span> <span class="nav-text">中介者（Mediator）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.</span> <span class="nav-text">代码实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%99%BB%E5%BD%95%E9%A1%B5%EF%BC%88Login%EF%BC%89"><span class="nav-number">5.1.</span> <span class="nav-text">登录页（Login）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E9%A1%B5%EF%BC%88Home%EF%BC%89"><span class="nav-number">5.2.</span> <span class="nav-text">主页（Home）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A6%E6%83%85%E9%A1%B5%EF%BC%88Detail%EF%BC%89"><span class="nav-number">5.3.</span> <span class="nav-text">详情页（Detail）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E9%A1%B5%E9%9D%A2%E8%B7%B3%E8%BD%AC"><span class="nav-number">6.</span> <span class="nav-text">关于页面跳转</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E5%BC%8F%E4%B8%80%EF%BC%9A"><span class="nav-number">6.1.</span> <span class="nav-text">方式一：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E5%BC%8F%E4%BA%8C%EF%BC%9A"><span class="nav-number">6.2.</span> <span class="nav-text">方式二：</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2018/02/12/mvvm-architecture/';
+          this.page.identifier = '2018/02/12/mvvm-architecture/';
+          this.page.title = '采用MVVM设计模式搭建项目基础架构初探';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Crash 防护方案（二）：EXC_BAD_ACCESS">
+<meta property="og:url" content="http://gonghonglou.com/2019/07/06/crash-guard-bad-access/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里">
+<meta property="og:locale">
+<meta property="og:image" content="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png">
+<meta property="og:image" content="http://image.gonghonglou.com/crash-guard/ZoombieObjects.png">
+<meta property="article:published_time" content="2019-07-06T12:00:00.000Z">
+<meta property="article:modified_time" content="2020-03-14T12:56:30.840Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2019/07/06/crash-guard-bad-access/"/>
+
+
+
+
+
+  <title>Crash 防护方案（二）：EXC_BAD_ACCESS | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2019/07/06/crash-guard-bad-access/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Crash 防护方案（二）：EXC_BAD_ACCESS</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-06T20:00:00+08:00">
+                2019-07-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>大家都知道，向业已回收的对象发送消息是不安全的。这么做有时可以，有时不行。具体可行与否，完全取决于对象所占内存有没有为其他内容所覆写。而这块内存有没有移作他用，又无法确定，因此，应用程序只是偶尔崩溃。在没有崩溃的情况下，那块内存可能只复用了其中一部分，所以对象中的某些二进制数据依然有效。还有一种可能，就是那块内存恰好为另外一个有效且存活的对象所占据。在这种情况下，运行期系统会把消息发到新对象那里，而此对象也许能应答，也许不能。如果能，那程序就不崩溃</p>
+</blockquote>
+<p>这是《Effective Objective-C 2.0》书中”第 35 条：用“僵尸对象”调试内存管理问题“一章中对野指针的介绍，这便是野指针出现的原因。</p>
+<p>本篇是 Crash 防护方案系列的第二篇文章，同样是非常常见的 Crash 类型：EXC_BAD_ACCESS，文章会涉及以下几点：</p>
+<ul>
+<li>重现 EXC_BAD_ACCESS Crash</li>
+<li>分析 Xcode 中 Zoombie Objects 僵尸对象调试原理</li>
+<li>自己实现僵尸对象调试</li>
+<li>EXC_BAD_ACCESS 防护</li>
+</ul>
+<h1 id="重现-EXC-BAD-ACCESS-Crash"><a href="#重现-EXC-BAD-ACCESS-Crash" class="headerlink" title="重现 EXC_BAD_ACCESS Crash"></a>重现 EXC_BAD_ACCESS Crash</h1><p>我们先模拟一下看看野指针崩溃的样子：<br><img src="http://image.gonghonglou.com/crash-guard/EXC_BAD_ACCESS.png" alt="EXC_BAD_ACCESS"></p>
+<p>崩溃的原因是 obj 对象是用 assign 修饰的，self 并未强引用该对象，GHLTestObject 对象创建之后因为没人引用他所以就被回收了，之后再次调用 GHLTestObject 的 log 方法则出现了 EXC_BAD_ACCESS 崩溃，这便是向已回收的对象发送消息产生的崩溃。</p>
+<p>多说一句，这里如果把 obj 对象的 assign 修饰改成 strong，则 GHLTestObject 的 log 方法可以正常执行，因为 obj 对象被 self 强引用了。如果把 obj 对象的 assign 修饰改成 weak，虽然 GHLTestObject 的 log 方法不会执行，但程序也不会崩溃，因为被 weak 修饰的指针会在对象销毁后自动置空，在 OC 中向一个空对象发消息是不会崩溃的。</p>
+<h1 id="Xcode-中-Zoombie-Objects-僵尸对象调试原理"><a href="#Xcode-中-Zoombie-Objects-僵尸对象调试原理" class="headerlink" title="Xcode 中 Zoombie Objects 僵尸对象调试原理"></a>Xcode 中 Zoombie Objects 僵尸对象调试原理</h1><p>我们开启 Xcode 的 Zoombie Objects 选项看一下效果（Edit Scheme -&gt; Diagnostics -&gt; Zoombie Objects）：<br><img src="http://image.gonghonglou.com/crash-guard/ZoombieObjects.png" alt="Zoombie Objects"></p>
+<p>可以看到控制台打印了明确的报错信息：</p>
+<blockquote>
+<p>2019-07-09 18:59:43.894822+0800 GHLCrashGuard_Example[51380:3729261] *** -[GHLTestObject retain]: message sent to deallocated instance 0x6000001356f0</p>
+</blockquote>
+<p>并且能看到 self 的 obj 属性从 GHLTestObject 类变成了 _NSZombie_GHLTestObject 类。 其实，在启用僵尸对象后，在运行期发现 GHLTestObject 变成了僵尸对象，那么便动态的创建一个 _NSZombie_GHLTestObject 类，将 GHLTestObject 对象的 isa 指针指向这个新的类，再次向 GHLTestObject 对象发消息的话就会去 _NSZombie_GHLTestObject 这个类里去找相应的方法，然而 _NSZombie_GHLTestObject 这个类没有实现任何方法，那么发给他的全部消息都要经过“完整的消息转发机制”。<br>在发生崩溃的栈回溯消息能能看到 <code>___forwarding___</code> 函数，该函数首先要做的事情就是检查接受对象所属的类名，如果类名前缀为 <code>_NSZombie_</code>，则表明消息接收者是僵尸对象，那么会在控制台打印一条消息。将消息接受对象所属的类名去掉 <code>_NSZombie_</code> 前缀就能得到原始类名了。</p>
+<h1 id="自己实现僵尸对象调试"><a href="#自己实现僵尸对象调试" class="headerlink" title="自己实现僵尸对象调试"></a>自己实现僵尸对象调试</h1><p>有时我们可能实现脱离 Xcode 的僵尸对象调试，方便开发和测试的调试工走，那么可以参照 Xcode 的思路自己来实现，即：</p>
+<p>1、Hook NSObject 的 dealloc 方法<br>2、运行时动态生成新类，用 <code>_GHLZoombie_</code> 做前缀拼接原始类名<br>3、将僵尸对象的 isa 指针指向 <code>_GHLZoombie_</code> 新类<br>4、给 <code>_GHLZoombie_</code> 新类添加 forwardingTargetForSelector 方法<br>5、在 forwardingTargetForSelector 方法里去掉 <code>_GHLZoombie_</code> 前缀获取原始类名，和调用方法名打印出来<br>6、终止程序</p>
+<p>代码实现：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    <span class="comment">// Bad Access</span></span><br><span class="line">    [<span class="keyword">self</span> jr_swizzleMethod:<span class="built_in">NSSelectorFromString</span>(<span class="string">@&quot;dealloc&quot;</span>) withMethod:<span class="keyword">@selector</span>(zoombie_dealloc) error:<span class="literal">nil</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)zoombie_dealloc &#123;</span><br><span class="line">    </span><br><span class="line">    [[GHLBadAccessManager sharedInstance] handleDeallocObject:<span class="keyword">self</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>GHLBadAccessManager 类里的处理：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">NSString *GHLZoombieClassPrefix = @<span class="string">&quot;_GHLZoombie_&quot;</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)handleDeallocObject:(__unsafe_unretained id)<span class="keyword">object</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向动态生成的类，用 _GHLZoombie_ 拼接原有类名</span></span><br><span class="line">    NSString *className = <span class="constructor">NSStringFromClass([<span class="params">object</span> <span class="params">class</span>])</span>;</span><br><span class="line">    NSString *zombieClassName = <span class="literal">[GHLZ<span class="identifier">oombieClassPrefix</span> <span class="identifier">stringByAppendingString</span>: <span class="identifier">className</span>]</span>;</span><br><span class="line">    Class zombieClass = <span class="constructor">NSClassFromString(<span class="params">zombieClassName</span>)</span>;</span><br><span class="line">    <span class="keyword">if</span>(zombieClass) return;</span><br><span class="line"></span><br><span class="line">    zombieClass = objc<span class="constructor">_allocateClassPair([NSObject <span class="params">class</span>], [<span class="params">zombieClassName</span> UTF8String], 0)</span>;</span><br><span class="line">    objc<span class="constructor">_registerClassPair(<span class="params">zombieClass</span>)</span>;</span><br><span class="line">    <span class="keyword">class</span><span class="constructor">_addMethod([<span class="params">zombieClass</span> <span class="params">class</span>], @<span class="params">selector</span>(<span class="params">forwardingTargetForSelector</span>:)</span>, (IMP)forwardingTargetForSelector, <span class="string">&quot;@@:@&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">object</span><span class="constructor">_setClass(<span class="params">object</span>, <span class="params">zombieClass</span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">id forwarding<span class="constructor">TargetForSelector(<span class="params">id</span> <span class="params">object</span>, SEL <span class="params">_cmd</span>, SEL <span class="params">aSelector</span>)</span> &#123;</span><br><span class="line"></span><br><span class="line">    NSString *className = <span class="constructor">NSStringFromClass([<span class="params">object</span> <span class="params">class</span>])</span>;</span><br><span class="line">    NSString *realClass = <span class="literal">[<span class="identifier">className</span> <span class="identifier">stringByReplacingOccurrencesOfString</span>:GHLZ<span class="identifier">oombieClassPrefix</span> <span class="identifier">withString</span>:@&quot;&quot;]</span>;</span><br><span class="line"></span><br><span class="line">    <span class="constructor">NSLog(@<span class="string">&quot;[%@ %@] message sent to deallocated instance %@&quot;</span>, <span class="params">realClass</span>, NSStringFromSelector(<span class="params">aSelector</span>)</span>, <span class="keyword">object</span>);</span><br><span class="line">    abort<span class="literal">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>2019-07-09 19:37:01.766612+0800 GHLCrashGuard_Example[51942:3759054] [GHLTestObject log] message sent to deallocated instance &lt;_GHLZoombie_GHLTestObject: 0x600002b05e90&gt;</p>
+</blockquote>
+<p>运行程序发现能够实现和 Xcode 开启僵尸对象同样的效果</p>
+<h1 id="EXC-BAD-ACCESS-防护"><a href="#EXC-BAD-ACCESS-防护" class="headerlink" title="EXC_BAD_ACCESS 防护"></a>EXC_BAD_ACCESS 防护</h1><p>既然我们实现了和 Xcode 开启僵尸对象同样的效果，那我们可以在最后一步不选择终止程序，而是让程序进入消息转发机制。</p>
+<p>不过我们的防护方案里也可以更简单的将原始僵尸对象的 isa 指针指向一个固定的类：GHLZoombie，不必在运行时动态的创建，至于获取原始类名的问题，可以通过 objc_setAssociatedObject 的方式将原始类名保存进 GHLZoombie 对象里，在 GHLZoombie 对象里重载 - (id)forwardingTargetForSelector: 方法，通过 objc_getAssociatedObject 取出原始类名，在控制台打印，并将消息转发给 GHLCrashGuardProxy 对像，在上一篇 <a href="http://gonghonglou.com/2019/07/06/crash-guard-unrecognized-selector/">Crash 防护方案（一）：Unrecognized Selector</a> 里讲过，GHLCrashGuardProxy 对像里重载了 + (BOOL)resolveInstanceMethod: 方法避免崩溃，并收集堆栈，上报 Crash。</p>
+<p>代码实现<br>GHLBadAccessManager 类里的处理：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- (void)handleDeallocObject:(__unsafe_unretained id)<span class="keyword">object</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 指向固定的类，原有类名存储在关联对象中</span></span><br><span class="line">    NSString *originClassName = <span class="constructor">NSStringFromClass([<span class="params">object</span> <span class="params">class</span>])</span>;</span><br><span class="line">    objc<span class="constructor">_setAssociatedObject(<span class="params">object</span>, <span class="string">&quot;originClassName&quot;</span>, <span class="params">originClassName</span>, OBJC_ASSOCIATION_COPY_NONATOMIC)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">object</span><span class="constructor">_setClass(<span class="params">object</span>, [GHLZoombie <span class="params">class</span>])</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>GHLZoombie 类里的实现：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">id</span>)forwardingTargetForSelector:(SEL)aSelector &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@&quot;[%@ %@] message sent to deallocated instance %@&quot;</span>, objc_getAssociatedObject(<span class="keyword">self</span>, <span class="string">&quot;originClassName&quot;</span>), <span class="built_in">NSStringFromSelector</span>(aSelector), <span class="keyword">self</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [GHLCrashGuardProxy new];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>剩下的就是上一篇文章的内容了，这样就能做到 EXC_BAD_ACCESS Crash 的防护。</p>
+<p><em><strong>但仍然存在问题是延迟释放内存会造成性能浪费，所以可以设置一个默认的缓存僵尸对象的实例数量（50）或者给定一个固定内存大小（2M），超出这个限制就会释放，当然在释放之后如果再此触发了刚好释放掉的野指针，还是会造成 Crash 的。</strong></em></p>
+<p>Demo 地址：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/GHLCrashGuard/tree/master/GHLCrashGuard/Classes/EXC_BAD_ACCESS">GHLCrashGuard：GHLCrashGuard&#x2F;Classes&#x2F;EXC_BAD_ACCESS</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/06/crash-guard-unrecognized-selector/" rel="next" title="Crash 防护方案（一）：Unrecognized Selector">
+                <i class="fa fa-chevron-left"></i> Crash 防护方案（一）：Unrecognized Selector
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/07/crash-guard-container/" rel="prev" title="Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.）">
+                Crash 防护方案（三）：Container （NSArray、NSDictionary、NSNumber etc.） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%87%8D%E7%8E%B0-EXC-BAD-ACCESS-Crash"><span class="nav-number">1.</span> <span class="nav-text">重现 EXC_BAD_ACCESS Crash</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Xcode-%E4%B8%AD-Zoombie-Objects-%E5%83%B5%E5%B0%B8%E5%AF%B9%E8%B1%A1%E8%B0%83%E8%AF%95%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">Xcode 中 Zoombie Objects 僵尸对象调试原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%B7%B1%E5%AE%9E%E7%8E%B0%E5%83%B5%E5%B0%B8%E5%AF%B9%E8%B1%A1%E8%B0%83%E8%AF%95"><span class="nav-number">3.</span> <span class="nav-text">自己实现僵尸对象调试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#EXC-BAD-ACCESS-%E9%98%B2%E6%8A%A4"><span class="nav-number">4.</span> <span class="nav-text">EXC_BAD_ACCESS 防护</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2019/07/06/crash-guard-bad-access/';
+          this.page.identifier = '2019/07/06/crash-guard-bad-access/';
+          this.page.title = 'Crash 防护方案（二）：EXC_BAD_ACCESS';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

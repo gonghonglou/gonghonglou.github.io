@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的： 123456NSURL *url &#x3D; [NSURL URLWithString">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDWebImage 4.x &amp; 5.x 对 GIF 类型的处理问题">
+<meta property="og:url" content="http://gonghonglou.com/2020/03/01/sdwebimage-gif/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。 测试代码大概是这个样子的： 123456NSURL *url &#x3D; [NSURL URLWithString">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-03-01T13:54:10.000Z">
+<meta property="article:modified_time" content="2021-06-10T02:22:02.293Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/03/01/sdwebimage-gif/"/>
+
+
+
+
+
+  <title>SDWebImage 4.x & 5.x 对 GIF 类型的处理问题 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/03/01/sdwebimage-gif/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">SDWebImage 4.x & 5.x 对 GIF 类型的处理问题</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-01T21:54:10+08:00">
+                2020-03-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>之前工作中遇到的问题，使用 SDWebImage（v4.4.8）下载并存储了一份 GIF 图片，第一次是可以正常显示的，但之后再从缓存中取出的时候就变成了静态图片。debug 发现是因为从磁盘里取出该图片时已经是 PNG 格式的了。为了解决这个问题所以去仔细看了下 SD 对 GIF 的处理。</p>
+<p>测试代码大概是这个样子的：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSURL</span> *url = [<span class="built_in">NSURL</span> URLWithString:<span class="string">@&quot;http://img.xxx.gif&quot;</span>];</span><br><span class="line">[[SDWebImageDownloader sharedDownloader] downloadImageWithURL:url options:SDWebImageDownloaderLowPriority progress:^(<span class="built_in">NSInteger</span> receivedSize, <span class="built_in">NSInteger</span> expectedSize, <span class="built_in">NSURL</span> * _Nullable targetURL) &#123;</span><br><span class="line">&#125; completed:^(<span class="built_in">UIImage</span> * _Nullable image, <span class="built_in">NSData</span> * _Nullable data, <span class="built_in">NSError</span> * _Nullable error, <span class="type">BOOL</span> finished) &#123;</span><br><span class="line">    </span><br><span class="line">    [[SDImageCache sharedImageCache] storeImage:image forKey:url.absoluteString completion:<span class="literal">nil</span>];            </span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+
+<p>发现问题主要是出在 <code>SDImageCache</code> 这个类的 <code>storeImage:forKey:completion:</code> 方法，在 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/blob/aa7ff6f060d8f34d2c66a716aefff1a3bc9ef816/SDWebImage/Core/SDImageCache.m#L192-L197">L192-L197</a> 行是这样的：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">if</span> (!<span class="class"><span class="keyword">data</span> &amp;&amp; image) &#123;</span></span><br><span class="line"><span class="class">    // <span class="type">If</span> <span class="title">we</span> <span class="title">do</span> <span class="title">not</span> <span class="title">have</span> <span class="title">any</span> <span class="title">data</span> <span class="title">to</span> <span class="title">detect</span> <span class="title">image</span> <span class="title">format</span>, <span class="title">check</span> <span class="title">whether</span> <span class="title">it</span> <span class="title">contains</span> <span class="title">alpha</span> <span class="title">channel</span> <span class="title">to</span> <span class="title">use</span> <span class="type">PNG</span> <span class="title">or</span> <span class="type">JPEG</span> <span class="title">format</span></span></span><br><span class="line"><span class="class">    <span class="type">SDImageFormat</span> <span class="title">format</span>;</span></span><br><span class="line"><span class="class">    <span class="title">if</span> ([<span class="type">SDImageCoderHelper</span> <span class="type">CGImageContainsAlpha</span>:<span class="title">image</span>.<span class="type">CGImage</span>]) &#123;</span></span><br><span class="line"><span class="class">        <span class="title">format</span> = <span class="type">SDImageFormatPNG</span>;</span></span><br><span class="line"><span class="class">    &#125; else &#123;</span></span><br><span class="line"><span class="class">        <span class="title">format</span> = <span class="type">SDImageFormatJPEG</span>;</span></span><br><span class="line"><span class="class">    &#125;</span></span><br><span class="line">    <span class="class"><span class="keyword">data</span> = [[<span class="type">SDImageCodersManager</span> sharedManager] encodedDataWithImage:image format:format options:nil];</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注释也写的明白：</p>
+<blockquote>
+<p>If we do not have any data to detect image format, check whether it contains alpha channel to use PNG or JPEG format</p>
+</blockquote>
+<p>判断图片格式主要用的这个方法：<a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/blob/aa7ff6f060d8f34d2c66a716aefff1a3bc9ef816/SDWebImage/Core/NSData%2BImageContentType.m#L23-L70">NSData+ImageContentType.m #L23-L70</a>：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">+ (SDImageFormat)sd_imageFormatForImageData:(<span class="literal">null</span>able NSData *)data &#123;</span><br><span class="line">    <span class="keyword">if</span> (!data) &#123;</span><br><span class="line">        <span class="keyword">return</span> SDImageFormatUndefined;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// File signatures table: http://www.garykessler.net/library/file_sigs.html</span></span><br><span class="line">    <span class="built_in">uint8</span>_t c;</span><br><span class="line"><span class="string">    [data getBytes:&amp;c length:1]</span>;</span><br><span class="line">    <span class="keyword">switch</span> (c) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0xFF</span>:</span><br><span class="line">            <span class="keyword">return</span> SDImageFormatJPEG;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0x89</span>:</span><br><span class="line">            <span class="keyword">return</span> SDImageFormatPNG;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0x47</span>:</span><br><span class="line">            <span class="keyword">return</span> SDImageFormatGIF;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0x49</span>:</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0x4D</span>:</span><br><span class="line">            <span class="keyword">return</span> SDImageFormatTIFF;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0x52</span>: &#123;</span><br><span class="line">            ...</span><br></pre></td></tr></table></figure>
+
+<p>因为所用的缓存方法只传了 UIImage 进去，没有 NSData，SD 无法判断图片格式，所以就根据 alpha channel 使用了 PNG 或者 JPEG 格式。</p>
+<p>当时为了快速解决 bug，项目上线。所以将 <code>storeImage:forKey:completion:</code> 方法替换为了 <code>storeImage:imageData:forKey:toDisk:completion:</code>，即：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[[SDWebImageDownloader sharedDownloader] downloadImageWithURL:url options:SDWebImageDownloaderLowPriority progress:^(<span class="built_in">NSInteger</span> receivedSize, <span class="built_in">NSInteger</span> expectedSize, <span class="built_in">NSURL</span> * _Nullable targetURL) &#123;</span><br><span class="line">&#125; completed:^(<span class="built_in">UIImage</span> * _Nullable image, <span class="built_in">NSData</span> * _Nullable data, <span class="built_in">NSError</span> * _Nullable error, <span class="type">BOOL</span> finished) &#123;</span><br><span class="line">    <span class="comment">// 替换缓存方法为</span></span><br><span class="line">    [[SDImageCache sharedImageCache] storeImage:image imageData:data forKey:url.absoluteString toDisk:<span class="literal">YES</span> completion:<span class="literal">nil</span>];</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>并在代码里加了备注，解释了原因及提醒了相关维护同学。</p>
+<p>这个周末有空了，突然想起来这个问题，想着既然图片是由 SD 下载的，那它肯定能拿到图片的 NSData。既然这样，可以在下载的时候根据 NSData 识别图片格式，给 UIImage 打个标签，这样，在存储的时候不就可以识别到该图片的 GIF 格式了嘛。然后就去浏览了下 SD 的源码，发现，其实 SD 已经给所有它经手的图片打过了标签：<code>sd_imageFormat</code>，即 <code>UIImage+Metadata</code> 这个分类的属性：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">-</span> (<span class="type">SDImageFormat</span>)sd_imageFormat &#123;</span><br><span class="line">    <span class="type">SDImageFormat</span> imageFormat <span class="operator">=</span> <span class="type">SDImageFormatUndefined</span>;</span><br><span class="line">    <span class="type">NSNumber</span> <span class="operator">*</span>value <span class="operator">=</span> objc_getAssociatedObject(<span class="keyword">self</span>, <span class="meta">@selector</span>(sd_imageFormat));</span><br><span class="line">    <span class="keyword">if</span> ([value isKindOfClass:[<span class="type">NSNumber</span> <span class="keyword">class</span>]]) &#123;</span><br><span class="line">        imageFormat <span class="operator">=</span> value.integerValue;</span><br><span class="line">        <span class="keyword">return</span> imageFormat;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Check CGImage&#x27;s UTType, may return nil for non-Image/IO based image</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">@available</span>(<span class="keyword">iOS</span> <span class="number">9.0</span>, <span class="keyword">tvOS</span> <span class="number">9.0</span>, <span class="keyword">macOS</span> <span class="number">10.11</span>, <span class="keyword">watchOS</span> <span class="number">2.0</span>, <span class="operator">*</span>)) &#123;</span><br><span class="line">        <span class="type">CFStringRef</span> uttype <span class="operator">=</span> <span class="type">CGImageGetUTType</span>(<span class="keyword">self</span>.<span class="type">CGImage</span>);</span><br><span class="line">        imageFormat <span class="operator">=</span> [<span class="type">NSData</span> sd_imageFormatFromUTType:uttype];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> imageFormat;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="operator">-</span> (void)setSd_imageFormat:(<span class="type">SDImageFormat</span>)sd_imageFormat &#123;</span><br><span class="line">    objc_setAssociatedObject(<span class="keyword">self</span>, <span class="meta">@selector</span>(sd_imageFormat), @(sd_imageFormat), <span class="type">OBJC_ASSOCIATION_RETAIN_NONATOMIC</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>既然如此的话，那在 <code>SDImageCache</code> 这个类的 <code>storeImage:forKey:completion:</code> 方法 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/blob/aa7ff6f060d8f34d2c66a716aefff1a3bc9ef816/SDWebImage/Core/SDImageCache.m#L192-L197">L192-L197</a> 行优先识别下 <code>sd_imageFormat</code> 不就好了，即：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">if</span> (!<span class="class"><span class="keyword">data</span> &amp;&amp; image) &#123;</span></span><br><span class="line"><span class="class">    // <span class="type">If</span> <span class="title">we</span> <span class="title">do</span> <span class="title">not</span> <span class="title">have</span> <span class="title">any</span> <span class="title">data</span> <span class="title">to</span> <span class="title">detect</span> <span class="title">image</span> <span class="title">format</span>, <span class="title">check</span> <span class="title">whether</span> <span class="title">it</span> <span class="title">contains</span> <span class="title">alpha</span> <span class="title">channel</span> <span class="title">to</span> <span class="title">use</span> <span class="type">PNG</span> <span class="title">or</span> <span class="type">JPEG</span> <span class="title">format</span></span></span><br><span class="line"><span class="class">    <span class="type">SDImageFormat</span> <span class="title">format</span> = <span class="title">image</span>.<span class="title">sd_imageFormat</span>;</span></span><br><span class="line"><span class="class">    <span class="title">if</span> (<span class="title">format</span> == <span class="type">SDImageFormatUndefined</span>) &#123;</span></span><br><span class="line"><span class="class">        <span class="title">if</span> ([<span class="type">SDImageCoderHelper</span> <span class="type">CGImageContainsAlpha</span>:<span class="title">image</span>.<span class="type">CGImage</span>]) &#123;</span></span><br><span class="line"><span class="class">            <span class="title">format</span> = <span class="type">SDImageFormatPNG</span>;</span></span><br><span class="line"><span class="class">        &#125; else &#123;</span></span><br><span class="line"><span class="class">            <span class="title">format</span> = <span class="type">SDImageFormatJPEG</span>;</span></span><br><span class="line"><span class="class">        &#125;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">data</span> = [[<span class="type">SDImageCodersManager</span> sharedManager] encodedDataWithImage:image format:format options:nil];</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>虽然那些未经 SD 处理过的 GIF 格式的 UIImage 使用该方法时仍然会判定为 PNG 或者 JPEG，但经过 SD 下载来的图片做缓存存取的话都会保证格式的。我提了 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/issues/2952">Issue #2952</a> ，SD 的维护者已经采纳了意见，提交了 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/pull/2953">PR #2953</a>，改动了代码到 Master 了，预计 SD 5.6.0 版本会生效。</p>
+<p>看到 5.6.0 版本可能会很突兀，文章开头不是说 SDWebImage（v4.4.8）吗？</p>
+<p>是这样的，我到 SD 官网查代码的时候发现 SD 在去年就发布了 5.x 版本。经测试，存储 GIF 图片再取出时仍然是动图，似乎已经修复了这个问题，但是通过 debug 发现，仍然是动图的原因是 SD 将图片的编解码方式改了，实际存储到磁盘的是 <code>_UIAnimatedImage</code> 类型，即直接设置 <code>_UIAnimatedImage</code> 类型给 UIImageView.image 也是动图效果，但是从取出图片的 NSData 头发现仍然是 0x89 PNG 类型。这也是为什么我仍然在 5.x 版本提交 Issus 的原因。</p>
+<p>顺便提一下，SD v5.x 版本移除了 <code>FLAnimatedImageView+WebCache</code> 分类，新增了 <code>SDAnimatedImageView</code> 类来处理 GIF 等格式。其实，得益于 v5.x 新的编解码方法，直接使用 UIImageView 就可以正常显示 GIF。<br>你仍然可以使用 <code>FLAnimatedImageView+WebCache</code> 这个分类兼容代码，通过引入 <code>SDWebImageFLPlugin</code> 插件的方式。<br>可以去了解下 SD 的 README，提供了一堆的 Plugin 和 Coder 来支持各种类型的图片和三方库。这个周末还新增了 <code>SDWebImageLottiePlugin</code> 插件，支持 JSON 动画。<br>通过无限插件的形式来丰富 SD 的功能，感觉很牛逼。升级升级！</p>
+<p>言归正传，现在，我们来看一下关键代码，为什么同样存储为 0x89，v4.x 版本就是静态图片，而 v5.x 就是动图呢？</p>
+<h2 id="v4-x"><a href="#v4-x" class="headerlink" title="v4.x"></a>v4.x</h2><p>在 v4.x 的代码里，<code>SDWebImageDownloaderOperation</code> 这个类负责下载数据，在 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/blob/a0b269a4bc353257fac482476d75f7bd2fcb1b0a/SDWebImage/SDWebImageDownloaderOperation.m#L418">#L418</a> 这一行将 NSData 转换为 UIImage。继续查看 <code>SDWebImageCodersManager</code> 这个类的解码（<code>decodedImageWithData:</code>）方法：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">-</span> (<span class="type">UIImage</span> <span class="operator">*</span>)decodedImageWithData:(<span class="type">NSData</span> <span class="operator">*</span>)data &#123;</span><br><span class="line">    <span class="type">LOCK</span>(<span class="keyword">self</span>.codersLock);</span><br><span class="line">    <span class="type">NSArray</span>&lt;id&lt;<span class="type">SDWebImageCoder</span>&gt;<span class="operator">&gt;</span> <span class="operator">*</span>coders <span class="operator">=</span> <span class="keyword">self</span>.coders;</span><br><span class="line">    <span class="type">UNLOCK</span>(<span class="keyword">self</span>.codersLock);</span><br><span class="line">    <span class="keyword">for</span> (id<span class="operator">&lt;</span><span class="type">SDWebImageCoder</span><span class="operator">&gt;</span> coder <span class="keyword">in</span> coders.reverseObjectEnumerator) &#123;</span><br><span class="line">        <span class="keyword">if</span> ([coder canDecodeFromData:data]) &#123;</span><br><span class="line">            <span class="keyword">return</span> [coder decodedImageWithData:data];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>遍历 self.coders 寻找能够解码当前 NSData 的 coder，而此时 self.coders 数组里也就只有 <code>SDWebImageImageIOCoder</code> 这个类而已，继续查看这个类的解码方法：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">- (UIImage *)decodedImageWithData:(NSData *)<span class="keyword">data</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">data</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> nil;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    UIImage *image = [[UIImage alloc] initWithData:<span class="keyword">data</span>];</span><br><span class="line">    image.sd_imageFormat = [NSData sd_imageFormatForImageData:<span class="keyword">data</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> image;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>直接将 data 转成了 UIImage，并且在这个时候根据 data，拿到了图片格式，设置了 <code>sd_imageFormat</code>。</p>
+<p>这里的 image 就是最终回调的 image 了，然后使用<br>1、<code>SDImageCache</code> 类的 <code>storeImage:forKey:completion:</code> 方法将该 image 存到磁盘的时候，还是调用的<br>2、<code>SDWebImageCodersManager</code> 这个类的编码（<code>encodedDataWithImage:format:options:</code>）方法，遍历 self.coders 数组，使用唯一的类：<br>3、<code>SDWebImageImageIOCoder</code> 的编码方法（<code>encodedDataWithImage:format:</code>）将 image 按 PNG 格式编码成了 NSData，完成这个方法图片就彻底变成了静态图片，后续存到了磁盘里。<strong>编码方法即为关键代码</strong>：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">NSData</span> *)encodedDataWithImage:(<span class="built_in">UIImage</span> *)image format:(SDImageFormat)format &#123;</span><br><span class="line">    <span class="keyword">if</span> (!image) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (format == SDImageFormatUndefined) &#123;</span><br><span class="line">        <span class="type">BOOL</span> hasAlpha = SDCGImageRefContainsAlpha(image.CGImage);</span><br><span class="line">        <span class="keyword">if</span> (hasAlpha) &#123;</span><br><span class="line">            format = SDImageFormatPNG;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            format = SDImageFormatJPEG;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSMutableData</span> *imageData = [<span class="built_in">NSMutableData</span> data];</span><br><span class="line">    <span class="built_in">CFStringRef</span> imageUTType = [<span class="built_in">NSData</span> sd_UTTypeFromSDImageFormat:format];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Create an image destination.</span></span><br><span class="line">    <span class="built_in">CGImageDestinationRef</span> imageDestination = <span class="built_in">CGImageDestinationCreateWithData</span>((__bridge <span class="built_in">CFMutableDataRef</span>)imageData, imageUTType, <span class="number">1</span>, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!imageDestination) &#123;</span><br><span class="line">        <span class="comment">// Handle failure.</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSMutableDictionary</span> *properties = [<span class="built_in">NSMutableDictionary</span> dictionary];</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> SD_UIKIT || SD_WATCH</span></span><br><span class="line">    <span class="built_in">NSInteger</span> exifOrientation = [SDWebImageCoderHelper exifOrientationFromImageOrientation:image.imageOrientation];</span><br><span class="line">    [properties setValue:@(exifOrientation) forKey:(__bridge <span class="built_in">NSString</span> *)kCGImagePropertyOrientation];</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Add your image to the destination.</span></span><br><span class="line">    <span class="built_in">CGImageDestinationAddImage</span>(imageDestination, image.CGImage, (__bridge <span class="built_in">CFDictionaryRef</span>)properties);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Finalize the destination.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">CGImageDestinationFinalize</span>(imageDestination) == <span class="literal">NO</span>) &#123;</span><br><span class="line">        <span class="comment">// Handle failure.</span></span><br><span class="line">        imageData = <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">CFRelease</span>(imageDestination);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [imageData <span class="keyword">copy</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以这一步存储的时候如果可以通过 <code>sd_imageFormat</code> 拿到正确的 GIF 格式的话，在存储时按照 GIF 格式编码，那么下次取出来动图还是可以生效的。</p>
+<h2 id="v5-x"><a href="#v5-x" class="headerlink" title="v5.x"></a>v5.x</h2><p>在 v5.x 的代码里，仍然是 <code>SDWebImageDownloaderOperation</code> 这个类负责下载数据，在 <a target="_blank" rel="noopener" href="https://github.com/SDWebImage/SDWebImage/blob/aa7ff6f060d8f34d2c66a716aefff1a3bc9ef816/SDWebImage/Core/SDWebImageDownloaderOperation.m#L464">#L464</a> 这行处理 NSData 数据。继续查看 <code>SDImageLoader</code> 这个类提供的 <code>SDImageLoaderDecodeImageData</code> 方法：</p>
+<figure class="highlight smali"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">.</span>..<span class="built_in"></span></span><br><span class="line"><span class="built_in">if </span>(!decodeFirstFrame) &#123;</span><br><span class="line">    //<span class="built_in"> check </span>whether we should use `SDAnimatedImage`</span><br><span class="line">    Class animatedImageClass = context[SDWebImageContextAnimatedImageClass];</span><br><span class="line">   <span class="built_in"> if </span>([animatedImageClass isSubclassOfClass:[UIImage class]] &amp;&amp; [animatedImageClass conformsToProtocol:@protocol(SDAnimatedImage)]) &#123;</span><br><span class="line">        image = [[animatedImageClass alloc] initWithData:imageData scale:scale options:coderOptions];</span><br><span class="line">       <span class="built_in"> if </span>(image) &#123;</span><br><span class="line">            // Preload frames<span class="built_in"> if </span>supported</span><br><span class="line">           <span class="built_in"> if </span>(options &amp; SDWebImagePreloadAllFrames &amp;&amp; [image respondsToSelector:@selector(preloadAllFrames)]) &#123;</span><br><span class="line">                [((id&lt;SDAnimatedImage&gt;)image) preloadAllFrames];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            // Check image class matching</span><br><span class="line">           <span class="built_in"> if </span>(options &amp; SDWebImageMatchAnimatedImageClass) &#123;</span><br><span class="line">               <span class="built_in"> return </span>nil;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;<span class="built_in"></span></span><br><span class="line"><span class="built_in">if </span>(!image) &#123;</span><br><span class="line">    image = [[SDImageCodersManager sharedManager] decodedImageWithData:imageData options:coderOptions];</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">.</span>..</span><br></pre></td></tr></table></figure>
+
+<p>在这个方法里判断是否要用 <code>SDAnimatedImage</code> 这个类来解码，主要给 <code>SDAnimatedImageView</code> 或者 <code>FLAnimatedImageView</code> 展示动图时用的。</p>
+<p>这里也是和 v4.x 设计不同的地方：v4.x 是在 <code>FLAnimatedImageView+WebCache</code> 分类里拿到回调的 image 和 data 之后再将 data 交由 <code>FLAnimatedImage</code> 处理，而 v5.x 由自己处理动图的编解码工作，在 <code>SDAnimatedImageView+WebCache</code> &#x2F; <code>FLAnimatedImageView+WebCache</code> 分类里下载图片一开始打上 <code>SDWebImageContextAnimatedImageClass</code> 的标记，然后在当前方法里判断标记从而决定是否使用 <code>SDAnimatedImage</code> 解码。</p>
+<p>我们这里是直接使用的 <code>SDWebImageDownloader</code> 下载图片，所以最终会由 <code>SDImageCodersManager</code> 这个类的 <code>decodedImageWithData:options:</code>方法来解码：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">- (UIImage *)decodedImageWithData:(NSData *)<span class="keyword">data</span> options:(nullable SDImageCoderOptions *)options &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">data</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> nil;</span><br><span class="line">    &#125;</span><br><span class="line">    UIImage *image;</span><br><span class="line">    NSArray&lt;id&lt;SDImageCoder&gt;&gt; *coders = self.coders;</span><br><span class="line">    <span class="keyword">for</span> (id&lt;SDImageCoder&gt; coder <span class="keyword">in</span> coders.reverseObjectEnumerator) &#123;</span><br><span class="line">        <span class="keyword">if</span> ([coder canDecodeFromData:<span class="keyword">data</span>]) &#123;</span><br><span class="line">            image = [coder decodedImageWithData:<span class="keyword">data</span> options:options];</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> image;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里就和 v4.x 很相似了，遍历 self.coders 寻找能够解码当前 NSData 的 coder，而此时 self.coders 数组里有 <code>SDImageIOCoder</code>、<code>SDImageGIFCoder</code>、<code>SDImageAPNGCoder</code> 三种 coder，当然匹配到 <code>SDImageGIFCoder</code> 来解码当前 data 了，其实走的也是它的父类（<code>SDImageIOAnimatedCoder</code>）方法：<code>decodedImageWithData:options:</code>，即为关键代码：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- (<span class="built_in">UIImage</span> *)decodedImageWithData:(<span class="built_in">NSData</span> *)data options:(<span class="keyword">nullable</span> SDImageCoderOptions *)options &#123;</span><br><span class="line">    <span class="keyword">if</span> (!data) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">CGFloat</span> scale = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">NSNumber</span> *scaleFactor = options[SDImageCoderDecodeScaleFactor];</span><br><span class="line">    <span class="keyword">if</span> (scaleFactor != <span class="literal">nil</span>) &#123;</span><br><span class="line">        scale = MAX([scaleFactor doubleValue], <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">CGSize</span> thumbnailSize = <span class="built_in">CGSizeZero</span>;</span><br><span class="line">    <span class="built_in">NSValue</span> *thumbnailSizeValue = options[SDImageCoderDecodeThumbnailPixelSize];</span><br><span class="line">    <span class="keyword">if</span> (thumbnailSizeValue != <span class="literal">nil</span>) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> SD_MAC</span></span><br><span class="line">        thumbnailSize = thumbnailSizeValue.sizeValue;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">        thumbnailSize = thumbnailSizeValue.CGSizeValue;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="type">BOOL</span> preserveAspectRatio = <span class="literal">YES</span>;</span><br><span class="line">    <span class="built_in">NSNumber</span> *preserveAspectRatioValue = options[SDImageCoderDecodePreserveAspectRatio];</span><br><span class="line">    <span class="keyword">if</span> (preserveAspectRatioValue != <span class="literal">nil</span>) &#123;</span><br><span class="line">        preserveAspectRatio = preserveAspectRatioValue.boolValue;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="keyword">if</span> SD_MAC</span></span><br><span class="line">    <span class="comment">// If don&#x27;t use thumbnail, prefers the built-in generation of frames (GIF/APNG)</span></span><br><span class="line">    <span class="comment">// Which decode frames in time and reduce memory usage</span></span><br><span class="line">    <span class="keyword">if</span> (thumbnailSize.width == <span class="number">0</span> || thumbnailSize.height == <span class="number">0</span>) &#123;</span><br><span class="line">        SDAnimatedImageRep *imageRep = [[SDAnimatedImageRep alloc] initWithData:data];</span><br><span class="line">        <span class="built_in">NSSize</span> size = <span class="built_in">NSMakeSize</span>(imageRep.pixelsWide / scale, imageRep.pixelsHigh / scale);</span><br><span class="line">        imageRep.size = size;</span><br><span class="line">        <span class="built_in">NSImage</span> *animatedImage = [[<span class="built_in">NSImage</span> alloc] initWithSize:size];</span><br><span class="line">        [animatedImage addRepresentation:imageRep];</span><br><span class="line">        <span class="keyword">return</span> animatedImage;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">CGImageSourceRef</span> source = <span class="built_in">CGImageSourceCreateWithData</span>((__bridge <span class="built_in">CFDataRef</span>)data, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!source) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    size_t count = <span class="built_in">CGImageSourceGetCount</span>(source);</span><br><span class="line">    <span class="built_in">UIImage</span> *animatedImage;</span><br><span class="line">    </span><br><span class="line">    <span class="type">BOOL</span> decodeFirstFrame = [options[SDImageCoderDecodeFirstFrameOnly] boolValue];</span><br><span class="line">    <span class="keyword">if</span> (decodeFirstFrame || count &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">        animatedImage = [<span class="keyword">self</span>.class createFrameAtIndex:<span class="number">0</span> source:source scale:scale preserveAspectRatio:preserveAspectRatio thumbnailSize:thumbnailSize];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">NSMutableArray</span>&lt;SDImageFrame *&gt; *frames = [<span class="built_in">NSMutableArray</span> array];</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (size_t i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">            <span class="built_in">UIImage</span> *image = [<span class="keyword">self</span>.class createFrameAtIndex:i source:source scale:scale preserveAspectRatio:preserveAspectRatio thumbnailSize:thumbnailSize];</span><br><span class="line">            <span class="keyword">if</span> (!image) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="built_in">NSTimeInterval</span> duration = [<span class="keyword">self</span>.class frameDurationAtIndex:i source:source];</span><br><span class="line">            </span><br><span class="line">            SDImageFrame *frame = [SDImageFrame frameWithImage:image duration:duration];</span><br><span class="line">            [frames addObject:frame];</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSUInteger</span> loopCount = [<span class="keyword">self</span>.class imageLoopCountWithSource:source];</span><br><span class="line">        </span><br><span class="line">        animatedImage = [SDImageCoderHelper animatedImageWithFrames:frames];</span><br><span class="line">        animatedImage.sd_imageLoopCount = loopCount;</span><br><span class="line">    &#125;</span><br><span class="line">    animatedImage.sd_imageFormat = <span class="keyword">self</span>.class.imageFormat;</span><br><span class="line">    <span class="built_in">CFRelease</span>(source);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> animatedImage;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个方法拿到 GIF 的每一帧处理成一组 <code>SDImageFrame</code> 类组成的数组，交由 <code>SDImageCoderHelper</code> 这个类处理：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line">+ (<span class="built_in">UIImage</span> *)animatedImageWithFrames:(<span class="built_in">NSArray</span>&lt;SDImageFrame *&gt; *)frames &#123;</span><br><span class="line">    <span class="built_in">NSUInteger</span> frameCount = frames.count;</span><br><span class="line">    <span class="keyword">if</span> (frameCount == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">UIImage</span> *animatedImage;</span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="keyword">if</span> SD_UIKIT || SD_WATCH</span></span><br><span class="line">    <span class="built_in">NSUInteger</span> durations[frameCount];</span><br><span class="line">    <span class="keyword">for</span> (size_t i = <span class="number">0</span>; i &lt; frameCount; i++) &#123;</span><br><span class="line">        durations[i] = frames[i].duration * <span class="number">1000</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">NSUInteger</span> <span class="keyword">const</span> gcd = gcdArray(frameCount, durations);</span><br><span class="line">    __block <span class="built_in">NSUInteger</span> totalDuration = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">NSMutableArray</span>&lt;<span class="built_in">UIImage</span> *&gt; *animatedImages = [<span class="built_in">NSMutableArray</span> arrayWithCapacity:frameCount];</span><br><span class="line">    [frames enumerateObjectsUsingBlock:^(SDImageFrame * _Nonnull frame, <span class="built_in">NSUInteger</span> idx, <span class="type">BOOL</span> * _Nonnull stop) &#123;</span><br><span class="line">        <span class="built_in">UIImage</span> *image = frame.image;</span><br><span class="line">        <span class="built_in">NSUInteger</span> duration = frame.duration * <span class="number">1000</span>;</span><br><span class="line">        totalDuration += duration;</span><br><span class="line">        <span class="built_in">NSUInteger</span> repeatCount;</span><br><span class="line">        <span class="keyword">if</span> (gcd) &#123;</span><br><span class="line">            repeatCount = duration / gcd;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            repeatCount = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (size_t i = <span class="number">0</span>; i &lt; repeatCount; ++i) &#123;</span><br><span class="line">            [animatedImages addObject:image];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;];</span><br><span class="line">    </span><br><span class="line">    animatedImage = [<span class="built_in">UIImage</span> animatedImageWithImages:animatedImages duration:totalDuration / <span class="number">1000.</span>f];</span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSMutableData</span> *imageData = [<span class="built_in">NSMutableData</span> data];</span><br><span class="line">    <span class="built_in">CFStringRef</span> imageUTType = [<span class="built_in">NSData</span> sd_UTTypeFromImageFormat:SDImageFormatGIF];</span><br><span class="line">    <span class="comment">// Create an image destination. GIF does not support EXIF image orientation</span></span><br><span class="line">    <span class="built_in">CGImageDestinationRef</span> imageDestination = <span class="built_in">CGImageDestinationCreateWithData</span>((__bridge <span class="built_in">CFMutableDataRef</span>)imageData, imageUTType, frameCount, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!imageDestination) &#123;</span><br><span class="line">        <span class="comment">// Handle failure.</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (size_t i = <span class="number">0</span>; i &lt; frameCount; i++) &#123;</span><br><span class="line">        <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">            SDImageFrame *frame = frames[i];</span><br><span class="line">            <span class="built_in">NSTimeInterval</span> frameDuration = frame.duration;</span><br><span class="line">            <span class="built_in">CGImageRef</span> frameImageRef = frame.image.CGImage;</span><br><span class="line">            <span class="built_in">NSDictionary</span> *frameProperties = @&#123;(__bridge <span class="built_in">NSString</span> *)kCGImagePropertyGIFDictionary : @&#123;(__bridge <span class="built_in">NSString</span> *)kCGImagePropertyGIFDelayTime : @(frameDuration)&#125;&#125;;</span><br><span class="line">            <span class="built_in">CGImageDestinationAddImage</span>(imageDestination, frameImageRef, (__bridge <span class="built_in">CFDictionaryRef</span>)frameProperties);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Finalize the destination.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">CGImageDestinationFinalize</span>(imageDestination) == <span class="literal">NO</span>) &#123;</span><br><span class="line">        <span class="comment">// Handle failure.</span></span><br><span class="line">        <span class="built_in">CFRelease</span>(imageDestination);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">CFRelease</span>(imageDestination);</span><br><span class="line">    <span class="built_in">CGFloat</span> scale = MAX(frames.firstObject.image.scale, <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    SDAnimatedImageRep *imageRep = [[SDAnimatedImageRep alloc] initWithData:imageData];</span><br><span class="line">    <span class="built_in">NSSize</span> size = <span class="built_in">NSMakeSize</span>(imageRep.pixelsWide / scale, imageRep.pixelsHigh / scale);</span><br><span class="line">    imageRep.size = size;</span><br><span class="line">    animatedImage = [[<span class="built_in">NSImage</span> alloc] initWithSize:size];</span><br><span class="line">    [animatedImage addRepresentation:imageRep];</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> animatedImage;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最终调用的<strong>关键代码</strong>就是：&#96;&#96;&#96;<br>animatedImage &#x3D; [UIImage animatedImageWithImages:animatedImages duration:totalDuration &#x2F; 1000.f];</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">option 键看一下这个方法的解释：![animatedImageWithImages:](http:<span class="regexp">//im</span>age.gonghonglou.com<span class="regexp">/sdwebimage-gif/</span>animatedImage.png)</span><br><span class="line"></span><br><span class="line">控制台打印下被上述方法处理过后的 animatedImage，看看它具体变成了什么：</span><br></pre></td></tr></table></figure>
+<p>(lldb) po animatedImage<br>&lt;_UIAnimatedImage:0x600002040aa0 anonymous {128, 128}&gt;</p>
+<p>(lldb) </p>
+<figure class="highlight autohotkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">这个 `_UIAnimatedImage` 类就是为什么直接将该类设置给 UIImageView.image 也是能够展示动图效果的原因了（注意这个类苹果并没有暴露给开发者使用）。</span><br><span class="line"></span><br><span class="line">这里的 image 就是最终回调的 image 了，然后使用 </span><br><span class="line"><span class="number">1</span>、`SDImageCache` 类的 `storeImage:forKey:completion:` 方法将该 image 存到磁盘的时候，还是调用的 </span><br><span class="line"><span class="number">2</span>、`SDWebImageCodersManager` 这个类的编码（`encodedDataWithImage:format:options:`）方法，遍历 self.coders 数组（`SDImageIOCoder`、`SDImageGIFCoder`、`SDImageAPNGCoder`），当前版本v5.<span class="number">5.2</span>使用 `SDImageAPNGCoder`，后期版本，预计v5.<span class="number">6.0</span>改正之后会使用 `SDImageGIFCoder` 来编码，其实都是调用它们的父类：</span><br><span class="line"><span class="number">3</span>、`SDImageIOAnimatedCoder` 的编码方法（`encodedDataWithImage:format:options:`）将 _UIAnimatedImage 由：</span><br><span class="line"><span class="number">4</span>、`SDImageCoderHelper` 根据 image 取出一组 `SDImageFrame` 类（对 UIImage 的封装）组成的数组，并将这一组 UIImage 编码成合理的 NSData，后续存到了磁盘里。**编码方法即为关键代码**：</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>(NSData *)encodedDataWithImage:(UIImage *)image format:(SDImageFormat)format options:(nullable SDImageCoderOptions *)options {<br>  if (!image) {<br>  return nil;<br>  }</p>
+<p>  if (format !&#x3D; self.class.imageFormat) {<br>  return nil;<br>  }</p>
+<p>  NSMutableData *imageData &#x3D; [NSMutableData data];<br>  CFStringRef imageUTType &#x3D; [NSData sd_UTTypeFromImageFormat:format];<br>  NSArray&lt;SDImageFrame *&gt; *frames &#x3D; [SDImageCoderHelper framesFromAnimatedImage:image];</p>
+<p>  &#x2F;&#x2F; Create an image destination. Animated Image does not support EXIF image orientation TODO<br>  &#x2F;&#x2F; The <code>CGImageDestinationCreateWithData</code> will log a warning when count is 0, use 1 instead.<br>  CGImageDestinationRef imageDestination &#x3D; CGImageDestinationCreateWithData((__bridge CFMutableDataRef)imageData, imageUTType, frames.count ?: 1, NULL);<br>  if (!imageDestination) {<br>  &#x2F;&#x2F; Handle failure.<br>  return nil;<br>  }<br>  NSMutableDictionary *properties &#x3D; [NSMutableDictionary dictionary];<br>  double compressionQuality &#x3D; 1;<br>  if (options[SDImageCoderEncodeCompressionQuality]) {<br>  compressionQuality &#x3D; [options[SDImageCoderEncodeCompressionQuality] doubleValue];<br>  }<br>  properties[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] &#x3D; @(compressionQuality);</p>
+<p>  BOOL encodeFirstFrame &#x3D; [options[SDImageCoderEncodeFirstFrameOnly] boolValue];<br>  if (encodeFirstFrame || frames.count &#x3D;&#x3D; 0) {<br>  &#x2F;&#x2F; for static single images<br>  CGImageDestinationAddImage(imageDestination, image.CGImage, (__bridge CFDictionaryRef)properties);<br>  } else {<br>  &#x2F;&#x2F; for animated images<br>  NSUInteger loopCount &#x3D; image.sd_imageLoopCount;<br>  NSDictionary *containerProperties &#x3D; @{self.class.loopCountProperty : @(loopCount)};<br>  properties[self.class.dictionaryProperty] &#x3D; containerProperties;<br>  CGImageDestinationSetProperties(imageDestination, (__bridge CFDictionaryRef)properties);<br><br>  for (size_t i &#x3D; 0; i &lt; frames.count; i++) {<br>      SDImageFrame *frame &#x3D; frames[i];<br>      NSTimeInterval frameDuration &#x3D; frame.duration;<br>      CGImageRef frameImageRef &#x3D; frame.image.CGImage;<br>      NSDictionary *frameProperties &#x3D; @{self.class.dictionaryProperty : @{self.class.delayTimeProperty : @(frameDuration)}};<br>      CGImageDestinationAddImage(imageDestination, frameImageRef, (__bridge CFDictionaryRef)frameProperties);<br>  }<br>  }<br>  &#x2F;&#x2F; Finalize the destination.<br>  if (CGImageDestinationFinalize(imageDestination) &#x3D;&#x3D; NO) {<br>  &#x2F;&#x2F; Handle failure.<br>  imageData &#x3D; nil;<br>  }</p>
+<p>  CFRelease(imageDestination);</p>
+<p>  return [imageData copy];</p>
+</li>
+</ul>
+<p>}</p>
+<pre><code>
+以上，就是为什么同样存储为 0x89，v4.x 版本是静态图片，而 v5.x 是动图的原因。并且分析了 SD 的处理逻辑：v4.x &amp; v5.x 都是由下载模块下载资源拿到 data 交由编解码模块解码成 image 回调使用；存储过程又是将 image 交由编解码模块编码成 data 存储到磁盘。
+
+需要注意的版本差异是：
+使用 `[[SDImageCache sharedImageCache] storeImage:image forKey:key completion:nil];` 方法存储 GIF 时，从磁盘再次取出该图片：
+v5.x 得益于新的编解码方法会保留动图效果，其中 v5.6.0 之前虽然有动图效果，但取出的 NSData 头信息仍然是 0x89 即 PNG 格式；v5.6.0 之后会修正为 0x47 GIF 格式（根据 SD 维护者提供的预计版本，见 [Issue #2952](https://github.com/SDWebImage/SDWebImage/issues/2952) 和 [PR #2953](https://github.com/SDWebImage/SDWebImage/pull/2953)）
+v4.x 则会失去动图效果
+
+再次需要注意的是：
+
+使用以上方法所存储的 image 如果是 SD 经手过的，由 NSData 类型转换来的 UIImage，SD 会给它打上 `sd_imageFormat` 标签，即能够正确识别图片类型。如果并非 SD 经手的话，即没有 `sd_imageFormat` 标签的情况，该方法还是会将图片编码为 PNG 或者 JPEG，除非使用 `[[SDImageCache sharedImageCache] storeImage:image imageData:imageData forKey:key toDisk:YES completion:nil];` 方法，同时传入 image 和 imageData。
+
+当然，使用该方法传入 imageData 的话，存储过程中就节省了 image 转 data 的操作，这就是 API 易用性和高性能的选择了。
+
+</code></pre>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/29/saybye2019/" rel="next" title="Say Bye 2019">
+                <i class="fa fa-chevron-left"></i> Say Bye 2019
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/08/pod-lifecycle-aop/" rel="prev" title="组件化分发生命周期 - AOP 方案">
+                组件化分发生命周期 - AOP 方案 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#v4-x"><span class="nav-number">1.</span> <span class="nav-text">v4.x</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#v5-x"><span class="nav-number">2.</span> <span class="nav-text">v5.x</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/03/01/sdwebimage-gif/';
+          this.page.identifier = '2020/03/01/sdwebimage-gif/';
+          this.page.title = 'SDWebImage 4.x & 5.x 对 GIF 类型的处理问题';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

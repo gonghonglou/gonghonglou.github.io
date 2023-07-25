@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） background在上一篇 组件化分发生命周期 - AOP 方案 文章里，介绍了通过 Aspects 这个库，面向切面实现分发 UIApplicationDelegate 方法。 再简单重复介绍下分发思路：  hook UIApp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组件化分发生命周期 - AOP 方案（libffi 实现）">
+<meta property="og:url" content="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="组件化分发生命周期 方案实现探索系列文章：1、组件化分发生命周期2、组件化分发生命周期 - AOP 方案3、组件化分发生命周期 - AOP 方案（libffi 实现） background在上一篇 组件化分发生命周期 - AOP 方案 文章里，介绍了通过 Aspects 这个库，面向切面实现分发 UIApplicationDelegate 方法。 再简单重复介绍下分发思路：  hook UIApp">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-09-06T08:09:39.000Z">
+<meta property="article:modified_time" content="2020-09-07T16:26:55.928Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/"/>
+
+
+
+
+
+  <title>组件化分发生命周期 - AOP 方案（libffi 实现） | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">组件化分发生命周期 - AOP 方案（libffi 实现）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-09-06T16:09:39+08:00">
+                2020-09-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>组件化分发生命周期 方案实现探索系列文章：<br>1、<a href="http://gonghonglou.com/2019/08/29/pod-lifecycle/">组件化分发生命周期</a><br>2、<a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a><br><strong>3、<a href="http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/">组件化分发生命周期 - AOP 方案（libffi 实现）</a></strong></p>
+<h1 id="background"><a href="#background" class="headerlink" title="background"></a>background</h1><p>在上一篇 <a href="http://gonghonglou.com/2020/03/08/pod-lifecycle-aop/">组件化分发生命周期 - AOP 方案</a> 文章里，介绍了通过 <a target="_blank" rel="noopener" href="https://github.com/steipete/Aspects">Aspects</a> 这个库，面向切面实现分发 <code>UIApplicationDelegate</code> 方法。</p>
+<p>再简单重复介绍下分发思路：</p>
+<ol>
+<li>hook <code>UIApplication</code> 的 <code>setDelegate:</code> 方法，拿到 <code>AppDelegate</code> 实例</li>
+</ol>
+<p>2）遍历 <code>AppDelegate</code> 的方法列表，判断是否是 <code>UIApplicationDelegate</code> 的协议方法</p>
+<p>3）对以上遍历得到的方法一一进行 hook</p>
+<p>4）在被 hook 方法执行的之前和之后，调用我们想要分发的那些对象对应的方法</p>
+<p>在以上第 3) 步里，是通过 <code>Aspects</code> 实现的 hook。<code>Aspects</code> hook 方法可以返回 <code>NSInvocation</code> 对象，这个对象里包含着 hook 对象，hook 方法，方法参数个数、参数类型等信息，恰好可以拿这些信息去调用目标分发对象的同名方法。</p>
+<p><code>Aspects</code> 的实现原理是使方法调用（消息发送）立马进入消息转发阶段，在消息转发的最后阶段：<code>forwardInvocation:</code> 方法里拿到当前所 hook 方法的 <code>NSInvocation</code> 对象，并进行原方法调用和 block 的调用。</p>
+<p>这种实现原理会导致原对象方法的调用要经历消息转发阶段，方法调用的性能差了一些。而且工程中如果全局 hook 了 <code>NSObject</code> 的 <code>forwardingTargetForSelector:</code>、<code>resolveInstanceMethod:</code> 等方法，监听 <code>unrecognized selector sent to instance</code> 崩溃类型的话，则会捕获到 <code>Aspects</code> 的 hook 过程。</p>
+<p>所以在这篇文章里，将采用 <a target="_blank" rel="noopener" href="https://github.com/libffi/libffi">libffi</a> 实现上述的第 3) 步的 hook 操作，替换 <code>Aspects</code> 的实现。 <code>libffi</code> 较 <code>Aspects</code> 的好处是，hook 操作是直接交换两个 IMP，和原生的 Method Swizzling 优势一样。而且同样能拿到 hook 方法的参数个数、参数类型等信息。</p>
+<h1 id="libffi-preview"><a href="#libffi-preview" class="headerlink" title="libffi preview"></a>libffi preview</h1><p><a target="_blank" rel="noopener" href="https://github.com/libffi/libffi">libffi</a> 相当于 C 语言上的 runtime，拥有动态调用 C 方法及 OC 方法的能力。简单介绍下用法吧，因为本篇文章的重点不在解析 <code>libffi</code> 及用法，所以这里只做简单的使用说明。</p>
+<p>例如，调用 C 函数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> c_func(<span class="type">int</span> a , <span class="type">int</span> b) &#123;</span><br><span class="line">    <span class="type">int</span> sum = a + b;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)libffi_call_c_func &#123;</span><br><span class="line">    ffi_cif cif;</span><br><span class="line">    ffi_type *argTypes[] = &#123;&amp;ffi_type_sint, &amp;ffi_type_sint&#125;;</span><br><span class="line">    ffi_prep_cif(&amp;cif, FFI_DEFAULT_ABI, <span class="number">2</span>, &amp;ffi_type_sint, argTypes);</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> b = <span class="number">2</span>;</span><br><span class="line">    <span class="type">void</span> *args[] = &#123;&amp;a, &amp;b&#125;;</span><br><span class="line">    <span class="type">int</span> retValue;</span><br><span class="line">    ffi_call(&amp;cif, (<span class="type">void</span> *)c_func, &amp;retValue, args); <span class="comment">// retValue = 3</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用 OC 函数：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">int</span>)oc_func:(<span class="type">int</span>)a b:(<span class="type">int</span>)b &#123;</span><br><span class="line">    <span class="type">int</span> sum = a + b;</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)libffi_call_oc_func &#123;</span><br><span class="line">    SEL selector = <span class="keyword">@selector</span>(oc_func:b:);</span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *signature = [<span class="keyword">self</span> methodSignatureForSelector:selector];</span><br><span class="line"></span><br><span class="line">    ffi_cif cif;</span><br><span class="line">    ffi_type *argTypes[] = &#123;&amp;ffi_type_pointer, &amp;ffi_type_pointer, &amp;ffi_type_sint, &amp;ffi_type_sint&#125;;</span><br><span class="line">    ffi_prep_cif(&amp;cif, FFI_DEFAULT_ABI, (uint32_t)signature.numberOfArguments, &amp;ffi_type_sint, argTypes);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> arg1 = <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> arg2 = <span class="number">2</span>;</span><br><span class="line">    <span class="type">void</span> *args[] = &#123;&amp;<span class="keyword">self</span>, &amp;selector, &amp;arg1, &amp;arg2&#125;;</span><br><span class="line">    <span class="type">int</span> retValue;</span><br><span class="line">    IMP func = [<span class="keyword">self</span> methodForSelector:selector];</span><br><span class="line">    ffi_call(&amp;cif, func, &amp;retValue, args); <span class="comment">// retValue = 3</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数调用 <code>ffi_call</code> 方法需要传入：1、函数模版（<code>ffi_cif</code>），2、函数指针，3、返回值，4、参数数组 这四个参数字段。<br>重点在于 函数模版（<code>ffi_cif</code>）。用 <code>ffi_cif</code> 生成一套函数模版，这个模版定义了调用一个函数时，这个函数的：1、参数个数（<code>int</code>），2、返回值类型（<code>ffi_type</code>），3、包含各个入参类型（<code>ffi_type</code>）的数组</p>
+<p>这样，<code>libffi</code> 的 <code>ffi_call</code> 方法就可以根据这个传入的 函数模版（<code>ffi_cif</code>）去调用函数了。</p>
+<p>其中，调用 OC 方法的话比较特殊，像 <code>objc_msgSend</code> 方法一样，第一位参数是函数调用者本身，第二位参数是调用的方法 SEL。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> objc_msgSend(<span class="type">void</span> <span class="comment">/* id self, SEL op, ... */</span> )</span><br></pre></td></tr></table></figure>
+
+<p>是不是看起来 <code>libffi</code> 的使用和 <code>NSInvocation</code> 很像。</p>
+<h1 id="libffi-hook"><a href="#libffi-hook" class="headerlink" title="libffi hook"></a>libffi hook</h1><p>除了动态调用 C &amp; OC 方法外，<code>libffi</code> 提供的另外一个关键的能力是：<br>通过 <code>ffi_closure_alloc</code> 方法创建一个关联着函数指针（<code>IMP</code>）的闭包（<code>closure</code>）<br>通过 <code>ffi_prep_closure_loc</code> 函数给 <code>cif</code> 关联上这个闭包，并传入一个函数实体（<code>fun</code>）和刚才闭包里的 <code>IMP</code></p>
+<p>这样，当 <code>IMP</code> 被执行的时候，就会执行函数实体（<code>fun</code>），并且能在这个函数里拿到：1、<code>cif</code>，2、返回值，3、参数地址，4、自定义的关联数据（<code>userdata</code>）<br>例如：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> *newIMP = <span class="literal">NULL</span>;</span><br><span class="line">ffi_closure *closure = ffi_closure_alloc(<span class="keyword">sizeof</span>(ffi_closure), (<span class="type">void</span> **)&amp;newIMP);</span><br><span class="line">ffi_status prepClosureStatus = ffi_prep_closure_loc(closure, cif, holo_lifecycle_ffi_closure_func, (__bridge <span class="type">void</span> *)info, newIMP);</span><br><span class="line"><span class="keyword">if</span> (prepClosureStatus != FFI_OK) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holo_lifecycle_ffi_closure_func(ffi_cif *cif, <span class="type">void</span> *ret, <span class="type">void</span> **args, <span class="type">void</span> *userdata) &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有了这样的能力，我们就可以将上述的 <code>newIMP</code> 与我们要 hook 的方法 <code>IMP</code> 交换，这样调用 hook 方法的时候，就会执行到 <code>holo_lifecycle_ffi_closure_func</code> 方法，在这个方法里可以拿到原方法的参数个数、参数类型能信息，我们只要在这个方法里再调用一下原方法的 <code>IMP</code>，并在之前和之后分别调用要转发的目标对象的同名方法即可。</p>
+<p>其中，还需要额外指出的一点是，在动态 hook 方法的时候，如何根据 C&amp;OC 方法里的参数类型转换成 <code>ffi_type</code> 呢？<br>苹果的官方文档 <a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html">Objective-C Type Encodings</a> 给出了参数 type encoding 字符串和参数类型的对应关系，也可以参考 NSHipster 的这篇文章：<a target="_blank" rel="noopener" href="https://nshipster.cn/type-encodings/">Type Encodings</a>。<br>其实每种类型，或者说相应字符，在 <code>libffi</code> 里也都存在着对应的 <code>ffi_type</code> 类型。这里直接拷贝了 <a target="_blank" rel="noopener" href="https://github.com/eleme/Stinger">Stinger</a> 里的 <a target="_blank" rel="noopener" href="https://github.com/eleme/Stinger/blob/master/Stinger/Classes/STMethodSignature.m#L131-L209">ffi_type *_st_ffiTypeWithType(const char *c)</a> 方法。</p>
+<p>代码实现参见：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">UIApplication</span> (<span class="title">HoloLifecycle</span>)</span></span><br><span class="line"></span><br><span class="line">+ (<span class="type">void</span>)load &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="built_in">dispatch_once_t</span> onceToken;</span><br><span class="line">    <span class="built_in">dispatch_once</span>(&amp;onceToken, ^&#123;</span><br><span class="line">        Class <span class="keyword">class</span> = [<span class="keyword">self</span> <span class="keyword">class</span>];</span><br><span class="line">        </span><br><span class="line">        SEL originalSelector = <span class="keyword">@selector</span>(setDelegate:);</span><br><span class="line">        SEL swizzledSelector = <span class="keyword">@selector</span>(_holo_setDelegate:);</span><br><span class="line">        </span><br><span class="line">        Method originalMethod = class_getInstanceMethod(<span class="keyword">class</span>, originalSelector);</span><br><span class="line">        Method swizzledMethod = class_getInstanceMethod(<span class="keyword">class</span>, swizzledSelector);</span><br><span class="line">        </span><br><span class="line">        <span class="type">BOOL</span> success = class_addMethod(<span class="keyword">class</span>, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));</span><br><span class="line">        <span class="keyword">if</span> (success) &#123;</span><br><span class="line">            class_replaceMethod(<span class="keyword">class</span>, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            method_exchangeImplementations(originalMethod, swizzledMethod);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)_holo_setDelegate:(<span class="type">id</span> &lt;<span class="built_in">UIApplicationDelegate</span>&gt;)delegate &#123;</span><br><span class="line">    <span class="type">unsigned</span> count = <span class="number">0</span>;</span><br><span class="line">    Method *methods = class_copyMethodList([delegate <span class="keyword">class</span>], &amp;count);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">        Method method = methods[i];</span><br><span class="line">        SEL sel = method_getName(method);</span><br><span class="line">        <span class="keyword">struct</span> objc_method_description methodDesc = protocol_getMethodDescription(<span class="class"><span class="keyword">@protocol</span>(<span class="title">UIApplicationDelegate</span>), <span class="title">sel</span>, <span class="title">NO</span>, <span class="title">YES</span>);</span></span><br><span class="line">        <span class="keyword">if</span> (methodDesc.name != <span class="literal">NULL</span> &amp;&amp; methodDesc.types != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            holo_lifecycle_hook_func(delegate, sel);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    [<span class="keyword">self</span> _holo_setDelegate:delegate];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> holo_lifecycle_hook_func(<span class="type">id</span> obj, SEL sel) &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *selStr = [<span class="string">@&quot;holo_lifecycle_&quot;</span> stringByAppendingString:<span class="built_in">NSStringFromSelector</span>(sel)];</span><br><span class="line">    <span class="keyword">const</span> SEL key = <span class="built_in">NSSelectorFromString</span>(selStr);</span><br><span class="line">    <span class="keyword">if</span> (objc_getAssociatedObject(obj, key)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    HoloLifecycleHookInfo *info = [HoloLifecycleHookInfo new];</span><br><span class="line">    info.cls = [obj <span class="keyword">class</span>];</span><br><span class="line">    info.sel = sel;</span><br><span class="line">    </span><br><span class="line">    objc_setAssociatedObject(obj, key, info, OBJC_ASSOCIATION_RETAIN_NONATOMIC);</span><br><span class="line">    </span><br><span class="line">    Method method = class_getInstanceMethod([obj <span class="keyword">class</span>], sel);</span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *typeEncoding = method_getTypeEncoding(method);</span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *signature = [<span class="built_in">NSMethodSignature</span> signatureWithObjCTypes:typeEncoding];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> <span class="type">unsigned</span> <span class="type">int</span> argsCount = method_getNumberOfArguments(method);</span><br><span class="line">    <span class="comment">// 构造参数类型列表</span></span><br><span class="line">    ffi_type **argTypes = calloc(argsCount, <span class="keyword">sizeof</span>(ffi_type *));</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; argsCount; ++i) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *argType = [signature getArgumentTypeAtIndex:i];</span><br><span class="line">        ffi_type *arg_ffi_type = holo_lifecycle_ffi_type(argType);</span><br><span class="line">        <span class="built_in">NSCAssert</span>(arg_ffi_type, <span class="string">@&quot;HoloLifecycle: can&#x27;t find a ffi_type: %s&quot;</span>, argType);</span><br><span class="line">        argTypes[i] = arg_ffi_type;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 返回值类型</span></span><br><span class="line">    ffi_type *retType = holo_lifecycle_ffi_type(signature.methodReturnType);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 需要在堆上开辟内存，否则会出现内存问题 (HoloLifecycleHookInfo 释放时会 free 掉)</span></span><br><span class="line">    ffi_cif *cif = calloc(<span class="number">1</span>, <span class="keyword">sizeof</span>(ffi_cif));</span><br><span class="line">    <span class="comment">// 生成 ffi_cfi 模版对象，保存函数参数个数、类型等信息，相当于一个函数原型</span></span><br><span class="line">    ffi_status prepCifStatus = ffi_prep_cif(cif, FFI_DEFAULT_ABI, argsCount, retType, argTypes);</span><br><span class="line">    <span class="keyword">if</span> (prepCifStatus != FFI_OK) &#123;</span><br><span class="line">        <span class="built_in">NSCAssert</span>(<span class="literal">NO</span>, <span class="string">@&quot;HoloLifecycle: ffi_prep_cif failed: %d&quot;</span>, prepCifStatus);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 生成新的 IMP</span></span><br><span class="line">    <span class="type">void</span> *newIMP = <span class="literal">NULL</span>;</span><br><span class="line">    ffi_closure *closure = ffi_closure_alloc(<span class="keyword">sizeof</span>(ffi_closure), (<span class="type">void</span> **)&amp;newIMP);</span><br><span class="line">    ffi_status prepClosureStatus = ffi_prep_closure_loc(closure, cif, holo_lifecycle_ffi_closure_func, (__bridge <span class="type">void</span> *)info, newIMP);</span><br><span class="line">    <span class="keyword">if</span> (prepClosureStatus != FFI_OK) &#123;</span><br><span class="line">        <span class="built_in">NSCAssert</span>(<span class="literal">NO</span>, <span class="string">@&quot;HoloLifecycle: ffi_prep_closure_loc failed: %d&quot;</span>, prepClosureStatus);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 替换 IMP 实现</span></span><br><span class="line">    Class hookClass = [obj <span class="keyword">class</span>];</span><br><span class="line">    SEL aSelector = method_getName(method);</span><br><span class="line">    <span class="keyword">if</span> (!class_addMethod(hookClass, aSelector, newIMP, typeEncoding)) &#123;</span><br><span class="line">        IMP originIMP = method_setImplementation(method, newIMP);</span><br><span class="line">        <span class="keyword">if</span> (info-&gt;_originalIMP != originIMP) &#123;</span><br><span class="line">            info-&gt;_originalIMP = originIMP;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holo_lifecycle_ffi_closure_func(ffi_cif *cif, <span class="type">void</span> *ret, <span class="type">void</span> **args, <span class="type">void</span> *userdata) &#123;</span><br><span class="line">    HoloLifecycleHookInfo *info = (__bridge HoloLifecycleHookInfo *)userdata;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// before</span></span><br><span class="line">    <span class="keyword">for</span> (HoloBaseLifecycle *lifecycle <span class="keyword">in</span> [HoloLifecycleManager sharedInstance].beforeInstances) &#123;</span><br><span class="line">        holo_lifecycle_call_sel(lifecycle, info.sel, cif, args);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// call original IMP</span></span><br><span class="line">    ffi_call(cif, info-&gt;_originalIMP, ret, args);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// after</span></span><br><span class="line">    <span class="keyword">for</span> (HoloBaseLifecycle *lifecycle <span class="keyword">in</span> [HoloLifecycleManager sharedInstance].afterInstances) &#123;</span><br><span class="line">        holo_lifecycle_call_sel(lifecycle, info.sel, cif, args);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="type">void</span> holo_lifecycle_call_sel(HoloBaseLifecycle *lifecycle, SEL sel, ffi_cif *originalCif, <span class="type">void</span> **originalArgs) &#123;</span><br><span class="line">    <span class="keyword">if</span> (![lifecycle respondsToSelector:sel]) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 复用 cif，构造参数，重置 args[0]、args[1]</span></span><br><span class="line">    <span class="built_in">NSMethodSignature</span> *signature = [lifecycle methodSignatureForSelector:sel];</span><br><span class="line">    <span class="built_in">NSUInteger</span> argsCount = signature.numberOfArguments;</span><br><span class="line">    <span class="type">void</span> **args = calloc(argsCount, <span class="keyword">sizeof</span>(<span class="type">void</span> *));</span><br><span class="line">    args[<span class="number">0</span>] = &amp;lifecycle;</span><br><span class="line">    args[<span class="number">1</span>] = &amp;sel;</span><br><span class="line">    memcpy(args + <span class="number">2</span>, originalArgs + <span class="number">2</span>, <span class="keyword">sizeof</span>(*originalArgs)*(argsCount - <span class="number">2</span>));</span><br><span class="line">    </span><br><span class="line">    IMP func = [lifecycle methodForSelector:sel];</span><br><span class="line">    ffi_call(originalCif, func, <span class="literal">NULL</span>, args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">NS_INLINE</span> ffi_type *holo_lifecycle_ffi_type(<span class="keyword">const</span> <span class="type">char</span> *c) &#123;</span><br><span class="line">    <span class="keyword">switch</span> (c[<span class="number">0</span>]) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;v&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_void;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;c&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_schar;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;C&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uchar;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;s&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sshort;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;S&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_ushort;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;i&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sint;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;I&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;l&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_slong;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;L&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_ulong;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;q&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_sint64;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;Q&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint64;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;f&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_float;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;d&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_double;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;F&#x27;</span>:</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> CGFLOAT_IS_DOUBLE</span></span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_double;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_float;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;B&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_uint8;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;^&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;@&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;#&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;:&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> &amp;ffi_type_pointer;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;&#123;&#x27;</span>: &#123;</span><br><span class="line">            <span class="comment">// http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Type-Example.html</span></span><br><span class="line">            ffi_type *type = malloc(<span class="keyword">sizeof</span>(ffi_type));</span><br><span class="line">            type-&gt;type = FFI_TYPE_STRUCT;</span><br><span class="line">            <span class="built_in">NSUInteger</span> size = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">NSUInteger</span> alignment = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">NSGetSizeAndAlignment</span>(c, &amp;size, &amp;alignment);</span><br><span class="line">            type-&gt;alignment = alignment;</span><br><span class="line">            type-&gt;size = size;</span><br><span class="line">            <span class="keyword">while</span> (c[<span class="number">0</span>] != <span class="string">&#x27;=&#x27;</span>) ++c; ++c;</span><br><span class="line">            </span><br><span class="line">            <span class="built_in">NSPointerArray</span> *pointArray = [<span class="built_in">NSPointerArray</span> pointerArrayWithOptions:<span class="built_in">NSPointerFunctionsOpaqueMemory</span>];</span><br><span class="line">            <span class="keyword">while</span> (c[<span class="number">0</span>] != <span class="string">&#x27;&#125;&#x27;</span>) &#123;</span><br><span class="line">                ffi_type *elementType = <span class="literal">NULL</span>;</span><br><span class="line">                elementType = holo_lifecycle_ffi_type(c);</span><br><span class="line">                <span class="keyword">if</span> (elementType) &#123;</span><br><span class="line">                    [pointArray addPointer:elementType];</span><br><span class="line">                    c = <span class="built_in">NSGetSizeAndAlignment</span>(c, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">NSInteger</span> count = pointArray.count;</span><br><span class="line">            ffi_type **types = malloc(<span class="keyword">sizeof</span>(ffi_type *) * (count + <span class="number">1</span>));</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                types[i] = [pointArray pointerAtIndex:i];</span><br><span class="line">            &#125;</span><br><span class="line">            types[count] = <span class="literal">NULL</span>; <span class="comment">// terminated element is NULL</span></span><br><span class="line">            </span><br><span class="line">            type-&gt;elements = types;</span><br><span class="line">            <span class="keyword">return</span> type;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>完整实现代码参见：<a target="_blank" rel="noopener" href="https://github.com/gonghonglou/HoloLifecycle">HoloLifecycle</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/10/HoloTableView-HoloCollectionView/" rel="next" title="HoloTableView & HoloCollectionView 让你的列表更好维护">
+                <i class="fa fa-chevron-left"></i> HoloTableView & HoloCollectionView 让你的列表更好维护
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/11/08/hook/" rel="prev" title="细数 iOS 里的 Hook 方案">
+                细数 iOS 里的 Hook 方案 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#background"><span class="nav-number">1.</span> <span class="nav-text">background</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#libffi-preview"><span class="nav-number">2.</span> <span class="nav-text">libffi preview</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#libffi-hook"><span class="nav-number">3.</span> <span class="nav-text">libffi hook</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2020/09/06/pod-lifecycle-aop-libffi/';
+          this.page.identifier = '2020/09/06/pod-lifecycle-aop-libffi/';
+          this.page.title = '组件化分发生命周期 - AOP 方案（libffi 实现）';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

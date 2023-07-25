@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="发现问题如题，在 Podfile 里将 pod 指向了某个版本，但 pod install 却无法正确的下载该版本号的代码。这个问题是最近在打包机上遇到的，Jenkins 打包提交给测试的时候偶尔会出现提交的代码未应用，或者在本地确认无误的代码在打包过程中 xcodebuild 直接编译失败。 因为场景比较特殊所以很快发现了问题。一开始我们在 Podfile 里将 PodA 指向了版本号 1.0.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="修复 pod install 无法正确拉取 pod 代码">
+<meta property="og:url" content="http://gonghonglou.com/2021/08/08/cocoapods-update-pod-sources/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="发现问题如题，在 Podfile 里将 pod 指向了某个版本，但 pod install 却无法正确的下载该版本号的代码。这个问题是最近在打包机上遇到的，Jenkins 打包提交给测试的时候偶尔会出现提交的代码未应用，或者在本地确认无误的代码在打包过程中 xcodebuild 直接编译失败。 因为场景比较特殊所以很快发现了问题。一开始我们在 Podfile 里将 PodA 指向了版本号 1.0.">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-08-08T05:09:14.000Z">
+<meta property="article:modified_time" content="2021-08-09T01:22:59.599Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/08/08/cocoapods-update-pod-sources/"/>
+
+
+
+
+
+  <title>修复 pod install 无法正确拉取 pod 代码 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/08/08/cocoapods-update-pod-sources/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">修复 pod install 无法正确拉取 pod 代码</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-08-08T13:09:14+08:00">
+                2021-08-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="发现问题"><a href="#发现问题" class="headerlink" title="发现问题"></a>发现问题</h1><p>如题，在 Podfile 里将 pod 指向了某个版本，但 pod install 却无法正确的下载该版本号的代码。这个问题是最近在打包机上遇到的，Jenkins 打包提交给测试的时候偶尔会出现提交的代码未应用，或者在本地确认无误的代码在打包过程中 xcodebuild 直接编译失败。</p>
+<p>因为场景比较特殊所以很快发现了问题。一开始我们在 Podfile 里将 <code>PodA</code> 指向了版本号 <code>1.0.0</code>，如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span> <span class="string">&#x27;PodA&#x27;</span>, <span class="string">&#x27;1.0.0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>提测过程中，我们从 <code>1.0.0</code> tag 处拉取了分支 <code>branch_a</code>，并且在该分支上提交了 <code>commitA</code>。然后在 Podfile 里将 <code>PodA</code> 从版本号 <code>1.0.0</code> 改向了分支 <code>branch_a</code>，如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span> <span class="string">&#x27;PodA&#x27;</span>, <span class="symbol">:git</span> =&gt; <span class="string">&#x27;https://xyz.com/PodA.git&#x27;</span>, <span class="symbol">:branch</span> =&gt; <span class="string">&#x27;branch_a&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>打包提交给测试之后，因为需求变更，在分支 <code>branch_a</code> 上的改动不需要了，所以又将 Podfile 里的 <code>PodA</code> 从分支改回了版本号 <code>1.0.0</code>，如：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Pod</span> <span class="string">&#x27;PodA&#x27;</span>, <span class="string">&#x27;1.0.0&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这时再打包就发现 Pods 文件夹下的 <code>PodA</code> 的代码依然包含了分支 <code>branch_a</code> 上的 <code>commitA</code>，并未更改为 <code>1.0.0</code> tag 的代码。</p>
+<p>通过查看 CocoaPods 源码发现，在 pod install 过程中，CocoaPods 会根据 <code>Pods/Manifest.lock</code> 文件比对 pod 是否需要重新下载。从版本号改向分支的时候，CocoaPods 有个 <code>predownloaded</code> 的判读，重新下载了 pod 代码；然而从分支改向版本号的时候，对比了 pod 版本号、名称、checksum 都没变所以代码未更新。以下是 CocoaPods 1.10.2 版本的判断代码：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">pod_changed?</span>(<span class="params">pod</span>)</span><br><span class="line">  spec = root_spec(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> spec.version != sandbox_version(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> spec.checksum != sandbox_checksum(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> resolved_spec_names(pod) != sandbox_spec_names(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> sandbox.predownloaded?(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> folder_empty?(pod)</span><br><span class="line">  <span class="literal">false</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="源码解读：pod-install-对-pod-sources-更新逻辑"><a href="#源码解读：pod-install-对-pod-sources-更新逻辑" class="headerlink" title="源码解读：pod install 对 pod sources 更新逻辑"></a>源码解读：pod install 对 pod sources 更新逻辑</h1><p>现在，从头捋一遍：pod install 过程中这么判断哪些 pod 该更新，哪些 pod 不更新的呢？</p>
+<p>首先打开 <code>installer.rb</code> 文件，找到 <code>def install!</code> 方法，便是 <code>pod install</code> 的入口方法了</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">install!</span></span><br><span class="line">  prepare</span><br><span class="line">  resolve_dependencies</span><br><span class="line">  download_dependencies</span><br><span class="line">  validate_targets</span><br><span class="line">  <span class="keyword">if</span> installation_options.skip_pods_project_generation?</span><br><span class="line">    show_skip_pods_project_generation_message</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    integrate</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  write_lockfiles</span><br><span class="line">  perform_post_install_actions</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>其中调用了 <code>download_dependencies</code> 方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">download_dependencies</span></span><br><span class="line">  <span class="variable constant_">UI</span>.section <span class="string">&#x27;Downloading dependencies&#x27;</span> <span class="keyword">do</span></span><br><span class="line">    install_pod_sources</span><br><span class="line">    run_podfile_pre_install_hooks</span><br><span class="line">    clean_pod_sources</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>其中调用了 <code>install_pod_sources</code> 方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Downloads, installs the documentation and cleans the sources of the Pods</span></span><br><span class="line"><span class="comment"># which need to be installed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [void]</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">install_pod_sources</span></span><br><span class="line">  <span class="variable">@installed_specs</span> = []</span><br><span class="line">  pods_to_install = sandbox_state.added |<span class="params"> sandbox_state.changed</span></span><br><span class="line"><span class="params">  title_options = &#123; :verbose_prefix =&gt; &#x27;-&gt; &#x27;.green &#125;</span></span><br><span class="line"><span class="params">  root_specs.sort_by(&amp;:name).each <span class="keyword">do</span> </span>|spec|<span class="params"></span></span><br><span class="line"><span class="params">    <span class="keyword">if</span> pods_to_install.<span class="keyword">include</span>?(spec.name)</span></span><br><span class="line"><span class="params">      ... 省略代码逻辑</span></span><br><span class="line"><span class="params">      UI.titled_section(title.green, title_options) <span class="keyword">do</span></span></span><br><span class="line"><span class="params">        install_source_of_pod(spec.name)</span></span><br><span class="line"><span class="params">      <span class="keyword">end</span></span></span><br><span class="line"><span class="params">    <span class="keyword">else</span></span></span><br><span class="line"><span class="params">      UI.section(&quot;Using #&#123;spec&#125;&quot;, title_options[:verbose_prefix]) <span class="keyword">do</span></span></span><br><span class="line"><span class="params">        create_pod_installer(spec.name)</span></span><br><span class="line"><span class="params">      <span class="keyword">end</span></span></span><br><span class="line"><span class="params">    <span class="keyword">end</span></span></span><br><span class="line"><span class="params">  <span class="keyword">end</span></span></span><br><span class="line"><span class="params"><span class="keyword">end</span></span></span><br></pre></td></tr></table></figure>
+
+<p>发现 <code>sandbox_state.added</code> 和 <code>sandbox_state.changed</code> 应该是分别对应着 新增、变更 的 pod。全局搜索 <code>sandbox_state</code> 会发现方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># <span class="doctag">@return</span> [SpecsState] The state of the sandbox returned by the analyzer.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sandbox_state</span></span><br><span class="line">  analysis_result.sandbox_state</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>全局搜索 <code>analysis_result</code>，看看它是哪里来的，会发现方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># @!group Installation steps</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Performs the analysis.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [Analyzer] analyzer the analyzer to use for analysis</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [void]</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">analyze</span>(<span class="params">analyzer = create_analyzer</span>)</span><br><span class="line">  <span class="variable">@analysis_result</span> = analyzer.analyze</span><br><span class="line">  <span class="variable">@aggregate_targets</span> = <span class="variable">@analysis_result</span>.targets</span><br><span class="line">  <span class="variable">@pod_targets</span> = <span class="variable">@analysis_result</span>.pod_targets</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>analysis_result</code> 是执行了 <code>analyzer</code> 的 <code>analyze</code> 方法得到的。搜索当前这个 <code>analyze(</code> 方法的调用是在方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># <span class="doctag">@return</span> [Analyzer] The analyzer used to resolve dependencies</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">resolve_dependencies</span></span><br><span class="line">  plugin_sources = run_source_provider_hooks</span><br><span class="line">  analyzer = create_analyzer(plugin_sources)</span><br><span class="line"></span><br><span class="line">  ... 省略代码逻辑</span><br><span class="line"></span><br><span class="line">  <span class="variable constant_">UI</span>.section <span class="string">&#x27;Analyzing dependencies&#x27;</span> <span class="keyword">do</span></span><br><span class="line">    analyze(analyzer)</span><br><span class="line">    validate_build_configurations</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">  ... 省略代码逻辑</span><br><span class="line"></span><br><span class="line">  analyzer</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>以上 <code>resolve_dependencies</code> 方法也是在 install 方法里被调用的，而且是在 <code>download_dependencies</code> 方法之前。根据方法名也不难看出这里的代码逻辑：首先调用 <code>resolve_dependencies</code> 方法进行依赖分析拿到结果，再执行 <code>download_dependencies</code> 方法下载依赖。</p>
+<p>接着搜索 <code>create_analyzer</code> 方法：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">create_analyzer</span>(<span class="params">plugin_sources = <span class="literal">nil</span></span>)</span><br><span class="line">  <span class="title class_">Analyzer</span>.new(sandbox, podfile, lockfile, plugin_sources, has_dependencies?, update)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Analyzer</code> 应该就是具体的分析类，这个类里拥有的 <code>analyze</code> 方法正是返回了上述提到的 <code>@analysis_result</code>。打开 <code>analyzer.rb</code> 文件搜索 <code>analyze</code> 试试：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Performs the analysis.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># The Podfile and the Lockfile provide the information necessary to</span></span><br><span class="line"><span class="comment"># compute which specification should be installed. The manifest of the</span></span><br><span class="line"><span class="comment"># sandbox returns which specifications are installed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [Bool] allow_fetches</span></span><br><span class="line"><span class="comment">#         whether external sources may be fetched</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [AnalysisResult]</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">analyze</span>(<span class="params">allow_fetches = <span class="literal">true</span></span>)</span><br><span class="line">  ... 省略代码逻辑</span><br><span class="line">  sandbox_state   = generate_sandbox_state(specifications)</span><br><span class="line">  ... 省略代码逻辑</span><br><span class="line">  <span class="variable">@result</span> = <span class="title class_">AnalysisResult</span>.new(podfile_state, specs_by_target, specs_by_source, specifications, sandbox_state,</span><br><span class="line">                               aggregate_targets, pod_targets, <span class="variable">@podfile_dependency_cache</span>)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Computes the state of the sandbox respect to the resolved</span></span><br><span class="line"><span class="comment"># specifications.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [SpecsState] the representation of the state of the manifest</span></span><br><span class="line"><span class="comment">#         specifications.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">generate_sandbox_state</span>(<span class="params">specifications</span>)</span><br><span class="line">  sandbox_state = <span class="literal">nil</span></span><br><span class="line">  <span class="variable constant_">UI</span>.section <span class="string">&#x27;Comparing resolved specification to the sandbox manifest&#x27;</span> <span class="keyword">do</span></span><br><span class="line">    sandbox_analyzer = <span class="title class_">SandboxAnalyzer</span>.new(sandbox, specifications, update_mode?)</span><br><span class="line">    sandbox_state = sandbox_analyzer.analyze</span><br><span class="line">    sandbox_state.print</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  sandbox_state</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>至此，就找到了前文提到的 <code>def sandbox_state</code> 方法返回的 <code>analysis_result.sandbox_state</code> 正是以上方法里 <code>AnalysisResult</code> 这个类的 <code>sandbox_state</code> 属性，而该属性又是来自 <code>generate_sandbox_state</code> 方法生成的 <code>SandboxAnalyzer</code> 对象，执行 <code>analyze</code> 方法返回的。</p>
+<p>找到 <code>SandboxAnalyzer</code> 类就找到我们此行的最终答案，打开 <code>sandbox_analyzer.rb</code> 文件：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Performs the analysis to the detect the state of the sandbox respect</span></span><br><span class="line"><span class="comment"># to the resolved specifications.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [void]</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">analyze</span></span><br><span class="line">  state = <span class="title class_">SpecsState</span>.new</span><br><span class="line">  <span class="keyword">if</span> sandbox_manifest</span><br><span class="line">    all_names = (resolved_pods + sandbox_pods).uniq.sort</span><br><span class="line">    all_names.sort.each <span class="keyword">do</span> |<span class="params">name</span>|</span><br><span class="line">      state.add_name(name, pod_state(name))</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    state.added.merge(resolved_pods)</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  state</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#---------------------------------------------------------------------#</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># @!group Pod state</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Returns the state of the Pod with the given name.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [String] pod</span></span><br><span class="line"><span class="comment">#         the name of the Pod.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [Symbol] The state</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pod_state</span>(<span class="params">pod</span>)</span><br><span class="line">  <span class="keyword">return</span> <span class="symbol">:added</span>   <span class="keyword">if</span> pod_added?(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="symbol">:deleted</span> <span class="keyword">if</span> pod_deleted?(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="symbol">:changed</span> <span class="keyword">if</span> pod_changed?(pod)</span><br><span class="line">  <span class="symbol">:unchanged</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Returns whether the Pod with the given name should be installed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@note</span>   A Pod whose folder doesn&#x27;t exists is considered added.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [String] pod</span></span><br><span class="line"><span class="comment">#         the name of the Pod.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [Bool] Whether the Pod is added.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pod_added?</span>(<span class="params">pod</span>)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> resolved_pods.<span class="keyword">include</span>?(pod) &amp;&amp; !sandbox_pods.<span class="keyword">include</span>?(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> !folder_exist?(pod) &amp;&amp; !sandbox.local?(pod)</span><br><span class="line">  <span class="literal">false</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Returns whether the Pod with the given name should be removed from</span></span><br><span class="line"><span class="comment"># the installation.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [String] pod</span></span><br><span class="line"><span class="comment">#         the name of the Pod.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [Bool] Whether the Pod is deleted.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pod_deleted?</span>(<span class="params">pod</span>)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> !resolved_pods.<span class="keyword">include</span>?(pod) &amp;&amp; sandbox_pods.<span class="keyword">include</span>?(pod)</span><br><span class="line">  <span class="literal">false</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Returns whether the Pod with the given name should be considered</span></span><br><span class="line"><span class="comment"># changed and thus should be reinstalled.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@note</span>   In update mode, as there is no way to know if a remote source</span></span><br><span class="line"><span class="comment">#         hash changed the Pods from external</span></span><br><span class="line"><span class="comment">#         sources are always marked as changed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@note</span>   A Pod whose folder is empty is considered changed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@param</span>  [String] pod</span></span><br><span class="line"><span class="comment">#         the name of the Pod.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># <span class="doctag">@return</span> [Bool] Whether the Pod is changed.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pod_changed?</span>(<span class="params">pod</span>)</span><br><span class="line">  spec = root_spec(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> spec.version != sandbox_version(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> spec.checksum != sandbox_checksum(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> resolved_spec_names(pod) != sandbox_spec_names(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> sandbox.predownloaded?(pod)</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span> <span class="keyword">if</span> folder_empty?(pod)</span><br><span class="line">  <span class="literal">false</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>这段代码就是 pod install 过程中判断得到的哪些 pod 是新增的、哪些 pod 是删除的、哪些 pod 是改变的，而新增的 和 改变的则需要下载新的代码。</p>
+<p>关注 <code>def pod_changed</code> 方法，spec 相当于目标 pod 的 podspec，sandbox_ 相关的则是进行比对的 <code>Pods/Manifest.lock</code> 文件包含的 pod 信息。<br>在 Podfile 里将 pod 从分支指向改为 版本号 时，这里的判断的 <code>version</code>、<code>checksum</code>、<code>name</code> 等信息都是相同的，所以该 pod 并未出现在 changed 数组里，Pods 文件夹里该 pod 的代码也就并未更新。</p>
+<h1 id="修复问题-PR-10825"><a href="#修复问题-PR-10825" class="headerlink" title="修复问题: PR #10825"></a>修复问题: <strong><a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/pull/10825">PR #10825</a></strong></h1><p>首先要搞明白在 Podfile 里将 pod 指向分支和指向版本号在 lock 记录里究竟有什么不一样，才好处理究竟要怎么判断。打开 <code>Podfile.lock</code> 文件（和 <code>Pods/Manifest.lock</code> 文件内容一致），搜索 <code>PodA</code> 相关的内容：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Pod &#x27;PodA&#x27;, :git =&gt; &#x27;https://xyz.com/PodA.git&#x27;, :branch =&gt; &#x27;branch_a&#x27;</span></span><br><span class="line"><span class="variable constant_">DEPENDENCIES</span>:</span><br><span class="line">  - <span class="title class_">Pod</span>A (from <span class="string">`https://xyz.com/PodA.git`</span>, branch <span class="string">`branch_a`</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Pod &#x27;PodA&#x27;, &#x27;1.0.0&#x27;</span></span><br><span class="line"><span class="variable constant_">DEPENDENCIES</span>:</span><br><span class="line">  - <span class="title class_">Pod</span>A (= <span class="number">1.0</span>.<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+
+<p>由此，只要判断 Podfile 里生成的 <code>Dependency</code> 和 <code>Pods/Manifest.lock</code> 文件里记录的 <code>Dependency</code> 不一致则代表 pod changed，需要被更新。</p>
+<p>通过查看 <a target="_blank" rel="noopener" href="https://github.com/CocoaPods/Core">cocoapods-core</a> 代码，<code>Lockfile</code> 类里已经有的 <code>dependencies</code> 数组，收集好了 <code>Dependency</code> 对象，<code>Podfile</code> 类里也已经提供好了 <code>dependencies</code> 数组。只要根据 pod name 从两个数组里分别匹配出 <code>Dependency</code> 对象进行比对，如果不同则代表 pod changed，需要被更新。</p>
+<p>思路大概就这样，具体改动可参考 PR 里的 <a target="_blank" rel="noopener" href="https://github.com/CocoaPods/CocoaPods/pull/10825/files">files changed</a></p>
+<h1 id="private-hofix"><a href="#private-hofix" class="headerlink" title="private hofix"></a>private hofix</h1><p>因为 PR 里 <a target="_blank" rel="noopener" href="https://github.com/dnkoutso">@dnkoutso</a> 标记了 <code>1.11.0</code> 发布。感觉日常开发中遇到这个 bug 还挺严重的。如果 Jenkins 打包失败了还好，还能发现问题，万一不影响代码编译很有可能将错误代码提交给测试，甚至带到线上去。所以在组内发布了 private hofix 版本。基于当前的最新版本（<code>1.10.2</code>）cherry pick 了相关的 commit，发布了 <code>1.10.2.9.private.hotfix</code> 版本。作为在 <code>1.11.0</code> 出来之前的临时使用版本吧。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/07/17/cocoapods-plugin-tool/" rel="next" title="记一次 CocoaPods 插件整合开发工具">
+                <i class="fa fa-chevron-left"></i> 记一次 CocoaPods 插件整合开发工具
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/08/21/fishhook/" rel="prev" title="fishhook 源码笔记">
+                fishhook 源码笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%91%E7%8E%B0%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">发现问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%EF%BC%9Apod-install-%E5%AF%B9-pod-sources-%E6%9B%B4%E6%96%B0%E9%80%BB%E8%BE%91"><span class="nav-number">2.</span> <span class="nav-text">源码解读：pod install 对 pod sources 更新逻辑</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E9%97%AE%E9%A2%98-PR-10825"><span class="nav-number">3.</span> <span class="nav-text">修复问题: PR #10825</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#private-hofix"><span class="nav-number">4.</span> <span class="nav-text">private hofix</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/08/08/cocoapods-update-pod-sources/';
+          this.page.identifier = '2021/08/08/cocoapods-update-pod-sources/';
+          this.page.title = '修复 pod install 无法正确拉取 pod 代码';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

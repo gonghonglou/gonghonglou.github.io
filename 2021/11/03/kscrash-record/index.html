@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本篇文章主要针对 KSCrash 捕获到崩溃后的记录操作。看看 KSCrash 都记录些什么内容，怎样记录的。特别是对堆栈信息的处理，对每个线程实现堆栈回溯和尝试符号解析的处理方式。 本篇文章主要都是贴的 KSCrash 的源码。会尽量对代码做注释说明。 前文已经分析过了，kscm_handleException 函数调用了 g_onExceptionEvent，而 g_onExceptionEv">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KSCrash 源码笔记 - 记录篇">
+<meta property="og:url" content="http://gonghonglou.com/2021/11/03/kscrash-record/index.html">
+<meta property="og:site_name" content="与佳期的个人博客">
+<meta property="og:description" content="本篇文章主要针对 KSCrash 捕获到崩溃后的记录操作。看看 KSCrash 都记录些什么内容，怎样记录的。特别是对堆栈信息的处理，对每个线程实现堆栈回溯和尝试符号解析的处理方式。 本篇文章主要都是贴的 KSCrash 的源码。会尽量对代码做注释说明。 前文已经分析过了，kscm_handleException 函数调用了 g_onExceptionEvent，而 g_onExceptionEv">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-11-03T11:12:43.000Z">
+<meta property="article:modified_time" content="2021-11-13T04:36:15.382Z">
+<meta property="article:author" content="与佳期">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://gonghonglou.com/2021/11/03/kscrash-record/"/>
+
+
+
+
+
+  <title>KSCrash 源码笔记 - 记录篇 | 与佳期的个人博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">与佳期的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">登白薠兮骋望，与佳期兮夕张。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://gonghonglou.com/2021/11/03/kscrash-record/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="与佳期的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">KSCrash 源码笔记 - 记录篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-11-03T19:12:43+08:00">
+                2021-11-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本篇文章主要针对 KSCrash 捕获到崩溃后的记录操作。看看 KSCrash 都记录些什么内容，怎样记录的。特别是对堆栈信息的处理，对每个线程实现堆栈回溯和尝试符号解析的处理方式。</p>
+<p>本篇文章主要都是贴的 KSCrash 的源码。会尽量对代码做注释说明。</p>
+<p>前文已经分析过了，kscm_handleException 函数调用了 g_onExceptionEvent，而 g_onExceptionEvent 函数就是保存的 onCrash 函数。我们再来看一下 onCrash 的内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">onCrash</span><span class="params">(<span class="keyword">struct</span> KSCrash_MonitorContext* monitorContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (monitorContext-&gt;currentSnapshotUserReported == <span class="literal">false</span>) &#123;</span><br><span class="line">        KSLOG_DEBUG(<span class="string">&quot;Updating application state to note crash.&quot;</span>);</span><br><span class="line">        kscrashstate_notifyAppCrash();</span><br><span class="line">    &#125;</span><br><span class="line">    monitorContext-&gt;consoleLogPath = g_shouldAddConsoleLogToReport ? g_consoleLogPath : <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(monitorContext-&gt;crashedDuringCrashHandling)</span><br><span class="line">    &#123;</span><br><span class="line">        kscrashreport_writeRecrashReport(monitorContext, g_lastCrashReportFilePath);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">char</span> crashReportFilePath[KSFU_MAX_PATH_LENGTH];</span><br><span class="line">        <span class="type">int64_t</span> reportID = kscrs_getNextCrashReport(crashReportFilePath);</span><br><span class="line">        <span class="built_in">strncpy</span>(g_lastCrashReportFilePath, crashReportFilePath, <span class="keyword">sizeof</span>(g_lastCrashReportFilePath));</span><br><span class="line">        kscrashreport_writeStandardReport(monitorContext, crashReportFilePath);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(g_reportWrittenCallback)</span><br><span class="line">        &#123;</span><br><span class="line">            g_reportWrittenCallback(reportID);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中调用了 kscrashreport_writeStandardReport 方法，这个方法里实现了对各种信息的记录操作，将所有信息写入到本地文件里。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">kscrashreport_writeStandardReport</span><span class="params">(<span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> monitorContext, <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> path)</span></span><br><span class="line">&#123;</span><br><span class="line">    KSLOG_INFO(<span class="string">&quot;Writing crash report to %s&quot;</span>, path);</span><br><span class="line">    <span class="type">char</span> writeBuffer[<span class="number">1024</span>];</span><br><span class="line">    KSBufferedWriter bufferedWriter;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!ksfu_openBufferedWriter(&amp;bufferedWriter, path, writeBuffer, <span class="keyword">sizeof</span>(writeBuffer)))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ksccd_freeze();</span><br><span class="line">    </span><br><span class="line">    KSJSONEncodeContext jsonContext;</span><br><span class="line">    jsonContext.userData = &amp;bufferedWriter;</span><br><span class="line">    KSCrashReportWriter concreteWriter;</span><br><span class="line">    KSCrashReportWriter* writer = &amp;concreteWriter;</span><br><span class="line">    prepareReportWriter(writer, &amp;jsonContext);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// addJSONData 函数赋值给 writer 的 context</span></span><br><span class="line">    ksjson_beginEncode(getJsonContext(writer), <span class="literal">true</span>, addJSONData, &amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1、写入 &quot;report&quot;: &quot;&#123;&quot;</span></span><br><span class="line">    writer-&gt;beginObject(writer, KSCrashField_Report);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 2、写入 report info（&quot;report&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">        writeReportInfo(writer,</span><br><span class="line">                        KSCrashField_Report,</span><br><span class="line">                        KSCrashReportType_Standard,</span><br><span class="line">                        monitorContext-&gt;eventID,</span><br><span class="line">                        monitorContext-&gt;System.processName);</span><br><span class="line">        <span class="comment">// 将 buffer 数据写入磁盘</span></span><br><span class="line">        ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3、写入 binary images（&quot;binary_images&quot;: &quot;[&quot;）</span></span><br><span class="line">        writeBinaryImages(writer, KSCrashField_BinaryImages);</span><br><span class="line">        ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4、写入 process state（&quot;process&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">        writeProcessState(writer, KSCrashField_ProcessState, monitorContext);</span><br><span class="line">        ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 5、写入 system info（&quot;system&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">        writeSystemInfo(writer, KSCrashField_System, monitorContext);</span><br><span class="line">        ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 写入 &quot;crash&quot;: &quot;&#123;&quot;</span></span><br><span class="line">        writer-&gt;beginObject(writer, KSCrashField_Crash);</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 6、写入崩溃错误信息</span></span><br><span class="line">            writeError(writer, KSCrashField_Error, monitorContext);</span><br><span class="line">            ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line">            <span class="comment">// 7、写入各线程堆栈信息（&quot;threads&quot;: &quot;[&quot;）</span></span><br><span class="line">            writeAllThreads(writer,</span><br><span class="line">                            KSCrashField_Threads,</span><br><span class="line">                            monitorContext,</span><br><span class="line">                            g_introspectionRules.enabled);</span><br><span class="line">            ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 写入 &quot;&#125;&quot;</span></span><br><span class="line">        writer-&gt;endContainer(writer);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(g_userInfoJSON != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            addJSONElement(writer, KSCrashField_User, g_userInfoJSON, <span class="literal">false</span>);</span><br><span class="line">            ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            writer-&gt;beginObject(writer, KSCrashField_User);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(g_userSectionWriteCallback != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line">            <span class="keyword">if</span> (monitorContext-&gt;currentSnapshotUserReported == <span class="literal">false</span>) &#123;</span><br><span class="line">                g_userSectionWriteCallback(writer);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        writer-&gt;endContainer(writer);</span><br><span class="line">        ksfu_flushBufferedWriter(&amp;bufferedWriter);</span><br><span class="line"></span><br><span class="line">        writeDebugInfo(writer, KSCrashField_Debug, monitorContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 写入 &quot;&#125;&quot;</span></span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">    </span><br><span class="line">    ksjson_endEncode(getJsonContext(writer));</span><br><span class="line">    ksfu_closeBufferedWriter(&amp;bufferedWriter);</span><br><span class="line">    ksccd_unfreeze();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来，我们一一查看上述调用的方法的具体内容，看看它们都具体做了什么工作。</p>
+<h1 id="1、写入方法：beginObject"><a href="#1、写入方法：beginObject" class="headerlink" title="1、写入方法：beginObject"></a>1、写入方法：beginObject</h1><p>beginObject 最终调用的即 addJSONData 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 写入 name 及 &quot;&#123;&quot;</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">ksjson_beginObject</span><span class="params">(KSJSONEncodeContext* <span class="type">const</span> context,</span></span><br><span class="line"><span class="params">                       <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> name)</span></span><br><span class="line">&#123;</span><br><span class="line">    likely_if(context-&gt;containerLevel &gt;= <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> result = ksjson_beginElement(context, name);</span><br><span class="line">        unlikely_if(result != KSJSON_OK)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    context-&gt;containerLevel++;</span><br><span class="line">    context-&gt;isObject[context-&gt;containerLevel] = <span class="literal">true</span>;</span><br><span class="line">    context-&gt;containerFirstEntry = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> addJSONData(context, <span class="string">&quot;&#123;&quot;</span>, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> addJSONData(CONTEXT,DATA,LENGTH) \</span></span><br><span class="line"><span class="meta">    (CONTEXT)-&gt;addJSONData(DATA, LENGTH, (CONTEXT)-&gt;userData)</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">addJSONData</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* <span class="keyword">restrict</span> <span class="type">const</span> data, <span class="type">const</span> <span class="type">int</span> length, <span class="type">void</span>* <span class="keyword">restrict</span> userData)</span></span><br><span class="line">&#123;</span><br><span class="line">    KSBufferedWriter* writer = (KSBufferedWriter*)userData;</span><br><span class="line">    <span class="comment">// 将目标数据写入 Buffer 或磁盘</span></span><br><span class="line">    <span class="type">const</span> <span class="type">bool</span> success = ksfu_writeBufferedWriter(writer, data, length);</span><br><span class="line">    <span class="keyword">return</span> success ? KSJSON_OK : KSJSON_ERROR_CANNOT_ADD_DATA;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">ksfu_writeBufferedWriter</span><span class="params">(KSBufferedWriter* writer, <span class="type">const</span> <span class="type">char</span>* <span class="keyword">restrict</span> <span class="type">const</span> data, <span class="type">const</span> <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 如果数据大小超出 buffer 剩余空间，则将数据写入文件</span></span><br><span class="line">    <span class="keyword">if</span>(length &gt; writer-&gt;bufferLength - writer-&gt;position)</span><br><span class="line">    &#123;</span><br><span class="line">        ksfu_flushBufferedWriter(writer);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(length &gt; writer-&gt;bufferLength)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> ksfu_writeBytesToFD(writer-&gt;fd, data, length);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则将数据写入 buffer</span></span><br><span class="line">    <span class="built_in">memcpy</span>(writer-&gt;buffer + writer-&gt;position, data, length);</span><br><span class="line">    <span class="comment">// 更新 position 用于标记 buffer 剩余空间</span></span><br><span class="line">    writer-&gt;position += length;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">ksfu_writeBytesToFD</span><span class="params">(<span class="type">const</span> <span class="type">int</span> fd, <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> bytes, <span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* pos = bytes;</span><br><span class="line">    <span class="keyword">while</span>(length &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// write 函数将数据写入文件，bytesWritten 为写入文档的字节数，出错为 -1</span></span><br><span class="line">        <span class="type">int</span> bytesWritten = (<span class="type">int</span>)write(fd, pos, (<span class="type">unsigned</span>)length);</span><br><span class="line">        <span class="keyword">if</span>(bytesWritten == <span class="number">-1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            KSLOG_ERROR(<span class="string">&quot;Could not write to fd %d: %s&quot;</span>, fd, strerror(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        length -= bytesWritten;</span><br><span class="line">        pos += bytesWritten;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="2、写入-report-info：writeReportInfo"><a href="#2、写入-report-info：writeReportInfo" class="headerlink" title="2、写入 report info：writeReportInfo"></a>2、写入 report info：writeReportInfo</h1><p>写入一些基础信息</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeReportInfo</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> type,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> reportID,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> processName)</span></span><br><span class="line">&#123;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tp</span>;</span></span><br><span class="line">        gettimeofday(&amp;tp, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="type">int64_t</span> microseconds = ((<span class="type">int64_t</span>)tp.tv_sec) * <span class="number">1000000</span> + tp.tv_usec;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// &quot;version&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Version, KSCRASH_REPORT_VERSION);</span><br><span class="line">        <span class="comment">// &quot;id&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_ID, reportID);</span><br><span class="line">        <span class="comment">// &quot;process_name&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_ProcessName, processName);</span><br><span class="line">        <span class="comment">// &quot;timestamp&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_Timestamp, microseconds);</span><br><span class="line">        <span class="comment">// &quot;type&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Type, type);</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="3、写入-binary-images：writeBinaryImages"><a href="#3、写入-binary-images：writeBinaryImages" class="headerlink" title="3、写入 binary images：writeBinaryImages"></a>3、写入 binary images：writeBinaryImages</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeBinaryImages</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer, <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 调用 _dyld_image_count 获取 image count</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> imageCount = ksdl_imageCount();</span><br><span class="line"></span><br><span class="line">    writer-&gt;beginArray(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> iImg = <span class="number">0</span>; iImg &lt; imageCount; iImg++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 遍历 image count，写入各 image 信息</span></span><br><span class="line">            writeBinaryImage(writer, <span class="literal">NULL</span>, iImg);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeBinaryImage</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                             <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                             <span class="type">const</span> <span class="type">int</span> index)</span></span><br><span class="line">&#123;</span><br><span class="line">    KSBinaryImage image = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="comment">// 获取 image 详细信息</span></span><br><span class="line">    <span class="keyword">if</span>(!ksdl_getBinaryImage(index, &amp;image))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// &quot;image_addr&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageAddress, image.address);</span><br><span class="line">        <span class="comment">// &quot;image_vmaddr&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageVmAddress, image.vmAddress);</span><br><span class="line">        <span class="comment">// &quot;image_size&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageSize, image.size);</span><br><span class="line">        <span class="comment">// &quot;name&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Name, image.name);</span><br><span class="line">        <span class="comment">// &quot;uuid&quot;</span></span><br><span class="line">        writer-&gt;addUUIDElement(writer, KSCrashField_UUID, image.uuid);</span><br><span class="line">        <span class="comment">// &quot;cpu_type&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_CPUType, image.cpuType);</span><br><span class="line">        <span class="comment">// &quot;cpu_subtype&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_CPUSubType, image.cpuSubType);</span><br><span class="line">        <span class="comment">// &quot;major_version&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageMajorVersion, image.majorVersion);</span><br><span class="line">        <span class="comment">// &quot;minor_version&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageMinorVersion, image.minorVersion);</span><br><span class="line">        <span class="comment">// &quot;revision_version&quot;</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_ImageRevisionVersion, image.revisionVersion);</span><br><span class="line">        <span class="keyword">if</span>(image.crashInfoMessage != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// &quot;crash_info_message&quot;</span></span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_ImageCrashInfoMessage, image.crashInfoMessage);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(image.crashInfoMessage2 != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// &quot;crash_info_message2&quot;</span></span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_ImageCrashInfoMessage2, image.crashInfoMessage2);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">ksdl_getBinaryImage</span><span class="params">(<span class="type">int</span> index, KSBinaryImage* buffer)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 获取 image header</span></span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">mach_header</span>* <span class="title">header</span> =</span> _dyld_get_image_header((<span class="type">unsigned</span>)index);</span><br><span class="line">    <span class="keyword">if</span>(header == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> ksdl_getBinaryImageForHeader((<span class="type">const</span> <span class="type">void</span>*)header, _dyld_get_image_name((<span class="type">unsigned</span>)index), buffer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取 image 详细信息</span></span><br><span class="line"><span class="type">bool</span> <span class="title function_">ksdl_getBinaryImageForHeader</span><span class="params">(<span class="type">const</span> <span class="type">void</span>* <span class="type">const</span> header_ptr, <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> image_name, KSBinaryImage* buffer)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">mach_header</span>* <span class="title">header</span> =</span> (<span class="type">const</span> <span class="keyword">struct</span> mach_header*)header_ptr;</span><br><span class="line">    <span class="type">uintptr_t</span> cmdPtr = firstCmdAfterHeader(header);</span><br><span class="line">    <span class="keyword">if</span>(cmdPtr == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Look for the TEXT segment to get the image size.</span></span><br><span class="line">    <span class="comment">// Also look for a UUID command.</span></span><br><span class="line">    <span class="type">uint64_t</span> imageSize = <span class="number">0</span>;</span><br><span class="line">    <span class="type">uint64_t</span> imageVmAddr = <span class="number">0</span>;</span><br><span class="line">    <span class="type">uint64_t</span> version = <span class="number">0</span>;</span><br><span class="line">    <span class="type">uint8_t</span>* uuid = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">uint32_t</span> iCmd = <span class="number">0</span>; iCmd &lt; header-&gt;ncmds; iCmd++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">load_command</span>* <span class="title">loadCmd</span> =</span> (<span class="keyword">struct</span> load_command*)cmdPtr;</span><br><span class="line">        <span class="keyword">switch</span>(loadCmd-&gt;cmd)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">case</span> LC_SEGMENT:</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">segment_command</span>* <span class="title">segCmd</span> =</span> (<span class="keyword">struct</span> segment_command*)cmdPtr;</span><br><span class="line">                <span class="keyword">if</span>(<span class="built_in">strcmp</span>(segCmd-&gt;segname, SEG_TEXT) == <span class="number">0</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    imageSize = segCmd-&gt;vmsize;</span><br><span class="line">                    imageVmAddr = segCmd-&gt;vmaddr;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">case</span> LC_SEGMENT_64:</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">segment_command_64</span>* <span class="title">segCmd</span> =</span> (<span class="keyword">struct</span> segment_command_64*)cmdPtr;</span><br><span class="line">                <span class="keyword">if</span>(<span class="built_in">strcmp</span>(segCmd-&gt;segname, SEG_TEXT) == <span class="number">0</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    imageSize = segCmd-&gt;vmsize;</span><br><span class="line">                    imageVmAddr = segCmd-&gt;vmaddr;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">case</span> LC_UUID:</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">uuid_command</span>* <span class="title">uuidCmd</span> =</span> (<span class="keyword">struct</span> uuid_command*)cmdPtr;</span><br><span class="line">                uuid = uuidCmd-&gt;uuid;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">case</span> LC_ID_DYLIB:</span><br><span class="line">            &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">dylib_command</span>* <span class="title">dc</span> =</span> (<span class="keyword">struct</span> dylib_command*)cmdPtr;</span><br><span class="line">                version = dc-&gt;dylib.current_version;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        cmdPtr += loadCmd-&gt;cmdsize;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buffer-&gt;address = (<span class="type">uintptr_t</span>)header;</span><br><span class="line">    buffer-&gt;vmAddress = imageVmAddr;</span><br><span class="line">    buffer-&gt;size = imageSize;</span><br><span class="line">    buffer-&gt;name = image_name;</span><br><span class="line">    buffer-&gt;uuid = uuid;</span><br><span class="line">    buffer-&gt;cpuType = header-&gt;cputype;</span><br><span class="line">    buffer-&gt;cpuSubType = header-&gt;cpusubtype;</span><br><span class="line">    buffer-&gt;majorVersion = version &gt;&gt; <span class="number">16</span>;</span><br><span class="line">    buffer-&gt;minorVersion = (version &gt;&gt; <span class="number">8</span>) &amp; <span class="number">0xff</span>;</span><br><span class="line">    buffer-&gt;revisionVersion = version &amp; <span class="number">0xff</span>;</span><br><span class="line">    getCrashInfo(header, buffer);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="4、写入-process-state：writeProcessState"><a href="#4、写入-process-state：writeProcessState" class="headerlink" title="4、写入 process state：writeProcessState"></a>4、写入 process state：writeProcessState</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeProcessState</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                              <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                              <span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> monitorContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// &quot;process&quot;: &quot;&#123;&quot;</span></span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(monitorContext-&gt;ZombieException.address != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// &quot;last_dealloced_nsexception&quot;: &quot;&#123;&quot;</span></span><br><span class="line">            writer-&gt;beginObject(writer, KSCrashField_LastDeallocedNSException);</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// &quot;address&quot;</span></span><br><span class="line">                writer-&gt;addUIntegerElement(writer, KSCrashField_Address, monitorContext-&gt;ZombieException.address);</span><br><span class="line">                <span class="comment">// &quot;name&quot;</span></span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Name, monitorContext-&gt;ZombieException.name);</span><br><span class="line">                <span class="comment">// &quot;reason&quot;</span></span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Reason, monitorContext-&gt;ZombieException.reason);</span><br><span class="line">                <span class="comment">// &quot;referenced_object&quot;</span></span><br><span class="line">                writeAddressReferencedByString(writer, KSCrashField_ReferencedObject, monitorContext-&gt;ZombieException.reason);</span><br><span class="line">            &#125;</span><br><span class="line">            writer-&gt;endContainer(writer);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="5、写入-system-info：writeSystemInfo"><a href="#5、写入-system-info：writeSystemInfo" class="headerlink" title="5、写入 system info：writeSystemInfo"></a>5、写入 system info：writeSystemInfo</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeSystemInfo</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> monitorContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// &quot;system_name&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_SystemName, monitorContext-&gt;System.systemName);</span><br><span class="line">        <span class="comment">// &quot;system_version&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_SystemVersion, monitorContext-&gt;System.systemVersion);</span><br><span class="line">        <span class="comment">// &quot;machine&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Machine, monitorContext-&gt;System.machine);</span><br><span class="line">        <span class="comment">// &quot;model&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Model, monitorContext-&gt;System.model);</span><br><span class="line">        <span class="comment">// &quot;kernel_version&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_KernelVersion, monitorContext-&gt;System.kernelVersion);</span><br><span class="line">        <span class="comment">// &quot;os_version&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_OSVersion, monitorContext-&gt;System.osVersion);</span><br><span class="line">        <span class="comment">// &quot;jailbroken&quot;</span></span><br><span class="line">        writer-&gt;addBooleanElement(writer, KSCrashField_Jailbroken, monitorContext-&gt;System.isJailbroken);</span><br><span class="line">        <span class="comment">// &quot;boot_time&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BootTime, monitorContext-&gt;System.bootTime);</span><br><span class="line">        <span class="comment">// &quot;app_start_time&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_AppStartTime, monitorContext-&gt;System.appStartTime);</span><br><span class="line">        <span class="comment">// &quot;CFBundleExecutablePath&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_ExecutablePath, monitorContext-&gt;System.executablePath);</span><br><span class="line">        <span class="comment">// &quot;CFBundleExecutable&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_Executable, monitorContext-&gt;System.executableName);</span><br><span class="line">        <span class="comment">// &quot;CFBundleIdentifier&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BundleID, monitorContext-&gt;System.bundleID);</span><br><span class="line">        <span class="comment">// &quot;CFBundleName&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BundleName, monitorContext-&gt;System.bundleName);</span><br><span class="line">        <span class="comment">// &quot;CFBundleVersion&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BundleVersion, monitorContext-&gt;System.bundleVersion);</span><br><span class="line">        <span class="comment">// &quot;CFBundleShortVersionString&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BundleShortVersion, monitorContext-&gt;System.bundleShortVersion);</span><br><span class="line">        <span class="comment">// &quot;app_uuid&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_AppUUID, monitorContext-&gt;System.appID);</span><br><span class="line">        <span class="comment">// &quot;cpu_arch&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_CPUArch, monitorContext-&gt;System.cpuArchitecture);</span><br><span class="line">        <span class="comment">// &quot;cpu_type&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_CPUType, monitorContext-&gt;System.cpuType);</span><br><span class="line">        <span class="comment">// &quot;cpu_subtype&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_CPUSubType, monitorContext-&gt;System.cpuSubType);</span><br><span class="line">        <span class="comment">// &quot;binary_cpu_type&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_BinaryCPUType, monitorContext-&gt;System.binaryCPUType);</span><br><span class="line">        <span class="comment">// &quot;binary_cpu_subtype&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_BinaryCPUSubType, monitorContext-&gt;System.binaryCPUSubType);</span><br><span class="line">        <span class="comment">// &quot;time_zone&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_TimeZone, monitorContext-&gt;System.timezone);</span><br><span class="line">        <span class="comment">// &quot;process_name&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_ProcessName, monitorContext-&gt;System.processName);</span><br><span class="line">        <span class="comment">// &quot;process_id&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_ProcessID, monitorContext-&gt;System.processID);</span><br><span class="line">        <span class="comment">// &quot;parent_process_id&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_ParentProcessID, monitorContext-&gt;System.parentProcessID);</span><br><span class="line">        <span class="comment">// &quot;device_app_hash&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_DeviceAppHash, monitorContext-&gt;System.deviceAppHash);</span><br><span class="line">        <span class="comment">// &quot;build_type&quot;</span></span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_BuildType, monitorContext-&gt;System.buildType);</span><br><span class="line">        <span class="comment">// &quot;storage&quot;</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_Storage, (<span class="type">int64_t</span>)monitorContext-&gt;System.storageSize);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 写入内存信息（&quot;memory&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">        writeMemoryInfo(writer, KSCrashField_Memory, monitorContext);</span><br><span class="line">        <span class="comment">// 写入App运行状态等信息（&quot;application_stats&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">        writeAppStats(writer, KSCrashField_AppStats, monitorContext);</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="6、写入崩溃错误信息：writeError"><a href="#6、写入崩溃错误信息：writeError" class="headerlink" title="6、写入崩溃错误信息：writeError"></a>6、写入崩溃错误信息：writeError</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeError</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                       <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                       <span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> crash)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 写入 &quot;error&quot;: &quot;&#123;&quot;</span></span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> KSCRASH_HOST_APPLE</span></span><br><span class="line">        <span class="comment">// 写入 &quot;mach&quot;: &quot;&#123;&quot;</span></span><br><span class="line">        writer-&gt;beginObject(writer, KSCrashField_Mach);</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入 mach 崩溃信息</span></span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* machExceptionName = ksmach_exceptionName(crash-&gt;mach.type);</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* machCodeName = crash-&gt;mach.code == <span class="number">0</span> ? <span class="literal">NULL</span> : ksmach_kernelReturnCodeName(crash-&gt;mach.code);</span><br><span class="line">            writer-&gt;addUIntegerElement(writer, KSCrashField_Exception, (<span class="type">unsigned</span>)crash-&gt;mach.type);</span><br><span class="line">            <span class="keyword">if</span>(machExceptionName != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_ExceptionName, machExceptionName);</span><br><span class="line">            &#125;</span><br><span class="line">            writer-&gt;addUIntegerElement(writer, KSCrashField_Code, (<span class="type">unsigned</span>)crash-&gt;mach.code);</span><br><span class="line">            <span class="keyword">if</span>(machCodeName != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_CodeName, machCodeName);</span><br><span class="line">            &#125;</span><br><span class="line">            writer-&gt;addUIntegerElement(writer, KSCrashField_Subcode, (<span class="type">size_t</span>)crash-&gt;mach.subcode);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 写入 &quot;&#125;&quot;</span></span><br><span class="line">        writer-&gt;endContainer(writer);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">        <span class="comment">// 写入 &quot;signal&quot;: &quot;&#123;&quot;</span></span><br><span class="line">        writer-&gt;beginObject(writer, KSCrashField_Signal);</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入 signal 崩溃信息</span></span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* sigName = kssignal_signalName(crash-&gt;signal.signum);</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* sigCodeName = kssignal_signalCodeName(crash-&gt;signal.signum, crash-&gt;signal.sigcode);</span><br><span class="line">            writer-&gt;addUIntegerElement(writer, KSCrashField_Signal, (<span class="type">unsigned</span>)crash-&gt;signal.signum);</span><br><span class="line">            <span class="keyword">if</span>(sigName != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Name, sigName);</span><br><span class="line">            &#125;</span><br><span class="line">            writer-&gt;addUIntegerElement(writer, KSCrashField_Code, (<span class="type">unsigned</span>)crash-&gt;signal.sigcode);</span><br><span class="line">            <span class="keyword">if</span>(sigCodeName != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_CodeName, sigCodeName);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 写入 &quot;&#125;&quot;</span></span><br><span class="line">        writer-&gt;endContainer(writer);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 写入崩溃地址</span></span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_Address, crash-&gt;faultAddress);</span><br><span class="line">        <span class="keyword">if</span>(crash-&gt;crashReason != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入引起崩溃原因的简短描述</span></span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Reason, crash-&gt;crashReason);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Gather specific info.</span></span><br><span class="line">        <span class="keyword">switch</span>(crash-&gt;crashType)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;deadlock&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeMainThreadDeadlock:</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_Deadlock);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;mach&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeMachException:</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_Mach);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;cpp_exception&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeCPPException:</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_CPPException);</span><br><span class="line">                writer-&gt;beginObject(writer, KSCrashField_CPPException);</span><br><span class="line">                &#123;</span><br><span class="line">                    writer-&gt;addStringElement(writer, KSCrashField_Name, crash-&gt;CPPException.name);</span><br><span class="line">                &#125;</span><br><span class="line">                writer-&gt;endContainer(writer);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;nsexception&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeNSException:</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_NSException);</span><br><span class="line">                writer-&gt;beginObject(writer, KSCrashField_NSException);</span><br><span class="line">                &#123;</span><br><span class="line">                    writer-&gt;addStringElement(writer, KSCrashField_Name, crash-&gt;NSException.name);</span><br><span class="line">                    writer-&gt;addStringElement(writer, KSCrashField_UserInfo, crash-&gt;NSException.userInfo);</span><br><span class="line">                    writeAddressReferencedByString(writer, KSCrashField_ReferencedObject, crash-&gt;crashReason);</span><br><span class="line">                &#125;</span><br><span class="line">                writer-&gt;endContainer(writer);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;signal&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeSignal:</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_Signal);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 写入 &quot;type&quot;: &quot;user&quot;</span></span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeUserReported:</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashExcType_User);</span><br><span class="line">                writer-&gt;beginObject(writer, KSCrashField_UserReported);</span><br><span class="line">                &#123;</span><br><span class="line">                    writer-&gt;addStringElement(writer, KSCrashField_Name, crash-&gt;userException.name);</span><br><span class="line">                    <span class="keyword">if</span>(crash-&gt;userException.language != <span class="literal">NULL</span>)</span><br><span class="line">                    &#123;</span><br><span class="line">                        writer-&gt;addStringElement(writer, KSCrashField_Language, crash-&gt;userException.language);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">if</span>(crash-&gt;userException.lineOfCode != <span class="literal">NULL</span>)</span><br><span class="line">                    &#123;</span><br><span class="line">                        writer-&gt;addStringElement(writer, KSCrashField_LineOfCode, crash-&gt;userException.lineOfCode);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">if</span>(crash-&gt;userException.customStackTrace != <span class="literal">NULL</span>)</span><br><span class="line">                    &#123;</span><br><span class="line">                        writer-&gt;addJSONElement(writer, KSCrashField_Backtrace, crash-&gt;userException.customStackTrace, <span class="literal">true</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                writer-&gt;endContainer(writer);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeSystem:</span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeApplicationState:</span><br><span class="line">            <span class="keyword">case</span> KSCrashMonitorTypeZombie:</span><br><span class="line">                KSLOG_ERROR(<span class="string">&quot;Crash monitor type 0x%x shouldn&#x27;t be able to cause events!&quot;</span>, crash-&gt;crashType);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 写入 &quot;&#125;&quot;</span></span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="7、写入各线程堆栈信息：writeAllThreads"><a href="#7、写入各线程堆栈信息：writeAllThreads" class="headerlink" title="7、写入各线程堆栈信息：writeAllThreads"></a>7、写入各线程堆栈信息：writeAllThreads</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeAllThreads</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> crash,</span></span><br><span class="line"><span class="params">                            <span class="type">bool</span> writeNotableAddresses)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">KSMachineContext</span>* <span class="title">const</span> <span class="title">context</span> =</span> crash-&gt;offendingMachineContext;</span><br><span class="line">    KSThread offendingThread = ksmc_getThreadFromContext(context);</span><br><span class="line">    <span class="type">int</span> threadCount = ksmc_getThreadCount(context);</span><br><span class="line">    KSMC_NEW_CONTEXT(machineContext);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fetch info for all threads.</span></span><br><span class="line">    writer-&gt;beginArray(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        KSLOG_DEBUG(<span class="string">&quot;Writing %d threads.&quot;</span>, threadCount);</span><br><span class="line">        <span class="comment">// 遍历线程</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; threadCount; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            KSThread thread = ksmc_getThreadAtIndex(context, i);</span><br><span class="line">            <span class="keyword">if</span>(thread == offendingThread)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// 如果是当前线程</span></span><br><span class="line">                writeThread(writer, <span class="literal">NULL</span>, crash, context, i, writeNotableAddresses);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// 如果不是当前线程</span></span><br><span class="line">                ksmc_getContextForThread(thread, machineContext, <span class="literal">false</span>);</span><br><span class="line">                writeThread(writer, <span class="literal">NULL</span>, crash, machineContext, i, writeNotableAddresses);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeThread</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                        <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                        <span class="type">const</span> KSCrash_MonitorContext* <span class="type">const</span> crash,</span></span><br><span class="line"><span class="params">                        <span class="type">const</span> <span class="keyword">struct</span> KSMachineContext* <span class="type">const</span> machineContext,</span></span><br><span class="line"><span class="params">                        <span class="type">const</span> <span class="type">int</span> threadIndex,</span></span><br><span class="line"><span class="params">                        <span class="type">const</span> <span class="type">bool</span> shouldWriteNotableAddresses)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">bool</span> isCrashedThread = ksmc_isCrashedContext(machineContext);</span><br><span class="line">    KSThread thread = ksmc_getThreadFromContext(machineContext);</span><br><span class="line">    KSLOG_DEBUG(<span class="string">&quot;Writing thread %x (index %d). is crashed: %d&quot;</span>, thread, threadIndex, isCrashedThread);</span><br><span class="line"></span><br><span class="line">    KSStackCursor stackCursor;</span><br><span class="line">    <span class="type">bool</span> hasBacktrace = getStackCursor(crash, machineContext, &amp;stackCursor);</span><br><span class="line"></span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(hasBacktrace)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入堆栈（&quot;backtrace&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">            writeBacktrace(writer, KSCrashField_Backtrace, &amp;stackCursor);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(ksmc_canHaveCPUState(machineContext))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入寄存器（&quot;registers&quot;: &quot;&#123;&quot;）</span></span><br><span class="line">            writeRegisters(writer, KSCrashField_Registers, machineContext);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 写入线程 index</span></span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_Index, threadIndex);</span><br><span class="line">        <span class="type">const</span> <span class="type">char</span>* name = ksccd_getThreadName(thread);</span><br><span class="line">        <span class="keyword">if</span>(name != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入线程 name</span></span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Name, name);</span><br><span class="line">        &#125;</span><br><span class="line">        name = ksccd_getQueueName(thread);</span><br><span class="line">        <span class="keyword">if</span>(name != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入线程 queue</span></span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_DispatchQueue, name);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 当前线程是否是 crash thread</span></span><br><span class="line">        writer-&gt;addBooleanElement(writer, KSCrashField_Crashed, isCrashedThread);</span><br><span class="line">        <span class="comment">// 当前线程是否是 current thread</span></span><br><span class="line">        writer-&gt;addBooleanElement(writer, KSCrashField_CurrentThread, thread == ksthread_self());</span><br><span class="line">        <span class="keyword">if</span>(isCrashedThread)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 如果是崩溃线程，写入部分堆栈信息</span></span><br><span class="line">            writeStackContents(writer, KSCrashField_Stack, machineContext, stackCursor.state.hasGivenUp);</span><br><span class="line">            <span class="keyword">if</span>(shouldWriteNotableAddresses)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// 写入寄存器和栈上的地址信息</span></span><br><span class="line">                writeNotableAddresses(writer, KSCrashField_NotableAddresses, machineContext);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="writeBacktrace"><a href="#writeBacktrace" class="headerlink" title="writeBacktrace"></a>writeBacktrace</h3><p>我们来重点关注下 writeBacktrace 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeBacktrace</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                           <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                           KSStackCursor* stackCursor)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 写入 &quot;backtrace&quot;: &quot;&#123;&quot;</span></span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 写入 &quot;contents&quot;: &quot;[&quot;</span></span><br><span class="line">        writer-&gt;beginArray(writer, KSCrashField_Contents);</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 循环进行堆栈符号化</span></span><br><span class="line">            <span class="keyword">while</span>(stackCursor-&gt;advanceCursor(stackCursor))</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;beginObject(writer, <span class="literal">NULL</span>);</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">// 尝试对当前地址进行符号化</span></span><br><span class="line">                    <span class="keyword">if</span>(stackCursor-&gt;symbolicate(stackCursor))</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">if</span>(stackCursor-&gt;stackEntry.imageName != <span class="literal">NULL</span>)</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="comment">// 写入 image name</span></span><br><span class="line">                            writer-&gt;addStringElement(writer, KSCrashField_ObjectName, ksfu_lastPathEntry(stackCursor-&gt;stackEntry.imageName));</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">// 写入 image address</span></span><br><span class="line">                        writer-&gt;addUIntegerElement(writer, KSCrashField_ObjectAddr, stackCursor-&gt;stackEntry.imageAddress);</span><br><span class="line">                        <span class="keyword">if</span>(stackCursor-&gt;stackEntry.symbolName != <span class="literal">NULL</span>)</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="comment">// 写入符号名称</span></span><br><span class="line">                            writer-&gt;addStringElement(writer, KSCrashField_SymbolName, stackCursor-&gt;stackEntry.symbolName);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">// 写入符号地址</span></span><br><span class="line">                        writer-&gt;addUIntegerElement(writer, KSCrashField_SymbolAddr, stackCursor-&gt;stackEntry.symbolAddress);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="comment">// 写入堆栈地址</span></span><br><span class="line">                    writer-&gt;addUIntegerElement(writer, KSCrashField_InstructionAddr, stackCursor-&gt;stackEntry.address);</span><br><span class="line">                &#125;</span><br><span class="line">                writer-&gt;endContainer(writer);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        writer-&gt;endContainer(writer);</span><br><span class="line">        writer-&gt;addIntegerElement(writer, KSCrashField_Skipped, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>1、其中 advanceCursor 函数用于遍历栈帧：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">bool</span> <span class="title function_">advanceCursor</span><span class="params">(KSStackCursor *cursor)</span></span><br><span class="line">&#123;</span><br><span class="line">    MachineContextCursor* context = (MachineContextCursor*)cursor-&gt;context;</span><br><span class="line">    <span class="type">uintptr_t</span> nextAddress = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果当前遍历的栈帧深度大于设定的栈帧深度，则直接返回</span></span><br><span class="line">    <span class="keyword">if</span>(cursor-&gt;state.currentDepth &gt;= context-&gt;maxStackDepth)</span><br><span class="line">    &#123;</span><br><span class="line">        cursor-&gt;state.hasGivenUp = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果 pc 寄存器为 0 并且循环栈帧深度为 0，则直接进入 successful 块</span></span><br><span class="line">    <span class="keyword">if</span>(context-&gt;instructionAddress == <span class="number">0</span> &amp;&amp; cursor-&gt;state.currentDepth == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 获取 pc 寄存器地址进行赋值</span></span><br><span class="line">        context-&gt;instructionAddress = kscpu_instructionAddress(context-&gt;machineContext);</span><br><span class="line">        nextAddress = context-&gt;instructionAddress;</span><br><span class="line">        <span class="keyword">goto</span> successfulExit;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果 lr 寄存器为 0 并且为经历循环，则直接进入 successful 块</span></span><br><span class="line">    <span class="keyword">if</span>(context-&gt;linkRegister == <span class="number">0</span> &amp;&amp; !context-&gt;isPastFramePointer)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Link register, if available, is the second address in the trace.</span></span><br><span class="line">        context-&gt;linkRegister = kscpu_linkRegister(context-&gt;machineContext);</span><br><span class="line">        <span class="keyword">if</span>(context-&gt;linkRegister != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            nextAddress = context-&gt;linkRegister;</span><br><span class="line">            <span class="keyword">goto</span> successfulExit;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果 currentFrame.previous 为空，则获取 fp 寄存器地址进行赋值</span></span><br><span class="line">    <span class="keyword">if</span>(context-&gt;currentFrame.previous == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(context-&gt;isPastFramePointer)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        context-&gt;currentFrame.previous = (<span class="keyword">struct</span> FrameEntry*)kscpu_framePointer(context-&gt;machineContext);</span><br><span class="line">        context-&gt;isPastFramePointer = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将 currentFrame.previous 地址拷贝到 currentFrame，向前遍历一桢栈帧</span></span><br><span class="line">    <span class="keyword">if</span>(!ksmem_copySafely(context-&gt;currentFrame.previous, &amp;context-&gt;currentFrame, <span class="keyword">sizeof</span>(context-&gt;currentFrame)))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果 currentFrame.previous 为 0 或者 currentFrame.return_address 为 0 代表栈帧结束，则直接返回</span></span><br><span class="line">    <span class="keyword">if</span>(context-&gt;currentFrame.previous == <span class="number">0</span> || context-&gt;currentFrame.return_address == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    nextAddress = context-&gt;currentFrame.return_address;</span><br><span class="line">    </span><br><span class="line">successfulExit:</span><br><span class="line">    <span class="comment">// 记录当前堆栈地址</span></span><br><span class="line">    cursor-&gt;stackEntry.address = kscpu_normaliseInstructionPointer(nextAddress);</span><br><span class="line">    cursor-&gt;state.currentDepth++;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>2、其中 symbolicate 函数尝试对地址进行符号化：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> <span class="title function_">kssymbolicator_symbolicate</span><span class="params">(KSStackCursor *cursor)</span></span><br><span class="line">&#123;</span><br><span class="line">    Dl_info symbolsBuffer;</span><br><span class="line">    <span class="comment">// 地址符号化</span></span><br><span class="line">    <span class="keyword">if</span>(ksdl_dladdr(CALL_INSTRUCTION_FROM_RETURN_ADDRESS(cursor-&gt;stackEntry.address), &amp;symbolsBuffer))</span><br><span class="line">    &#123;</span><br><span class="line">        cursor-&gt;stackEntry.imageAddress = (<span class="type">uintptr_t</span>)symbolsBuffer.dli_fbase;</span><br><span class="line">        cursor-&gt;stackEntry.imageName = symbolsBuffer.dli_fname;</span><br><span class="line">        cursor-&gt;stackEntry.symbolAddress = (<span class="type">uintptr_t</span>)symbolsBuffer.dli_saddr;</span><br><span class="line">        cursor-&gt;stackEntry.symbolName = symbolsBuffer.dli_sname;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    cursor-&gt;stackEntry.imageAddress = <span class="number">0</span>;</span><br><span class="line">    cursor-&gt;stackEntry.imageName = <span class="number">0</span>;</span><br><span class="line">    cursor-&gt;stackEntry.symbolAddress = <span class="number">0</span>;</span><br><span class="line">    cursor-&gt;stackEntry.symbolName = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">ksdl_dladdr</span><span class="params">(<span class="type">const</span> <span class="type">uintptr_t</span> address, Dl_info* <span class="type">const</span> info)</span></span><br><span class="line">&#123;</span><br><span class="line">    info-&gt;dli_fname = <span class="literal">NULL</span>;</span><br><span class="line">    info-&gt;dli_fbase = <span class="literal">NULL</span>;</span><br><span class="line">    info-&gt;dli_sname = <span class="literal">NULL</span>;</span><br><span class="line">    info-&gt;dli_saddr = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 查找目标地址所在的 image index</span></span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> idx = imageIndexContainingAddress(address);</span><br><span class="line">    <span class="keyword">if</span>(idx == UINT_MAX)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 获取 image header</span></span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">mach_header</span>* <span class="title">header</span> =</span> _dyld_get_image_header(idx);</span><br><span class="line">    <span class="comment">// 获取 image 虚拟地址偏移量</span></span><br><span class="line">    <span class="type">const</span> <span class="type">uintptr_t</span> imageVMAddrSlide = (<span class="type">uintptr_t</span>)_dyld_get_image_vmaddr_slide(idx);</span><br><span class="line">    <span class="comment">// 获取 image 有效地址</span></span><br><span class="line">    <span class="type">const</span> <span class="type">uintptr_t</span> addressWithSlide = address - imageVMAddrSlide;</span><br><span class="line">    <span class="comment">// 根据 image index 获取 image 基地址，加上 image 虚拟地址偏移量得到 image 的起始地址</span></span><br><span class="line">    <span class="type">const</span> <span class="type">uintptr_t</span> segmentBase = segmentBaseOfImageIndex(idx) + imageVMAddrSlide;</span><br><span class="line">    <span class="keyword">if</span>(segmentBase == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取 image name</span></span><br><span class="line">    info-&gt;dli_fname = _dyld_get_image_name(idx);</span><br><span class="line">    info-&gt;dli_fbase = (<span class="type">void</span>*)header;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 查找符号表，在符号表里查找目标地址最近的符号地址及符号名称</span></span><br><span class="line">    <span class="comment">// Find symbol tables and get whichever symbol is closest to the address.</span></span><br><span class="line">    <span class="type">const</span> <span class="type">nlist_t</span>* bestMatch = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="type">uintptr_t</span> bestDistance = ULONG_MAX;</span><br><span class="line">    <span class="type">uintptr_t</span> cmdPtr = firstCmdAfterHeader(header);</span><br><span class="line">    <span class="keyword">if</span>(cmdPtr == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">uint32_t</span> iCmd = <span class="number">0</span>; iCmd &lt; header-&gt;ncmds; iCmd++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">load_command</span>* <span class="title">loadCmd</span> =</span> (<span class="keyword">struct</span> load_command*)cmdPtr;</span><br><span class="line">        <span class="keyword">if</span>(loadCmd-&gt;cmd == LC_SYMTAB)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">symtab_command</span>* <span class="title">symtabCmd</span> =</span> (<span class="keyword">struct</span> symtab_command*)cmdPtr;</span><br><span class="line">            <span class="comment">// 符号表（image 起始地址 + 符号表偏移量）</span></span><br><span class="line">            <span class="type">const</span> <span class="type">nlist_t</span>* symbolTable = (<span class="type">nlist_t</span>*)(segmentBase + symtabCmd-&gt;symoff);</span><br><span class="line">            <span class="comment">// 字符串表（image 起始地址 + 字符串表偏移量）</span></span><br><span class="line">            <span class="type">const</span> <span class="type">uintptr_t</span> stringTable = segmentBase + symtabCmd-&gt;stroff;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span>(<span class="type">uint32_t</span> iSym = <span class="number">0</span>; iSym &lt; symtabCmd-&gt;nsyms; iSym++)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// If n_value is 0, the symbol refers to an external object.</span></span><br><span class="line">                <span class="keyword">if</span>(symbolTable[iSym].n_value != <span class="number">0</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="type">uintptr_t</span> symbolBase = symbolTable[iSym].n_value;</span><br><span class="line">                    <span class="type">uintptr_t</span> currentDistance = addressWithSlide - symbolBase;</span><br><span class="line">                    <span class="keyword">if</span>((addressWithSlide &gt;= symbolBase) &amp;&amp;</span><br><span class="line">                       (currentDistance &lt;= bestDistance))</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="comment">// 找到离目标地址最近的符号</span></span><br><span class="line">                        bestMatch = symbolTable + iSym;</span><br><span class="line">                        bestDistance = currentDistance;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(bestMatch != <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// 符号地址（符号偏移量 + image 虚拟地址偏移量）</span></span><br><span class="line">                info-&gt;dli_saddr = (<span class="type">void</span>*)(bestMatch-&gt;n_value + imageVMAddrSlide);</span><br><span class="line">                <span class="keyword">if</span>(bestMatch-&gt;n_desc == <span class="number">16</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">// This image has been stripped. The name is meaningless, and</span></span><br><span class="line">                    <span class="comment">// almost certainly resolves to &quot;_mh_execute_header&quot;</span></span><br><span class="line">                    info-&gt;dli_sname = <span class="literal">NULL</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">// 符号名称（字符串表位置 + 符号所在字符串表 index）</span></span><br><span class="line">                    info-&gt;dli_sname = (<span class="type">char</span>*)((<span class="type">intptr_t</span>)stringTable + (<span class="type">intptr_t</span>)bestMatch-&gt;n_un.n_strx);</span><br><span class="line">                    <span class="keyword">if</span>(*info-&gt;dli_sname == <span class="string">&#x27;_&#x27;</span>)</span><br><span class="line">                    &#123;</span><br><span class="line">                        info-&gt;dli_sname++;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        cmdPtr += loadCmd-&gt;cmdsize;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="writeRegisters"><a href="#writeRegisters" class="headerlink" title="writeRegisters"></a>writeRegisters</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeRegisters</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                           <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                           <span class="type">const</span> <span class="keyword">struct</span> KSMachineContext* <span class="type">const</span> machineContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 写入各寄存器内容</span></span><br><span class="line">        writeBasicRegisters(writer, KSCrashField_Basic, machineContext);</span><br><span class="line">        <span class="keyword">if</span>(ksmc_hasValidExceptionRegisters(machineContext))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 写入异常寄存器内容</span></span><br><span class="line">            writeExceptionRegisters(writer, KSCrashField_Exception, machineContext);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeBasicRegisters</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                                <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                                <span class="type">const</span> <span class="keyword">struct</span> KSMachineContext* <span class="type">const</span> machineContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> registerNameBuff[<span class="number">30</span>];</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* registerName;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 遍历寄存器</span></span><br><span class="line">        <span class="type">const</span> <span class="type">int</span> numRegisters = kscpu_numRegisters();</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> reg = <span class="number">0</span>; reg &lt; numRegisters; reg++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 获取寄存器名称</span></span><br><span class="line">            registerName = kscpu_registerName(reg);</span><br><span class="line">            <span class="keyword">if</span>(registerName == <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="built_in">snprintf</span>(registerNameBuff, <span class="keyword">sizeof</span>(registerNameBuff), <span class="string">&quot;r%d&quot;</span>, reg);</span><br><span class="line">                registerName = registerNameBuff;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// kscpu_registerValue：获取寄存器内容</span></span><br><span class="line">            writer-&gt;addUIntegerElement(writer, registerName,</span><br><span class="line">                                       kscpu_registerValue(machineContext, reg));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="type">char</span>* g_registerNames[] =</span><br><span class="line">&#123;</span><br><span class="line">     <span class="string">&quot;x0&quot;</span>,  <span class="string">&quot;x1&quot;</span>,  <span class="string">&quot;x2&quot;</span>,  <span class="string">&quot;x3&quot;</span>,  <span class="string">&quot;x4&quot;</span>,  <span class="string">&quot;x5&quot;</span>,  <span class="string">&quot;x6&quot;</span>,  <span class="string">&quot;x7&quot;</span>,</span><br><span class="line">     <span class="string">&quot;x8&quot;</span>,  <span class="string">&quot;x9&quot;</span>, <span class="string">&quot;x10&quot;</span>, <span class="string">&quot;x11&quot;</span>, <span class="string">&quot;x12&quot;</span>, <span class="string">&quot;x13&quot;</span>, <span class="string">&quot;x14&quot;</span>, <span class="string">&quot;x15&quot;</span>,</span><br><span class="line">    <span class="string">&quot;x16&quot;</span>, <span class="string">&quot;x17&quot;</span>, <span class="string">&quot;x18&quot;</span>, <span class="string">&quot;x19&quot;</span>, <span class="string">&quot;x20&quot;</span>, <span class="string">&quot;x21&quot;</span>, <span class="string">&quot;x22&quot;</span>, <span class="string">&quot;x23&quot;</span>,</span><br><span class="line">    <span class="string">&quot;x24&quot;</span>, <span class="string">&quot;x25&quot;</span>, <span class="string">&quot;x26&quot;</span>, <span class="string">&quot;x27&quot;</span>, <span class="string">&quot;x28&quot;</span>, <span class="string">&quot;x29&quot;</span>,</span><br><span class="line">    <span class="string">&quot;fp&quot;</span>, <span class="string">&quot;lr&quot;</span>, <span class="string">&quot;sp&quot;</span>, <span class="string">&quot;pc&quot;</span>, <span class="string">&quot;cpsr&quot;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">uint64_t</span> <span class="title function_">kscpu_registerValue</span><span class="params">(<span class="type">const</span> KSMachineContext* <span class="type">const</span> context, <span class="type">const</span> <span class="type">int</span> regNumber)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(regNumber &lt;= <span class="number">29</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> context-&gt;machineContext.__ss.__x[regNumber];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span>(regNumber)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">30</span>: <span class="keyword">return</span> context-&gt;machineContext.__ss.__fp;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">31</span>: <span class="keyword">return</span> context-&gt;machineContext.__ss.__lr;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">32</span>: <span class="keyword">return</span> context-&gt;machineContext.__ss.__sp;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">33</span>: <span class="keyword">return</span> context-&gt;machineContext.__ss.__pc;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">34</span>: <span class="keyword">return</span> context-&gt;machineContext.__ss.__cpsr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    KSLOG_ERROR(<span class="string">&quot;Invalid register number: %d&quot;</span>, regNumber);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="writeStackContents-writeNotableAddresses"><a href="#writeStackContents-writeNotableAddresses" class="headerlink" title="writeStackContents &amp; writeNotableAddresses"></a>writeStackContents &amp; writeNotableAddresses</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeStackContents</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                               <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                               <span class="type">const</span> <span class="keyword">struct</span> KSMachineContext* <span class="type">const</span> machineContext,</span></span><br><span class="line"><span class="params">                               <span class="type">const</span> <span class="type">bool</span> isStackOverflow)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">uintptr_t</span> sp = kscpu_stackPointer(machineContext);</span><br><span class="line">    <span class="keyword">if</span>((<span class="type">void</span>*)sp == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">uintptr_t</span> lowAddress = sp + (<span class="type">uintptr_t</span>)(kStackContentsPushedDistance * (<span class="type">int</span>)<span class="keyword">sizeof</span>(sp) * kscpu_stackGrowDirection() * <span class="number">-1</span>);</span><br><span class="line">    <span class="type">uintptr_t</span> highAddress = sp + (<span class="type">uintptr_t</span>)(kStackContentsPoppedDistance * (<span class="type">int</span>)<span class="keyword">sizeof</span>(sp) * kscpu_stackGrowDirection());</span><br><span class="line">    <span class="keyword">if</span>(highAddress &lt; lowAddress)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">uintptr_t</span> tmp = lowAddress;</span><br><span class="line">        lowAddress = highAddress;</span><br><span class="line">        highAddress = tmp;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        writer-&gt;addStringElement(writer, KSCrashField_GrowDirection, kscpu_stackGrowDirection() &gt; <span class="number">0</span> ? <span class="string">&quot;+&quot;</span> : <span class="string">&quot;-&quot;</span>);</span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_DumpStart, lowAddress);</span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_DumpEnd, highAddress);</span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_StackPtr, sp);</span><br><span class="line">        writer-&gt;addBooleanElement(writer, KSCrashField_Overflow, isStackOverflow);</span><br><span class="line">        <span class="type">uint8_t</span> stackBuffer[kStackContentsTotalDistance * <span class="title function_">sizeof</span><span class="params">(sp)</span>];</span><br><span class="line">        <span class="type">int</span> copyLength = (<span class="type">int</span>)(highAddress - lowAddress);</span><br><span class="line">        <span class="keyword">if</span>(ksmem_copySafely((<span class="type">void</span>*)lowAddress, stackBuffer, copyLength))</span><br><span class="line">        &#123;</span><br><span class="line">            writer-&gt;addDataElement(writer, KSCrashField_Contents, (<span class="type">void</span>*)stackBuffer, copyLength);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Error, <span class="string">&quot;Stack contents not accessible&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeNotableAddresses</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                                  <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                                  <span class="type">const</span> <span class="keyword">struct</span> KSMachineContext* <span class="type">const</span> machineContext)</span></span><br><span class="line">&#123;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 写入寄存器的地址信息</span></span><br><span class="line">        writeNotableRegisters(writer, machineContext);</span><br><span class="line">        <span class="comment">// 写入栈上的地址信息</span></span><br><span class="line">        writeNotableStackContents(writer,</span><br><span class="line">                                  machineContext,</span><br><span class="line">                                  kStackNotableSearchBackDistance,</span><br><span class="line">                                  kStackNotableSearchForwardDistance);</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因篇幅原因，对上述 writeNotableRegisters 和 writeNotableStackContents 就不做过多详细的分析了。其中，他们都调用了 writeMemoryContents 关键方法：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">writeMemoryContents</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                                <span class="type">const</span> <span class="type">char</span>* <span class="type">const</span> key,</span></span><br><span class="line"><span class="params">                                <span class="type">const</span> <span class="type">uintptr_t</span> address,</span></span><br><span class="line"><span class="params">                                <span class="type">int</span>* limit)</span></span><br><span class="line">&#123;</span><br><span class="line">    (*limit)--;</span><br><span class="line">    <span class="type">const</span> <span class="type">void</span>* object = (<span class="type">const</span> <span class="type">void</span>*)address;</span><br><span class="line">    writer-&gt;beginObject(writer, key);</span><br><span class="line">    &#123;</span><br><span class="line">        writer-&gt;addUIntegerElement(writer, KSCrashField_Address, address);</span><br><span class="line">        writeZombieIfPresent(writer, KSCrashField_LastDeallocObject, address);</span><br><span class="line">        <span class="keyword">if</span>(!writeObjCObject(writer, address, limit))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(object == <span class="literal">NULL</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_NullPointer);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span>(isValidString(object))</span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_String);</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Value, (<span class="type">const</span> <span class="type">char</span>*)object);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_Unknown);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    writer-&gt;endContainer(writer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">bool</span> <span class="title function_">writeObjCObject</span><span class="params">(<span class="type">const</span> KSCrashReportWriter* <span class="type">const</span> writer,</span></span><br><span class="line"><span class="params">                            <span class="type">const</span> <span class="type">uintptr_t</span> address,</span></span><br><span class="line"><span class="params">                            <span class="type">int</span>* limit)</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> KSCRASH_HAS_OBJC</span></span><br><span class="line">    <span class="type">const</span> <span class="type">void</span>* object = (<span class="type">const</span> <span class="type">void</span>*)address;</span><br><span class="line">    <span class="keyword">switch</span>(ksobjc_objectType(object))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> KSObjCTypeClass:</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_Class);</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Class, ksobjc_className(object));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">case</span> KSObjCTypeObject:</span><br><span class="line">        &#123;</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_Object);</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* className = ksobjc_objectClassName(object);</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Class, className);</span><br><span class="line">            <span class="keyword">if</span>(!isRestrictedClass(className))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">switch</span>(ksobjc_objectClassType(object))</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeString:</span><br><span class="line">                        writeNSStringContents(writer, KSCrashField_Value, address, limit);</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeURL:</span><br><span class="line">                        writeURLContents(writer, KSCrashField_Value, address, limit);</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeDate:</span><br><span class="line">                        writeDateContents(writer, KSCrashField_Value, address, limit);</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeArray:</span><br><span class="line">                        <span class="keyword">if</span>(*limit &gt; <span class="number">0</span>)</span><br><span class="line">                        &#123;</span><br><span class="line">                            writeArrayContents(writer, KSCrashField_FirstObject, address, limit);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeNumber:</span><br><span class="line">                        writeNumberContents(writer, KSCrashField_Value, address, limit);</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeDictionary:</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeException:</span><br><span class="line">                        <span class="comment">// <span class="doctag">TODO:</span> Implement these.</span></span><br><span class="line">                        <span class="keyword">if</span>(*limit &gt; <span class="number">0</span>)</span><br><span class="line">                        &#123;</span><br><span class="line">                            writeUnknownObjectContents(writer, KSCrashField_Ivars, address, limit);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    <span class="keyword">case</span> KSObjCClassTypeUnknown:</span><br><span class="line">                        <span class="keyword">if</span>(*limit &gt; <span class="number">0</span>)</span><br><span class="line">                        &#123;</span><br><span class="line">                            writeUnknownObjectContents(writer, KSCrashField_Ivars, address, limit);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">case</span> KSObjCTypeBlock:</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Type, KSCrashMemType_Block);</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span>* className = ksobjc_objectClassName(object);</span><br><span class="line">            writer-&gt;addStringElement(writer, KSCrashField_Class, className);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">case</span> KSObjCTypeUnknown:</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上方法判断了 OC 对象类型，String、URL、Date、Array、Number、Dictionary、Block 等类型，并对这些类型分别做了取值与写入操作。因篇幅原因就不再进行详细分析了。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>KSCrash 对崩溃后日志的记录，主要是系统信息、崩溃信息、堆栈信息等等。尤其是堆栈信息，将各线程挂起，一一记录堆栈，并且会对堆栈地址尝试符号化。</p>
+<p>对 KSCrash 的源码笔记写了好久，本系列笔记也只是按代码执行顺序过了一遍，大概了解了 KSCrash 的工作内容和工作过程。后续有精力的话再对其实现原理与细节进行补充吧。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/11/03/kscrash-catch/" rel="next" title="KSCrash 源码笔记 - 捕获篇">
+                <i class="fa fa-chevron-left"></i> KSCrash 源码笔记 - 捕获篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/12/19/saybye2021/" rel="prev" title="Say Bye 2021">
+                Say Bye 2021 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">52</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/gonghonglou" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/gonghonglou" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/gonghonglou" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1%E3%80%81%E5%86%99%E5%85%A5%E6%96%B9%E6%B3%95%EF%BC%9AbeginObject"><span class="nav-number">1.</span> <span class="nav-text">1、写入方法：beginObject</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2%E3%80%81%E5%86%99%E5%85%A5-report-info%EF%BC%9AwriteReportInfo"><span class="nav-number">2.</span> <span class="nav-text">2、写入 report info：writeReportInfo</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3%E3%80%81%E5%86%99%E5%85%A5-binary-images%EF%BC%9AwriteBinaryImages"><span class="nav-number">3.</span> <span class="nav-text">3、写入 binary images：writeBinaryImages</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4%E3%80%81%E5%86%99%E5%85%A5-process-state%EF%BC%9AwriteProcessState"><span class="nav-number">4.</span> <span class="nav-text">4、写入 process state：writeProcessState</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#5%E3%80%81%E5%86%99%E5%85%A5-system-info%EF%BC%9AwriteSystemInfo"><span class="nav-number">5.</span> <span class="nav-text">5、写入 system info：writeSystemInfo</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#6%E3%80%81%E5%86%99%E5%85%A5%E5%B4%A9%E6%BA%83%E9%94%99%E8%AF%AF%E4%BF%A1%E6%81%AF%EF%BC%9AwriteError"><span class="nav-number">6.</span> <span class="nav-text">6、写入崩溃错误信息：writeError</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#7%E3%80%81%E5%86%99%E5%85%A5%E5%90%84%E7%BA%BF%E7%A8%8B%E5%A0%86%E6%A0%88%E4%BF%A1%E6%81%AF%EF%BC%9AwriteAllThreads"><span class="nav-number">7.</span> <span class="nav-text">7、写入各线程堆栈信息：writeAllThreads</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#writeBacktrace"><span class="nav-number">7.0.1.</span> <span class="nav-text">writeBacktrace</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#writeRegisters"><span class="nav-number">7.0.2.</span> <span class="nav-text">writeRegisters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#writeStackContents-writeNotableAddresses"><span class="nav-number">7.0.3.</span> <span class="nav-text">writeStackContents &amp; writeNotableAddresses</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">与佳期</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://gonghonglou.com/2021/11/03/kscrash-record/';
+          this.page.identifier = '2021/11/03/kscrash-record/';
+          this.page.title = 'KSCrash 源码笔记 - 记录篇';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://gonghonglou.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
